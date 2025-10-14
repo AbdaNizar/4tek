@@ -1,0 +1,342 @@
+/* ========================================================================= */
+/* === VARIABLES ET PARAMÈTRES (Codés en dur comme demandé) ================ */
+/* ========================================================================= */
+:host {
+  display: block;
+  /* Fond de la page (pour le contexte du glassmorphism) */
+}
+
+/* Respecte la préférence utilisateur */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* ========================================================================= */
+/* === SECTION / HEADER ===================================================== */
+/* ========================================================================= */
+.contact {
+  display: grid;
+  gap: 20px; /* Légèrement réduit */
+  padding: 0 4px;
+}
+
+.contact-head {
+  padding: 0 4px;
+}
+
+.contact-head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  color: #eaf2ff;
+}
+
+.contact-head .link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.contact-head .link:hover {
+  color: rgba(34,211,238,1);
+  background: rgba(34,211,238,.1);
+  transform: translateX(-2px);
+}
+
+.contact-head .muted {
+  color: #8a99b8;
+  font-size: 1.0rem; /* Légèrement réduit */
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.contact .container {
+  /* Glassmorphism élégant */
+  background: linear-gradient(135deg, rgb(18 24 38 / 44%), rgb(11 15 24 / 6%));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,.2),
+    0 2px 8px rgba(0,0,0,.1),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter: blur(10px);
+}
+
+/* === GRID ================================================================ */
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.card-wrapper {
+  position: relative; /* Point d'ancrage pour le positionnement absolu */
+  display: contents; /* Permet au wrapper de ne pas casser la grille */
+}
+
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Cartes plus larges sur grand écran */
+    gap: 20px;
+  }
+}
+
+/* === CARD ================================================================ */
+.card {
+  position: relative;
+  display: grid;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  grid-template-rows: auto auto;
+  gap: 0;
+  text-decoration: none;
+  border-radius: 16px;
+  /* Fond dark glass */
+  background:
+    radial-gradient(100% 100% at 0% 0%, rgba(34,211,238,.12), transparent 60%),
+    linear-gradient(135deg, rgba(18,24,38,.9), rgba(12,16,26,.95));
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow:
+    0 4px 20px rgba(0,0,0,.15),
+    0 1px 3px rgba(0,0,0,.1);
+  overflow: hidden;
+  color: #eaf2ff;
+  transform: translateZ(0);
+  cursor: pointer;
+}
+
+/* Glow subtil au survol */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(34,211,238,.03), transparent 30%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px) scale(1.01); /* Ajusté pour moins d'agressivité */
+  box-shadow:
+    0 12px 40px rgba(0,0,0,.25),
+    0 4px 12px rgba(0,0,0,.15),
+    0 0 0 1px rgba(34,211,238,.2);
+  border-color: rgba(34,211,238,.3);
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+
+/* media (image on top) */
+.media {
+  position: relative;
+  background: linear-gradient(135deg, #0e1525, #0a0f1c);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  overflow: hidden;
+}
+
+.media::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(34,211,238,.4), transparent);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.card:hover .media::after {
+  transform: scaleX(1);
+}
+
+.media img {
+  width: 100%;
+  height: 160px; /* Réduire la hauteur de l'image de 180px à 160px */
+  object-fit: cover;
+  display: block;
+  transform: scale(1);
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: brightness(0.95);
+}
+
+.card:hover .media img {
+  transform: scale(1.05); /* Réduire légèrement le zoom */
+  filter: brightness(1.05);
+}
+
+
+/* body */
+.pad {
+  padding: 16px; /* Padding réduit */
+  display: grid;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+/* title */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(16px, 1.8vw, 18px);
+  color: #eaf2ff;
+  line-height: 1.3;
+  /* Autres propriétés de troncature conservées */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================================================= */
+/* === DESCRIPTION EXPANDABLE (CORE FIX) =================================== */
+/* ========================================================================= */
+
+/* Description par défaut (tronquée) */
+/* Description par défaut (tronquée à 3 lignes) */
+.desc-content {
+  margin: 0;
+  color: #8a99b8;
+  line-height: 1.5;
+  font-size: 14px;
+
+  overflow: hidden;
+
+  /* Limite de hauteur par défaut (≈ 3 lignes) */
+  max-height: 4.5em;
+
+  /* Transition pour l'effet d'ouverture/fermeture doux */
+  transition: max-height 0.4s ease-in-out;
+}
+
+/* Mode étendu : Afficher le contenu complet */
+.desc-content.expanded {
+  /* Une grande valeur pour s'assurer que tout le contenu s'affiche */
+  max-height: 500px;
+  overflow: visible;
+}
+
+/* Bouton "Afficher la suite" (Remplaçant l'ancien lien) */
+.read-more-btn {
+  /* Styles visuels conservés: font-size, color, background:none, border:none, etc. */
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(34,211,238, 0.9);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  /* NOUVEAU: Positionnement absolu */
+  position: absolute;
+  /* Placer le bouton dans le coin inférieur gauche de la carte */
+  bottom: 24px; /* Ajustement pour qu'il soit bien visible au-dessus du slug */
+  left: 32px; /* Marge par rapport au bord */
+  z-index: 10;
+}
+
+/* Ajuster la position au survol pour qu'il suive la carte si elle se déplace */
+.card-wrapper:hover .read-more-btn {
+  /* Applique la même translation Y que la carte au survol */
+  transform: translateY(-6px);
+}
+.read-more-btn:hover {
+  color: #fff;
+}
+/* ========================================================================= */
+
+/* slug "chip" */
+.slug {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #8a99b8;
+  border-radius: 12px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.1);
+  width: max-content;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+}
+
+.card:hover .slug {
+  background: rgba(34,211,238,.1);
+  border-color: rgba(34,211,238,.2);
+  color: rgba(34,211,238,.9);
+}
+
+/* optional icon block (if category has icon) */
+.icon {
+  position: absolute;
+  top: -22px;
+  right: 4px;
+
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(12,16,26,.8);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.3),
+    0 2px 6px rgba(0,0,0,.2);
+  backdrop-filter: blur(10px);
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* ... (Reste des styles : skeletons, responsive, animations) ... */
+
+/* === RESPONSIVE TWEAKS =================================================== */
+@media (max-width: 768px) {
+  .contact { gap: 20px; padding: 0 4px; }
+  .contact .container { padding: 20px 16px; border-radius: 16px; }
+  .media img { height: 140px; } /* Encore plus petit sur tablette */
+  .pad { padding: 14px; gap: 8px; }
+
+  .icon { width: 36px; height: 36px; top: 12px; right: 12px; } /* Ajusté pour l'image 140px */
+
+  .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+}
+
+@media (max-width: 480px) {
+  .grid { gap: 12px; grid-template-columns: 1fr; }
+  .media img { height: 120px; }
+  .title { font-size: 15px; }
+  .contact .container { padding: 16px 12px; }
+  .contact-head { padding: 0 4px; }
+  .icon { top: 10px; right: 10px; }
+}
+
+/* Animation pour l'apparition des cartes */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card { animation: fadeInUp 0.5s ease-out; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.2s; }
+.card:nth-child(4) { animation-delay: 0.3s; }
+.card:nth-child(5) { animation-delay: 0.4s; }
+.card:nth-child(6) { animation-delay: 0.5s; }

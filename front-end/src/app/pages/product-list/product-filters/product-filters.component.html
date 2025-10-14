@@ -1,0 +1,54 @@
+<aside class="filters" aria-label="Filtres">
+  <div class="filters-head">
+    <h3>Filtres</h3>
+    <button class="link-reset" type="button" (click)="onReset()">Effacer tout</button>
+  </div>
+
+  <!-- MARQUE -->
+  <section class="brands">
+    <h4>Marque</h4>
+
+    <!-- Champ texte (optionnel) -->
+    <div class="field inline" *ngIf="showTextBrand">
+      <input type="text" placeholder="ex: Lenovo" [formControl]="form.controls.brand" (input)="filterChange.emit()" />
+    </div>
+
+    <!-- Grille d’icônes -->
+    <div class="brand-grid" *ngIf="brands.length; else noBrands">
+      <button type="button"
+              class="brand-chip"
+              *ngFor="let b of brands; trackBy: trackByBrand"
+              [class.active]="form.value?.brandId === b._id"
+              [attr.aria-pressed]="form.value?.brandId === b._id"
+              [title]="b.name"
+              (click)="selectBrand(b._id)">
+        <div class="logo">
+          <img [src]="getUrl(b.iconUrl) || '/assets/placeholder.jpg'" [alt]="b.name" />
+        </div>
+        <span class="name">{{ b.name }}</span>
+      </button>
+
+    </div>
+    <ng-template #noBrands>
+      <p class="muted">Aucune marque disponible.</p>
+    </ng-template>
+  </section>
+
+  <!-- PRIX -->
+  <section class="prices">
+    <h4>Prix</h4>
+
+    <ngx-slider
+    [value]="minValue"
+    [highValue]="maxValue"
+    [options]="options"
+    (valueChange)="onMinChange($event)"
+    (highValueChange)="onMaxChange($event)"
+    (userChangeEnd)="filterChange.emit()">
+  </ngx-slider>
+    <div class="price-row">
+      <span>{{ minValue | number:'1.0-0' }} DT</span>
+      <span>{{ maxValue | number:'1.0-0' }} DT</span>
+    </div>
+  </section>
+</aside>

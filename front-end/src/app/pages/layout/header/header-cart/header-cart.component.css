@@ -1,0 +1,215 @@
+:host {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* pousse le panier à l'extrême droite du header */
+}
+
+/* bouton cart */
+.cart-btn {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color .2s;
+}
+
+.cart-btn:hover {
+  color: var(--accent);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  background: var(--accent);
+  color: #0b0f1a;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+:host{ display:inline-flex; }
+
+/* === Backdrop === */
+.cart-backdrop{
+  position:fixed; inset:0; z-index: 870;
+  background: rgba(0,0,0,0);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: fadeIn .18s ease;
+}
+
+/* === Desktop dropdown (default) === */
+.cart-dropdown{
+  position:absolute; top: calc(100% + 8px); right: 10px; z-index: 880;
+  animation: slideDown .22s ease both;
+}
+.cart-box{
+  width: min(92vw, 380px);
+  background: linear-gradient(180deg, rgba(18,24,38,.97), rgba(14,19,32,.97));
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.45);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.cart-x{
+  position:absolute; top: 8px; right: 8px;
+  width: 32px; height: 32px; display:grid; place-items:center;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.10);
+  color: var(--muted); border-radius: 10px; cursor: pointer;
+  transition: background .2s, color .2s, transform .1s;
+}
+.cart-x:hover{ color: var(--accent); background: rgba(255,255,255,.10); }
+.cart-x:active{ transform: translateY(1px); }
+
+.cart-top{
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 10px; padding-right: 36px; margin-bottom: 12px;
+}
+.cart-top .count{ font-weight: 800; letter-spacing: .2px; color: var(--text); }
+.cart-top .subtotal{ color: var(--muted); }
+.cart-top .subtotal strong{ color: var(--accent); }
+
+.btn-checkout{
+  width: 100%; margin: 4px 0 10px; padding: 12px 14px;
+  border: 0; border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), #5b4df0);
+  color:#fff; font-weight: 800;
+  box-shadow: 0 16px 36px rgba(79,70,229,.35);
+  cursor: pointer; transition: filter .2s, transform .1s;
+}
+.btn-checkout:hover{ filter: brightness(1.06); }
+.btn-checkout:active{ transform: translateY(1px); }
+
+.line hr{
+  border: none; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+  margin: 10px 0;
+}
+
+.cart-list{
+  max-height: 56vh; overflow:auto; -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+.cart-list::-webkit-scrollbar{ width: 8px; }
+.cart-list::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.14); border-radius: 999px; }
+
+.cart-row{
+  display:grid; grid-template-columns: 70px 1fr; gap: 12px;
+  align-items: center; padding: 6px 2px;
+  border-radius: 10px; transition: background .2s;
+}
+.cart-row:hover{ background: rgba(255,255,255,.04); }
+.thumb{ width: 70px; height: 70px; object-fit: cover; border-radius: 12px; background: #0e1525; }
+.meta{ display:grid; gap: 8px; }
+.title{ margin:0; font-size:14px; font-weight:800; line-height:1.35; }
+.price{ color: var(--accent); font-weight:700; }
+
+.controls{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; }
+.controls label{ color: var(--muted); font-size:12px; }
+
+.qty{
+  display:inline-flex; align-items:center; gap:6px;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius: 10px; padding: 3px;
+}
+.qty button{
+  width:28px; height:28px; border-radius:8px; border:0;
+  background: rgba(255,255,255,.08); color: var(--text);
+  cursor:pointer; transition: background .2s, transform .1s;
+}
+.qty button:hover{ background: rgba(255,255,255,.12); }
+.qty button:active{ transform: translateY(1px); }
+.qty input{
+  width: 54px; text-align:center; border:0; outline:0;
+  background: transparent; color: var(--text);
+  padding: 4px 2px; font-weight: 700;
+}
+
+.actions{ display:inline-flex; align-items:center; gap:6px; margin-left:auto; }
+.actions .icon{
+  width:32px; height:32px; border-radius:8px; border:0; cursor:pointer;
+  display:grid; place-items:center; color:var(--text);
+  background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);
+  transition: background .2s, color .2s, transform .1s, border-color .2s;
+}
+.actions .icon:hover{
+  color: var(--accent); background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+}
+.actions .icon:active{ transform: translateY(1px); }
+
+.empty{ margin: 8px 0 12px; text-align:center; }
+.cart-link{ display:block; text-align:center; margin-top:10px; color: var(--accent); text-decoration:none; font-weight:700; }
+.cart-link:hover{ text-decoration: underline; }
+
+.cart-badge{
+  position:absolute; top:-4px; right:-6px;
+  background: var(--accent); color:#0b0f1a;
+  font-size: 11px; font-weight: 800;
+  padding: 2px 6px; border-radius: 999px;
+}
+
+/* === Mobile: turn into bottom-sheet === */
+@media (max-width: 768px){
+  .cart-dropdown{
+    position: fixed;
+    left: 0; right: 0; bottom: 0; top: auto;
+    z-index: 880;
+    animation: sheetUp .24s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .cart-box{
+    width: 100%;
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+    padding: 14px 14px calc(env(safe-area-inset-bottom, 0) + 14px);
+    box-shadow: 0 -12px 36px rgba(0,0,0,0);
+    top: 500px;
+  }
+
+  /* Make the list taller on mobile and leave room for sticky checkout */
+  .cart-list{
+    max-height: 50vh;
+  }
+
+  /* Sticky checkout bar look (larger target) */
+  .btn-checkout{
+    position: sticky; bottom: 0;
+    z-index: 1;
+    padding: 14px 16px;
+    border-radius: 12px;
+  }
+
+  /* Bigger controls for tap */
+  .qty button{ width:32px; height:32px; }
+  .qty input{ width:64px; }
+  .actions .icon{ width:36px; height:36px; }
+
+  /* Close button bigger and easier to reach */
+  .cart-x{
+    top: 10px; right: 10px; width: 36px; height: 36px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes slideDown{ from{opacity:0; transform: translateY(-8px);} to{opacity:1; transform:none;} }
+@keyframes sheetUp{ from{opacity:0; transform: translateY(12px);} to{opacity:1; transform:none;} }
+
+
+
+

@@ -1,0 +1,98 @@
+<div class="cat-detail" *ngIf="!loading(); else loadingTpl">
+
+  <!-- Protect the template: expose as `c` only when available -->
+  <ng-container *ngIf="cat() as c; else emptyTpl">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="cover">
+        <img [src]="getUrl(c.imageUrl || c.banners?.[0] || c.iconUrl)" [alt]="c.name" />
+        <div class="overlay"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="title-line">
+          <span class="icon" *ngIf="c.iconUrl">
+            <img [src]="getUrl(c.iconUrl)" [alt]="c.name + ' icon'"/>
+          </span>
+          <span class="dot"></span>
+          <h1>{{ c.name }}</h1>
+          <span class="badge" [class.on]="c.isActive" [class.off]="!c.isActive">
+            {{ c.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <div class="slug">/{{ c.slug }}</div>
+
+        <div class="desc" [class.expanded]="descExpanded">
+          <p>{{ c.description || '—' }}</p>
+          <button
+            *ngIf="(c.description || '').length > 140"
+            type="button"
+            class="read-more"
+            (click)="toggleDesc()">
+            {{ descExpanded ? 'Lire moins' : 'Lire la suite' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY (bannières) -->
+    <section class="gallery" *ngIf="c.banners?.length">
+      <h3>Bannières</h3>
+      <div class="thumbs">
+        <figure class="thumb" *ngFor="let b of c.banners">
+          <img [src]="getUrl(b)" [alt]="c.name + ' banner'"/>
+        </figure>
+      </div>
+    </section>
+
+    <!-- META / DETAILS -->
+    <section class="meta">
+      <div class="card">
+        <h4>Informations</h4>
+        <ul>
+          <li>
+            <span>Nom</span>
+            <code>{{ c.name }}</code>
+          </li>
+          <li>
+            <span>Slug</span>
+            <code>{{ c.slug }}</code>
+          </li>
+          <li>
+            <span>Statut</span>
+            <b [class.on]="c.isActive" [class.off]="!c.isActive">
+              {{ c.isActive ? 'Actif' : 'Inactif' }}
+            </b>
+          </li>
+          <li *ngIf="c.createdAt">
+            <span>Créée</span>
+            <code>{{ c.createdAt | date:'medium' }}</code>
+          </li>
+          <li *ngIf="c.updatedAt">
+            <span>Modifiée</span>
+            <code>{{ c.updatedAt | date:'medium' }}</code>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card res">
+        <h4>Ressources</h4>
+        <div class="flexy">
+          <img class="mini" *ngIf="c.iconUrl" [src]="getUrl(c.iconUrl)" alt="icône"/>
+          <img class="mini wide" *ngIf="c.imageUrl" [src]="getUrl(c.imageUrl)" alt="image"/>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="muted">Chargement…</div>
+</ng-template>
+
+<ng-template #emptyTpl>
+  <div class="muted">Catégorie introuvable.</div>
+</ng-template>

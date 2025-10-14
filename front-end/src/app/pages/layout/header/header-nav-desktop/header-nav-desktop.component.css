@@ -1,0 +1,325 @@
+/* ========================================================================= */
+/* === NETTOYAGE DES VARIABLES GLOBALES (Suppression des :root et :host) === */
+/* ========================================================================= */
+:host {
+  display: block;
+}
+
+/* Respecte la préférence utilisateur */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+
+/* Conteneur subnav */
+.subnav{
+  position: relative;
+  isolation: isolate;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: 40px;
+
+}
+
+/* Rangée */
+.pill{
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* =========================
+   HOME BUTTON
+   ========================= */
+.tab-home{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #e0e6f7;
+
+  /* Accent #00bcd4 */
+  background: rgba(0, 188, 212, 0.2);
+  border: 1px solid rgba(0, 188, 212, 0.35);
+  transition: all .2s ease-in-out;
+  white-space: nowrap;
+}
+.tab-home:hover{
+  background: rgba(0, 188, 212, 0.3);
+  border-color: #00bcd4;
+  box-shadow: 0 0 8px rgba(0, 188, 212, 0.4);
+  color: #fff;
+}
+.tab-home:active{ transform: translateY(0); }
+.tab-home:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.2), 0 0 0 6px rgba(0, 188, 212, 0.1); }
+
+.tab-home .ico{
+  width: 20px; height: 20px; flex: 0 0 20px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* =========================
+   CATEGORIES TABS (Onglets)
+   ========================= */
+.menu-host{ display: flex; gap: 12px; flex-wrap: wrap; }
+.cat-item{ position: relative; display: inline-block; }
+
+/* pont anti-perte de hover */
+.cat-item::after{
+  content:""; position:absolute; left:0; right:0; top:100%; height:10px;
+}
+
+/* Onglet */
+.tab{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 14px; border-radius: 999px;
+  cursor:pointer; background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  color: #a7b0c2; text-decoration:none; white-space:nowrap;
+  transition: all .2s ease-in-out;
+}
+.tab:hover{
+  background: rgba(255, 255, 255, 0);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #e0e6f7;
+}
+.tab.active{
+  /* Accent #00bcd4 */
+  background: rgba(0, 188, 212, 0.2);
+  color:#fff;
+  border-color: rgba(0, 188, 212, 0.35);
+}
+.tab:active{ transform: translateY(0); }
+.tab:focus-visible{ outline:none; box-shadow: 0 0 0 3px rgba(0, 188, 212, 0.2); }
+
+.tab .ico{
+  width:20px; height:20px; border-radius:4px; overflow:hidden;
+  background:#fff;
+  display:grid; place-items:center;
+}
+.tab .lbl{ font-weight:700; letter-spacing:0; }
+.tab .chev{ opacity:.6; transition: transform .2s ease; }
+.tab.active .chev{ transform: rotate(180deg); }
+
+
+/* =========================
+   PANELS - Structure
+   ========================= */
+.panel{
+  position:absolute; top:calc(100% + 10px); left:0;
+  min-width: 300px;
+  width: auto;
+
+  /* Glassmorphism amélioré */
+  background: rgba(19, 26, 40, 0.44);
+  backdrop-filter: blur(10px) saturate(150%);
+
+  color: #e0e6f7;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+
+  opacity:0; visibility:hidden; transform: translateY(10px);
+  transition: opacity .2s, transform .2s, visibility .2s;
+  pointer-events:none; overflow:hidden; z-index:70;
+}
+.cat-item:hover > .panel,
+.cat-item:focus-within > .panel{
+  opacity:1; visibility:visible; transform:none; pointer-events:auto;
+}
+
+/* Structure de grille dynamique */
+.panel-inner{
+  display: grid;
+  grid-template-columns: 300px;
+  /* min-height: auto; (implicite après retrait) */
+  transition: grid-template-columns 0.3s ease;
+}
+
+/* Quand une sous-catégorie est sélectionnée, on passe à 2 colonnes */
+.panel-inner.has-right{
+  grid-template-columns: 300px 1fr;
+  min-width: 650px;
+}
+
+/* Colonne gauche - Sous-catégories */
+.col.left{
+  background: rgba(18, 24, 38, 0.29);
+  border-right: 1px solid rgba(255,255,255,.1);
+  padding: 15px 0;
+  width: 300px;
+}
+
+/* En-tête catégorie principale */
+.category-header {
+  padding: 0 20px 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  margin-bottom: 8px;
+}
+.category-subtitle {
+  font-size: 0.95em;
+  color: #a7b0c2;
+  font-weight: 500;
+}
+
+/* Sous-catégories (Menu vertical) */
+.submenu{
+  list-style:none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.submenu-item{
+  width:100%;
+  text-align:left;
+  padding:12px 20px;
+  border: none;
+  background: transparent;
+  color: #e0e6f7;
+  font-weight:600;
+  transition: all .2s;
+}
+
+.submenu-item:hover{
+  /* Accent #00bcd4 */
+  background: rgba(0, 188, 212, 0.15);
+  color: #fff;
+}
+
+.submenu-item.current{
+  /* Accent #00bcd4 */
+  background: rgba(0, 188, 212, 0.2);
+  color: #fff;
+  font-weight: 700;
+}
+
+.submenu-item.current::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #00bcd4;
+  border-radius: 0 4px 4px 0;
+}
+
+/* Colonne droite - Produits */
+.col.right{
+  background: transparent;
+  padding: 24px; /* Augmenter le padding pour plus d'espace */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 350px;
+}
+
+/* Titre de la Sous-catégorie */
+.subcategory-title {
+  font-size: 1.3em; /* Rendre le titre plus grand */
+  font-weight: 800;
+  color: #e0e6f7;
+  margin-bottom: 20px; /* Plus d'espace sous le titre */
+  padding-bottom: 10px;
+  /* Ligne d'accent améliorée avec un léger glow */
+  border-bottom: 2px solid rgba(0, 188, 212, 0.4);
+  text-shadow: 0 0 5px rgba(0, 188, 212, 0.2); /* Léger effet de glow sur le texte */
+}
+
+/* Liste produits (Links) - Conserver la grille 2 colonnes */
+.links{
+  list-style:none;
+  margin: 0;
+  padding: 0;
+  /* Grille 2 colonnes pour l'efficacité */
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px; /* Augmenter le gap */
+}
+
+/* Style des liens de produits (Mini-carte) */
+.links a{
+  display: flex;
+  align-items: center; /* Centrer verticalement le contenu */
+  gap: 10px;
+  padding:12px 14px; /* Plus de padding pour un look plus "carte" */
+  border-radius: 10px; /* Un radius légèrement plus prononcé */
+  color: #e0e6f7;
+  text-decoration:none;
+  border:1px solid rgba(255,255,255,.1); /* Bordure plus visible */
+  background: rgba(12,16,26,.8); /* Fond plus opaque */
+  transition: all .25s ease;
+  font-weight: 600; /* Plus de poids pour le nom du produit */
+  line-height: 1.3;
+  position: relative;
+  overflow: hidden;
+}
+
+.links a:before {
+  /* Ajout d'une petite décoration d'icône (fausse icône) pour chaque produit */
+  content: '★'; /* Peut être remplacé par un véritable icône si vous avez une librairie (ex: icon-box, icon-check) */
+  font-size: 10px;
+  color: #00bcd4;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 4px 6px;
+  background: rgba(0, 188, 212, 0.1);
+  border-radius: 10px 0 10px 0;
+  font-weight: 900;
+}
+
+.links a:hover{
+  background: rgba(0, 188, 212, 0.3); /* Survol plus intense */
+  border-color: #00bcd4;
+  color: #fff;
+  transform: translateY(-3px); /* Soulèvement plus prononcé */
+  box-shadow: 0 5px 15px rgba(0, 188, 212, 0.2); /* Ombre légère pour l'effet 3D */
+}
+
+/* Ajustement pour que le texte du lien ne soit pas coupé par la fausse icône */
+.links a {
+  padding-left: 20px; /* Pousser le contenu pour l'espace de l'icône */
+}
+
+/* Bouton "Tous les articles" (Conserver son statut d'CTA) */
+.links .all {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+}
+/* Le style du lien CTA reste le même pour un contraste maximal */
+
+/* ===== Responsive (Simplification) ===== */
+@media (max-width: 980px){
+  /* Tablette/Mobile : Empiler les colonnes */
+  .panel-inner,
+  .panel-inner.has-right{
+    grid-template-columns: 1fr;
+    min-width: 300px;
+  }
+  .col.left{
+    border-right:none;
+    border-bottom:1px solid rgba(255,255,255,.1);
+    border-radius: 12px 12px 0 0;
+    width: auto;
+  }
+  .col.right{
+    border-radius:0 0 12px 12px;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Mobile : réduire la grille pour les produits */
+  .links{
+    grid-template-columns: 1fr;
+  }
+}

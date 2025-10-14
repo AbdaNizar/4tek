@@ -1,0 +1,20 @@
+<section class="banner"
+         (mouseenter)="paused.set(true)"
+         (mouseleave)="paused.set(false)">
+  <!-- Slides -->
+  <div class="slides">
+    <app-banner-slide *ngFor="let s of slides; let i = index"
+                      [slide]="s" [active]="i === index()"></app-banner-slide>
+  </div>
+
+  <!-- Controls -->
+  <button class="nav prev" (click)="prev()" aria-label="Image précédente">❮</button>
+  <button class="nav next" (click)="next()" aria-label="Image suivante">❯</button>
+
+  <!-- Dots -->
+  <div class="dots">
+    <button *ngFor="let s of slides; let i = index"
+            class="dot" [class.active]="i === index()"
+            (click)="goTo(i)" [attr.aria-label]="'Aller à l’image ' + (i+1)"></button>
+  </div>
+</section>

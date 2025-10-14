@@ -1,0 +1,36 @@
+.contact-us {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  transition: transform .2s ease, box-shadow .2s ease;
+  text-decoration: none;
+}
+
+.icon:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.35);
+}
+
+/* Couleurs officielles */
+.phone { background: #25a244; }      /* vert tel */
+.messenger {background: linear-gradient(21deg, #80beef, #f7b7b7);
+} /* bleu Messenger */
+.whatsapp { background: #25D366; }  /* vert WhatsApp */
+.email { background: #4285F4; }     /* bleu email */
+img {
+  display: block;
+  max-width: 70%;
+}

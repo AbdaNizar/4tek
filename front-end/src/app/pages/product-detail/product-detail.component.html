@@ -1,0 +1,83 @@
+<section class="detail" *ngIf="product() as p">
+  <!-- Col gauche : galerie -->
+  <div class="gallery">
+    <div class="main">
+      <img [src]="getUrl(images()[activeIndex()]) || 'assets/images/placeholder.jpg'"
+           [alt]="p.name"/>
+      <div *ngIf="discount()" class="badge">-{{ discount() }}%</div>
+    </div>
+
+    <div class="thumbs" *ngIf="images().length > 1">
+      <button type="button"
+              class="thumb"
+              *ngFor="let img of images(); let i = index"
+              [class.active]="i === activeIndex()"
+              (click)="selectImage(i)"
+              [attr.aria-label]="'Voir image ' + (i + 1)">
+        <img [src]="getUrl(img)" [alt]="p.name + ' ' + (i + 1)"/>
+      </button>
+    </div>
+  </div>
+
+  <!-- Col droite : infos / achat -->
+  <aside class="sheet">
+    <h1 class="title">{{ p.name }}</h1>
+
+    <div class="meta">
+      <span class="stock" [class.ok]="(p.stock ?? 0) > 0" [class.ko]="!(p.stock ?? 0)">
+        ● {{ (p.stock ?? 0) > 0 ? 'En stock' : 'Rupture' }}
+      </span>
+
+      <img *ngIf="p.brands?.iconUrl" class="brand"
+           [src]="getUrl(p.brands?.iconUrl)"
+           [alt]="p.brands?.name || 'brand'">
+      <span class="brand-name" *ngIf="p.brands?.name">{{ p.brands?.name }}</span>
+    </div>
+
+    <div class="ref" *ngIf="p.sku">Référence#: <strong>{{ p.sku }}</strong></div>
+
+    <div class="price-block">
+      <div class="price">{{ p.price | currency:(p.currency || 'TND'):'symbol':'1.0-3' }}</div>
+      <div class="old" *ngIf="p.oldPrice">
+        <s>{{ p.oldPrice | currency:(p.currency || 'TND'):'symbol':'1.0-3' }}</s>
+        <span class="save" *ngIf="discount()">-{{ discount() }}%</span>
+      </div>
+    </div>
+
+    <div class="buy">
+      <label for="q">Quantité</label>
+      <div class="qty">
+        <button type="button" (click)="dec()" aria-label="Diminuer">−</button>
+        <input id="q" type="number" min="1" max="99"
+               [ngModel]="qty()"
+               (ngModelChange)="qty.set(Math.max(1, Math.min(99, +$event || 1)))"/>
+        <button type="button" (click)="inc()" aria-label="Augmenter">＋</button>
+      </div>
+
+      <button class="btn-primary" [disabled]="!(p.stock ?? 0)" (click)="addToCart()">
+        Ajouter au panier
+      </button>
+    </div>
+
+    <div class="specs" *ngIf="p.specs && (p.specs | keyvalue)?.length">
+      <h3>Caractéristiques principales</h3>
+      <ul>
+        <li *ngFor="let s of (p.specs | keyvalue) | slice:0:7">
+          {{ s.key }} : {{ s.value }}
+        </li>
+      </ul>
+    </div>
+
+    <div class="tags" *ngIf="p.tags?.length">
+      <span class="tag" *ngFor="let t of p.tags">{{ t }}</span>
+    </div>
+
+    <div class="desc" *ngIf="p.description">
+      {{ p.description }}
+    </div>
+
+    <div class="ship">
+      <strong>Livraison</strong> : Gratuite — <small>Expédition en 24h</small>
+    </div>
+  </aside>
+</section>

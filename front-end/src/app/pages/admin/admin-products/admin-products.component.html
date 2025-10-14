@@ -1,0 +1,276 @@
+<section class="admin-prods">
+  <header class="head">
+    <h2>Produits</h2>
+    <div class="actions">
+      <input class="search" type="search" placeholder="Rechercher (nom / slug / sku / desc)…"
+             [ngModel]="q()" (ngModelChange)="q.set($event)">
+
+      <select class="select" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="all">Tous</option>
+        <option value="active">Actifs</option>
+        <option value="inactive">Inactifs</option>
+      </select>
+
+      <select class="select" [ngModel]="catId()" (ngModelChange)="catId.set($event)">
+        <option value="all">Toutes catégories</option>
+        <option *ngFor="let c of categories()" [value]="c._id">{{ c.name }}</option>
+      </select>
+
+      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="grid" *ngIf="!loading() && list().length; else empty">
+    <article class="card" *ngFor="let p of list()">
+      <div class="media">
+        <img [src]="getUrl(p.imageUrl) || '/assets/placeholder.jpg'" alt="{{p.name}}">
+      </div>
+
+      <div class="info">
+        <div class="top">
+          <h3>{{ p.name }}</h3>
+          <span class="badge" [class.on]="p.isActive" [class.off]="!p.isActive">
+            {{ p.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <div class="meta-line">
+          <span class="price">{{ p.price | currency:(p.currency || 'TND'):'symbol':'1.0-3' }}</span>
+          <span class="sku" *ngIf="p.sku">SKU: {{ p.sku }}</span>
+        </div>
+
+        <p class="muted">{{ p.description || '—' }}</p>
+        <div class="meta">
+          <span class="slug">/{{ p.slug }}</span>
+        </div>
+
+        <div class="row">
+          <button class="btn" (click)="openEdit(p)">Modifier</button>
+          <button class="btn ghost" (click)="openReplace(p)">Remplacer fichiers…</button>
+          <button class="btn warn" (click)="toggle(p)">{{ p.isActive ? 'Désactiver' : 'Activer' }}</button>
+          <button class="btn danger" (click)="remove(p)">Supprimer</button>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <ng-template #empty>
+    <p class="empty muted">Aucun produit.</p>
+  </ng-template>
+</section>
+
+<!-- MODAL CREATE / EDIT -->
+<div class="backdrop" *ngIf="modalOpen()" (click)="closeModal()"></div>
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true" (click)="closeModal()">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>{{ editing() ? 'Modifier le produit' : 'Ajouter un produit' }}</h3>
+      <button class="x" type="button" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="panel-body">
+      <form class="form" [formGroup]="f" (ngSubmit)="save()">
+        <div class="row-2">
+          <div class="field">
+            <label>Nom *</label>
+            <input formControlName="name" placeholder="Ex: HP ProBook 450 G9">
+          </div>
+          <div class="field">
+            <label>Slug *</label>
+            <input formControlName="slug" placeholder="ex: hp-probook-450-g9">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <!-- MARQUE -->
+          <div class="field">
+            <label>Marque *</label>
+            <select formControlName="brand" (change)="onBrandChange($event)">
+              <option value="" disabled selected>Choisir…</option>
+              <option *ngFor="let b of brands()" [value]="b._id">{{ b.name }}</option>
+            </select>
+          </div>
+
+          <!-- CATEGORIE (désactivée tant que brand non choisi) -->
+          <div class="field">
+            <label>Catégorie *</label>
+            <select formControlName="category"
+                    [disabled]="!f.value.brand"
+                    (change)="onCategoryChange($event)">
+              <option value="" disabled selected>Choisir…</option>
+              <option *ngFor="let c of categories()" [value]="c._id">{{ c.name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Sous-catégorie (dépend de category) -->
+        <div class="field">
+          <label>Sous-catégorie *</label>
+          <select formControlName="subCategory" [disabled]="!subOptions().length">
+            <option value="" disabled>
+              {{ subOptions().length ? 'Choisir…' : 'Choisir une catégorie d’abord' }}
+            </option>
+            <option *ngFor="let s of subOptions()" [value]="s._id">{{ s.name }}</option>
+          </select>
+          <small class="muted" *ngIf="selectedCatId() && !subOptions().length">
+            Aucune sous-catégorie active pour cette catégorie.
+          </small>
+        </div>
+
+
+        <div class="row-2">
+          <div class="field">
+            <label>Prix *</label>
+            <input type="number" step="0.001" formControlName="price" placeholder="0.000">
+          </div>
+          <div class="field">
+            <label>Ancien prix</label>
+            <input type="number" step="0.001" formControlName="oldPrice" placeholder="0.000">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>Stock</label>
+            <input type="number" formControlName="stock" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Devise</label>
+            <input formControlName="currency" placeholder="TND">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Tags (séparés par des virgules)</label>
+          <input formControlName="tags" placeholder="laptop, i7, 16go, ssd">
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Description courte…"></textarea>
+        </div>
+
+        <!-- Uploads -->
+        <div class="uploads" *ngIf="!editing()">
+          <div class="u-block">
+            <div class="u-head">
+              <label>Image de couverture</label>
+              <div class="u-actions" *ngIf="coverPreview()">
+                <button type="button" class="btn ghost sm" (click)="clearCover()">Retirer</button>
+              </div>
+            </div>
+            <div class="u-body">
+              <label class="btn ghost sm" *ngIf="!coverPreview()">
+                Ajouter
+                <input type="file" accept="image/*" (change)="onPickCover($event)" hidden>
+              </label>
+              <div class="preview" *ngIf="coverPreview()">
+                <img [src]="coverPreview()!" alt="cover preview">
+              </div>
+            </div>
+          </div>
+
+          <div class="u-block">
+            <div class="u-head">
+              <label>Galerie (multiples)</label>
+              <div class="u-actions">
+                <label class="btn ghost sm">
+                  Ajouter
+                  <input type="file" accept="image/*" multiple (change)="onPickGallery($event)" hidden>
+                </label>
+              </div>
+            </div>
+            <div class="thumbs" *ngIf="galleryPreviews().length">
+              <div class="thumb" *ngFor="let p of galleryPreviews(); let i = index">
+                <img [src]="p" alt="gallery preview">
+                <button type="button" class="t-remove" (click)="removeGalleryAt(i)">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field switch">
+          <input id="active" type="checkbox" formControlName="isActive">
+          <label for="active">Produit actif</label>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeModal()">Annuler</button>
+          <button class="btn primary" type="submit" [disabled]="f.invalid || saving()">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REPLACE FILES -->
+<div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
+<div class="modal" *ngIf="replaceOpen()" role="dialog" aria-modal="true" (click)="closeReplace()">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>Remplacer les fichiers</h3>
+      <button class="x" type="button" (click)="closeReplace()">×</button>
+    </div>
+    <div class="panel-body">
+      <form class="form" (ngSubmit)="saveReplace()">
+        <div class="u-block">
+          <div class="u-head">
+            <label>Cover (remplacement total)</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichier
+                <input type="file" accept="image/*" (change)="onPickCoverReplace($event)" hidden>
+              </label>
+              <button *ngIf="coverChanged()" class="btn warn sm" type="button" (click)="resetCoverReplace()">Annuler</button>
+            </div>
+          </div>
+          <div class="u-body">
+            <div class="preview" *ngIf="editing()?.imageUrl && !coverChanged()">
+              <img [src]="getUrl(editing()!.imageUrl!)" alt="cover old">
+              <span class="tag">actuelle</span>
+            </div>
+            <div class="preview" *ngIf="coverChanged() && coverReplacePreview()">
+              <img [src]="coverReplacePreview()!" alt="cover new">
+              <span class="tag">nouvelle</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="u-block">
+          <div class="u-head">
+            <label>Galerie (remplacement total)</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichiers
+                <input type="file" accept="image/*" multiple (change)="onPickGalleryReplace($event)" hidden>
+              </label>
+              <button *ngIf="galleryChanged()" class="btn warn sm" type="button" (click)="galleryReplace.set([]); galleryReplacePreviews.set([]); galleryChanged.set(false)">Annuler</button>
+            </div>
+          </div>
+
+          <div class="thumbs" *ngIf="editing()?.gallery?.length && !galleryChanged()">
+            <div class="thumb" *ngFor="let u of editing()!.gallery">
+              <img [src]="getUrl(u)" alt="old gall">
+              <span class="tag">actuelle</span>
+            </div>
+          </div>
+
+          <div class="thumbs" *ngIf="galleryChanged() && galleryReplacePreviews().length">
+            <div class="thumb" *ngFor="let p of galleryReplacePreviews(); let i = index">
+              <img [src]="p" alt="new gall">
+              <button type="button" class="t-remove" (click)="removeNewGalleryAt(i)">×</button>
+              <span class="tag">nouvelle</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
+          <button class="btn primary" type="submit">Remplacer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

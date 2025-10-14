@@ -1,0 +1,27 @@
+<!-- src/app/pages/admin/shell/sidebar/admin-sidebar.component.html -->
+<aside class="sidebar">
+  <nav>
+    <a routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+      <span>📊</span> Dashboard
+    </a>
+
+    <div class="group">Marques</div>
+    <a routerLink="/admin/brands" routerLinkActive="active">
+      <span>📱</span> Marques
+    </a>
+
+    <div class="group">Catégories</div>
+    <a routerLink="/admin/categories" routerLinkActive="active">
+      <span>🗃️</span> Catégories
+    </a>
+    <div class="group">Sous-catégories</div>
+    <a routerLink="/admin/sous-categories" routerLinkActive="active">
+      <span>🗂️</span> Sous-catégories
+    </a>
+    <div class="group">Produits</div>
+    <a routerLink="/admin/produits" routerLinkActive="active">
+      <span>📦️</span> Produits
+    </a>
+    <!-- Ajoute Produits / Stocks etc. -->
+  </nav>
+</aside>

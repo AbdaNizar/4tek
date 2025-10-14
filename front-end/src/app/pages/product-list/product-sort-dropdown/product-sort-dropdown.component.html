@@ -1,0 +1,11 @@
+<div class="custom-select" [class.open]="open()" (click)="toggle()">
+  <div class="selected">{{ label(sortBy) }}</div>
+
+  <ul *ngIf="open()" class="options">
+    <li *ngFor="let o of options"
+        (click)="choose(o.key); $event.stopPropagation()"
+        [class.active]="o.key === sortBy">
+      {{ o.label }}
+    </li>
+  </ul>
+</div>

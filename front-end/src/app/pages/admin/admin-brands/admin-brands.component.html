@@ -1,0 +1,161 @@
+<section class="admin-cats">
+  <header class="head">
+    <h2>Marques</h2>
+    <div class="actions">
+      <input class="search" type="search" placeholder="Rechercher (nom / slug / desc)…"
+             [ngModel]="q()" (ngModelChange)="q.set($event)">
+      <select class="select" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="all">Toutes</option>
+        <option value="active">Actives</option>
+        <option value="inactive">Inactives</option>
+      </select>
+      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="grid" *ngIf="!loading() && list().length; else empty">
+    <article class="card" *ngFor="let b of list()">
+      <div class="media">
+        <img [src]="getUrl(b.iconUrl) || '/assets/placeholder.jpg'" alt="{{b.name}}">
+      </div>
+
+      <div class="info">
+        <div class="top">
+          <h3>{{ b.name }}</h3>
+          <span class="badge" [class.on]="b.isActive" [class.off]="!b.isActive">
+            {{ b.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+
+        <div class="meta">
+          <span class="slug">/{{ b.slug }}</span>
+          <span *ngIf="b.iconUrl" class="slug">icône ✓</span>
+        </div>
+
+        <div class="row">
+          <button class="btn" (click)="openEdit(b)">Modifier</button>
+          <button class="btn ghost" (click)="openReplace(b)">Remplacer fichiers</button>
+          <button class="btn warn" (click)="toggle(b)">{{ b.isActive ? 'Désactiver' : 'Activer' }}</button>
+          <button class="btn danger" (click)="remove(b)">Supprimer</button>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <ng-template #empty><p class="empty muted">Aucune marque.</p></ng-template>
+</section>
+
+<!-- Modal create / edit -->
+<div class="backdrop" *ngIf="modalOpen()" (click)="closeModal()"></div>
+<div class="modal" *ngIf="modalOpen()" (click)="closeModal()" role="dialog" aria-modal="true">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>{{ editing() ? 'Modifier la marque' : 'Ajouter une marque' }}</h3>
+      <button class="x" type="button" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="panel-body">
+      <form class="form" [formGroup]="f" (ngSubmit)="save()">
+        <div class="row-2">
+          <div class="field">
+            <label>Nom *</label>
+            <input formControlName="name" placeholder="ex: Lenovo">
+          </div>
+          <div class="field">
+            <label>Slug *</label>
+            <input formControlName="slug" placeholder="ex: lenovo">
+          </div>
+        </div>
+
+
+        <!-- uploads uniquement en création -->
+        <div class="uploads" *ngIf="!editing()">
+          <div class="u-block">
+            <div class="u-head">
+              <label>Icône (logo)</label>
+              <div class="u-actions" *ngIf="iconPreview()">
+                <button type="button" class="btn ghost sm" (click)="iconPreview.set(null); iconFile=null">Retirer</button>
+              </div>
+            </div>
+            <div class="u-body">
+              <label class="btn ghost sm" *ngIf="!iconPreview()">
+                Ajouter
+                <input type="file" accept="image/*" (change)="onPickIcon($event)" hidden>
+              </label>
+              <div class="preview icon" *ngIf="iconPreview()">
+                <img [src]="iconPreview()!" alt="icon preview">
+              </div>
+            </div>
+          </div>
+
+
+
+
+        </div>
+
+        <div class="field switch">
+          <input id="active" type="checkbox" formControlName="isActive">
+          <label for="active">Marque active</label>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeModal()">Annuler</button>
+          <button class="btn primary" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal replace files -->
+<!-- Modal replace files -->
+<div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
+<div class="modal" *ngIf="replaceOpen()" (click)="closeReplace()" role="dialog" aria-modal="true">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>Remplacer les fichiers</h3>
+      <button class="x" type="button" (click)="closeReplace()">×</button>
+    </div>
+
+    <div class="panel-body">
+      <form class="form" (ngSubmit)="saveReplace()" novalidate>
+        <div class="u-block">
+          <div class="u-head">
+            <label>Icône</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichier
+                <input type="file" accept="image/*" (change)="onPickIconReplace($event)" hidden>
+              </label>
+              <button *ngIf="iconChanged()" type="button" class="btn warn sm" (click)="resetIconSelection()">
+                Annuler
+              </button>
+            </div>
+          </div>
+
+          <div class="u-body">
+            <!-- Current icon -->
+            <div class="preview icon" *ngIf="editing()?.iconUrl && !iconChanged()">
+              <img [src]="getUrl(editing()!.iconUrl!)" alt="icon actuel">
+              <span class="tag">actuel</span>
+            </div>
+
+            <!-- New icon -->
+            <div class="preview icon" *ngIf="iconChanged() || iconPreview()">
+              <img [src]="iconPreview()!" alt="icon nouveau">
+              <span class="tag">nouveau</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
+          <button class="btn primary" type="submit" [disabled]="!iconFile">Remplacer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

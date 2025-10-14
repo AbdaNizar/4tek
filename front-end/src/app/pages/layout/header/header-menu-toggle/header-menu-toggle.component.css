@@ -1,0 +1,14 @@
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.menu-toggle:hover { color: var(--accent); }
+@media (max-width: 768px) {
+  .menu-toggle { display: inline-flex; }
+}

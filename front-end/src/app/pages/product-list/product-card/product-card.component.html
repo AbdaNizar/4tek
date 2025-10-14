@@ -1,0 +1,60 @@
+<article class="card" [class.list]="view === 'list'">
+  <!-- IMAGE / THUMB -->
+  <a class="thumb" [routerLink]="['/product', product.slug]" >
+    <img
+      [src]="getUrl(product.imageUrl) || 'assets/images/placeholder.jpg'"
+      [alt]="product.name"
+      loading="lazy"
+    />
+    <span *ngIf="!product.stock || product.stock <= 0" class="badge oos">Rupture</span>
+
+    <!-- logo marque si peuplée -->
+    <div class="brand-mark" *ngIf="product.brands?.iconUrl">
+      <img [src]="getUrl(product.brands?.iconUrl)" alt="brand" />
+    </div>
+  </a>
+
+  <!-- INFO -->
+  <div class="info">
+    <div class="top">
+      <h3 class="title">
+        <a [routerLink]="['/product', product.slug]">{{ product.name }}</a>
+      </h3>
+      <span class="stock" [class.in]="product.stock > 0" [class.out]="!product.stock || product.stock <= 0">
+        {{ product.stock > 0 ? 'En stock' : 'Rupture' }}
+      </span>
+    </div>
+
+    <div class="meta">
+      <span class="brand" *ngIf="product.brands?.name">{{ product.brands?.name }}</span>
+      <span class="sku" *ngIf="product.sku">SKU: {{ product.sku }}</span>
+    </div>
+
+    <!-- specs: on affiche max 3 paires clé:valeur -->
+    <div class="chips" *ngIf="product?.specs">
+      <ng-container *ngFor="let s of (product.specs | keyvalue) | slice:0:3">
+        <span class="chip">{{ s.key }}: {{ s.value }}</span>
+      </ng-container>
+    </div>
+
+    <!-- tags -->
+    <div class="tags" *ngIf="product.tags?.length">
+      <span class="tag" *ngFor="let t of product.tags">{{ t }}</span>
+    </div>
+
+    <!-- description courte -->
+    <p class="desc" *ngIf="product.description">{{ product.description }}</p>
+
+    <!-- bas de carte -->
+    <div class="bottom">
+      <div class="price-wrap">
+        <span class="price">{{ product.price | currency:(product.currency || 'TND') }}</span>
+        <span class="old" *ngIf="product.oldPrice">{{ product.oldPrice | currency:(product.currency || 'TND') }}</span>
+      </div>
+      <div class="actions">
+        <a class="btn sm ghost" [routerLink]="['/product', product.slug]">Voir</a>
+        <button class="btn sm primary" type="button">Ajouter</button>
+      </div>
+    </div>
+  </div>
+</article>

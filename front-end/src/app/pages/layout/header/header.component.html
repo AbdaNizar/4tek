@@ -1,0 +1,23 @@
+<app-header-topbar></app-header-topbar>
+
+<header class="header">
+  <app-header-brand></app-header-brand>
+
+  <app-header-search (submitSearch)="onSearch($event)"></app-header-search>
+
+
+  <app-header-user></app-header-user>
+  <div class="header-right">
+
+    <app-header-cart></app-header-cart>
+    <app-header-menu-toggle (toggle)="toggleMenu()"></app-header-menu-toggle>
+  </div>
+</header>
+
+
+<app-header-nav-desktop></app-header-nav-desktop>
+
+<app-header-nav-mobile
+  [open]="open()"
+  (closed)="closeMenu()">
+</app-header-nav-mobile>

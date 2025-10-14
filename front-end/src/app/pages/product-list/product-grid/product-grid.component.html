@@ -1,0 +1,6 @@
+<div *ngIf="loading" class="loading">Chargement…</div>
+<div *ngIf="!loading && products.length === 0" class="empty">Aucun produit trouvé.</div>
+
+<div *ngIf="!loading && products.length" [class.grid]="view==='grid'" [class.list]="view==='list'">
+  <app-product-card *ngFor="let p of products" [product]="p" [view]="view"></app-product-card>
+</div>

@@ -1,0 +1,82 @@
+<nav class="subnav" aria-label="Catégories">
+  <div class="pill">
+
+    <!-- Bouton Accueil -->
+    <a class="tab-home" routerLink="/">
+      <span class="ico">
+        <img src="assets/png/home-3d.png" alt="Accueil" />
+      </span>
+      ACCUEIL
+    </a>
+
+    <!-- Bloc catégories -->
+    <div class="menu-host">
+      <ng-container *ngFor="let c of categories()">
+        <div class="cat-item"
+             (mouseenter)="onEnterCat(c)"
+             (focusin)="onEnterCat(c)"
+             (mouseleave)="activeCatId.set(null); activeSubId.set(null)">
+
+          <!-- Onglet catégorie -->
+          <a class="tab"
+             [class.active]="activeCatId()===c._id"
+             [routerLink]="['/categories', c._id]">
+            <span class="ico">
+              <img [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'" [alt]="c.name" />
+            </span>
+            <span class="lbl">{{ c.name }}</span>
+            <svg class="chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </a>
+
+          <!-- Panel sous-catégories / produits -->
+          <div class="panel" *ngIf="activeCatId()===c._id">
+            <!-- Classe dynamique pour la grille -->
+            <div class="panel-inner" [class.has-right]="prodsOf(activeSubId()!).length > 0">
+
+              <!-- Colonne gauche - TOUJOURS visible -->
+              <aside class="col left">
+                <div class="category-header">
+                  <div class="category-subtitle">Tous les sous catégorie {{ c.name.toLowerCase() }}</div>
+                </div>
+                <ul class="submenu">
+                  <li *ngFor="let s of subsOf(c._id)">
+                    <button class="submenu-item"
+                            (mouseenter)="onEnterSub(s)"
+                            (focus)="onEnterSub(s)"
+                            [class.current]="activeSubId()===s._id"
+                            type="button">
+                      {{ s.name }} <span class="arrow">›</span>
+                    </button>
+                  </li>
+                </ul>
+              </aside>
+
+              <!-- Colonne droite - SEULEMENT quand une sous-catégorie est sélectionnée -->
+              <section class="col right" *ngIf="activeSubId()">
+
+                <!-- Produits de la sous-catégorie sélectionnée -->
+                <div class="subcategory-section" *ngIf="prodsOf(activeSubId()!).length > 0">
+                  <h3 class="subcategory-title">{{ getSubName(activeSubId()!) }}</h3>
+                  <ul class="links">
+                    <li *ngFor="let p of prodsOf(activeSubId()!).slice(0, 6)">
+                      <a [routerLink]="['/produits', p._id]">{{ p.name }}</a>
+                    </li>
+                    <li class="all">
+                      <a [routerLink]="['/categories', activeCatId(), 'sub', activeSubId()]">
+                        Tous les articles →
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </section>
+
+            </div>
+          </div>
+
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</nav>

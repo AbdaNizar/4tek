@@ -1,0 +1,30 @@
+/* src/app/admin/products/admin-product-add.component.css */
+.card{
+  max-width: 900px; margin: 24px auto; padding: 16px;
+  background: rgba(18,24,38,.7);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px; backdrop-filter: blur(10px);
+}
+h1{ margin:0 0 12px; }
+.grid{
+  display:grid; gap:12px;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+label{ display:grid; gap:6px; }
+label.row{ align-items:center; grid-auto-flow:column; grid-auto-columns:max-content; gap:10px; }
+.col-span-2{ grid-column: span 2; }
+input, textarea{
+  padding:10px 12px; border-radius:10px;
+  border:1px solid rgba(255,255,255,.12);
+  background:#0e1525; color:#e5e7eb;
+}
+.btn{
+  margin-top:12px; padding:10px 16px; border:none; border-radius:10px;
+  background:#22c55e; color:#0b0f1a; font-weight:800; cursor:pointer;
+}
+.ok{ color:#22c55e; margin-top:8px; }
+.err{ color:#f87171; margin-top:8px; }
+@media (max-width: 720px){
+  .grid{ grid-template-columns: 1fr; }
+  .col-span-2{ grid-column: auto; }
+}

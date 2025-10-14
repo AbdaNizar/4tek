@@ -1,0 +1,41 @@
+<div class="controls">
+  <!-- Vue (grid / list) -->
+
+  <div class="col-4">
+    <div class="view">
+      <span>Vue:</span>
+      <button [class.active]="view === 'grid'" (click)="viewChange.emit('grid')" aria-label="Vue grille">▦</button>
+      <button [class.active]="view === 'list'" (click)="viewChange.emit('list')" aria-label="Vue liste">▤</button>
+
+
+    </div>
+  </div>
+
+<!--  <div class="col-4">-->
+<!--    <div class="featured">-->
+<!--      <span>Notre Sélection</span>-->
+<!--      <label class="switch">-->
+<!--        <input type="checkbox"-->
+<!--               [ngModel]="featuredOnly"-->
+<!--               (ngModelChange)="featuredChange.emit($event)" />-->
+<!--        <span class="slider"></span>-->
+<!--      </label>-->
+
+<!--    </div>-->
+<!--  </div>-->
+  <!-- Sélection produits en vedette -->
+
+
+  <!-- Tri -->
+  <div class="col-4">
+
+    <div class="sort">
+      <label >Trier par:</label>
+      <app-product-sort-dropdown
+        [sortBy]="sortBy"
+        (sortChange)="sortChange.emit($event)">
+      </app-product-sort-dropdown>
+    </div>
+  </div>
+</div>
+

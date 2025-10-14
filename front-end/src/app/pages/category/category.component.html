@@ -1,0 +1,104 @@
+<section class="contact">
+  <header class="contact-head">
+    <ng-container *ngIf="!selectedCatId(); else subHeader">
+      <h2>
+        <a routerLink="/" class="link" aria-label="Retour à l'accueil">←</a>
+        <i class="icon-folder"></i> Catégories
+      </h2>
+      <p class="muted" *ngIf="!loading()">Explore nos rubriques et collections</p>
+    </ng-container>
+
+    <ng-template #subHeader>
+      <h2>
+        <a routerLink="/categories" class="link" aria-label="Retour aux catégories">←</a>
+        <i class="icon-folder"></i> {{ cat()?.name || 'Catégorie' }}
+      </h2>
+    </ng-template>
+  </header>
+
+  <div class="container">
+    <div class="grid" *ngIf="loading()">
+      <article class="card skel" *ngFor="let x of [1,2,3,4,5,6]">
+        <div class="media skel-box"></div>
+        <div class="pad">
+          <div class="title skel-line"></div>
+          <div class="desc skel-line short"></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="grid" *ngIf="!loading() && !selectedCatId() && list().length; else emptyWhenNoCats">
+      <ng-container *ngFor="let c of list()">
+        <div class="card-wrapper">
+
+          <a class="card"
+             [routerLink]="['/categories', c._id]"
+             aria-label="Ouvrir la catégorie">
+
+            <div class="media">
+              <img [src]="getUrl(c.imageUrl) || getUrl(c.banners?.[0]) || getUrl(c.iconUrl) || '/assets/placeholder.jpg'"
+                   alt="{{ c.name }}" />
+            </div>
+
+            <div class="pad">
+              <h3 class="title"><i class="icon-tag"></i> {{ c.name }}</h3>
+
+              <p class="desc-content" [class.expanded]="c.isExpanded" [title]="c.description || ''">
+                {{ c.description || '—' }}
+              </p>
+
+              <span class="slug"><i class="icon-link-2"></i> /{{ c.slug }}</span>
+
+              <div class="icon" *ngIf="c.iconUrl">
+                <img [src]="getUrl(c.iconUrl)" [alt]="'Icône ' + c.name" />
+              </div>
+            </div>
+          </a>
+
+          <button *ngIf="(c.description||'').length > 90"
+                  class="read-more-btn"
+                  (click)="c.isExpanded = !c.isExpanded"
+                  type="button">
+            {{ c.isExpanded ? 'Masquer la suite ↑' : 'Afficher la suite ↓' }}
+          </button>
+
+        </div>
+      </ng-container>
+    </div>
+    <ng-template #emptyWhenNoCats>
+      <p class="empty muted" *ngIf="!selectedCatId()">Aucune catégorie disponible.</p>
+    </ng-template>
+
+    <div class="grid" *ngIf="!loading() && selectedCatId()">
+      <ng-container *ngIf="subs().length; else noSubs">
+        <a class="card"
+           *ngFor="let s of subs()"
+           [routerLink]="['/categories/sub-categories/', s._id]"
+           aria-label="Ouvrir la sous-catégorie">
+
+          <div class="media">
+            <img [src]="getUrl(s.imageUrl) || getUrl(s.banners?.[0]) || getUrl(s.iconUrl) || '/assets/placeholder.jpg'"
+                 alt="{{ s.name }}" />
+          </div>
+
+          <div class="pad">
+            <h3 class="title"><i class="icon-tag"></i> {{ s.name }}</h3>
+
+            <p class="desc-content" [title]="s.description || ''">
+              {{ s.description || '—' | slice:0:90 }}<ng-container *ngIf="(s.description||'').length>90">…</ng-container>
+            </p>
+
+            <span class="slug"><i class="icon-link-2"></i> /{{ s.slug }}</span>
+            <div class="icon" *ngIf="s.iconUrl">
+              <img [src]="getUrl(s.iconUrl)" [alt]="'Icône ' + s.name" />
+            </div>
+          </div>
+        </a>
+      </ng-container>
+
+      <ng-template #noSubs>
+        <p class="empty muted">Aucune sous-catégorie dans « {{ cat()?.name }} ».</p>
+      </ng-template>
+    </div>
+  </div>
+</section>

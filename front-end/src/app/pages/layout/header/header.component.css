@@ -1,0 +1,156 @@
+/* Wrapper sticky + glass */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: rgba(18, 24, 38, 0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 18px;
+  border-radius: 30px
+}
+/* ----- Mobile behavior ----- */
+@media (max-width: 768px){
+  .header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:nowrap;     /* keep in one row */
+    padding:10px 12px;
+  }
+
+  /* Hide desktop nav */
+  app-header-nav-desktop{ display:none !important; }
+
+  /* Brand stays left */
+  app-header-brand{ flex:0 0 auto; }
+
+  /* Icons cluster right */
+  .header-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:auto;
+  }
+
+  /* User icon + cart + burger all inline */
+  app-header-user,
+  app-header-cart,
+  app-header-menu-toggle{
+    flex:0 0 auto;
+  }
+
+  /* Search becomes icon only */
+
+
+  /* Collapse input, show only button */
+  .searchbar.desktop{ display:none; }
+  .searchbar.mobile{
+    display:flex; align-items:center; justify-content:center;
+  }
+  .searchbar.mobile input{ display:none; }
+
+  /* When active, input shows */
+  .searchbar.mobile.open input{
+    display:block;
+    position:absolute;
+    top:60px; left:10px; right:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.15);
+    background:#0e1525;
+    z-index:1000;
+  }
+}
+/* optionnel si tu vois encore un conflit de stacking */
+.no-stack{
+  position: relative;
+  z-index: 1;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+/* Wrapper sticky + glass */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  background: rgba(18, 24, 38, 0.6);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  border-radius: 30px
+}
+/* ----- Mobile behavior ----- */
+@media (max-width: 768px){
+  .header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0px;
+    flex-wrap: nowrap;
+    padding: 7px 5px;
+  }
+
+  /* Hide desktop nav */
+  app-header-nav-desktop{ display:none !important; }
+
+  /* Brand stays left */
+  app-header-brand{ flex:0 0 auto; }
+
+  /* Icons cluster right */
+  .header-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-left:auto;
+  }
+
+  /* User icon + cart + burger all inline */
+  app-header-user,
+  app-header-cart,
+  app-header-menu-toggle{
+    flex:0 0 auto;
+  }
+
+  /* Search becomes icon only */
+
+
+  /* Collapse input, show only button */
+  .searchbar.desktop{ display:none; }
+  .searchbar.mobile{
+    display:flex; align-items:center; justify-content:center;
+  }
+  .searchbar.mobile input{ display:none; }
+
+  /* When active, input shows */
+  .searchbar.mobile.open input{
+    display:block;
+    position:absolute;
+    top:60px; left:10px; right:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.15);
+    background:#0e1525;
+    z-index:1000;
+  }
+}
+/* optionnel si tu vois encore un conflit de stacking */
+.no-stack{
+  position: relative;
+  z-index: 1;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}

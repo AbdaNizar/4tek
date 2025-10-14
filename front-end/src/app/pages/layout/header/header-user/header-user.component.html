@@ -1,0 +1,203 @@
+<!-- Bouton utilisateur (si NON connecté) -->
+<button
+  *ngIf="!isLoggedIn(); else logged"
+  class="user-btn"
+  (click)="toggleModal()"
+  aria-label="Se connecter / Créer un compte">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+  </svg>
+</button>
+
+<!-- Bouton + menu (si connecté) -->
+<ng-template #logged>
+  <div class="user-chip"
+       (click)="toggleUserMenu()"
+       tabindex="0"
+       aria-haspopup="menu"
+       [attr.aria-expanded]="userMenuOpen()">
+    <ng-container *ngIf="avatarUrlSafe() && hasAvatar(); else letter">
+      <img
+        [src]="avatarUrlSafe()!"
+        alt="avatar"
+        class="avatar-img"
+        (error)="onAvatarError()"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+      />
+    </ng-container>
+    <ng-template #letter>
+      <div class="avatar">{{ (shortName() | slice:0:1) | uppercase }}</div>
+    </ng-template>
+    <span class="name">{{ shortName() }}</span>
+    <svg class="chev" width="16" height="16" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+    </svg>
+  </div>
+
+  <div class="user-menu" *ngIf="userMenuOpen()">
+
+    <a routerLink="/commandes" (click)="closeUserMenu()">Mes commandes</a>
+    <button type="button" (click)="startForgot(auth.user()?.email || undefined)">Changer mon mot de passe</button>
+    <button type="button" (click)="logout()">Se déconnecter</button>
+  </div>
+</ng-template>
+
+<!-- Backdrop -->
+<div class="modal-backdrop" *ngIf="open()" (click)="toggleModal()"></div>
+
+<!-- Modal -->
+<div
+  class="modal"
+  *ngIf="open()"
+  [class.is-register]="mode()==='register'"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="authTitle">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3 id="authTitle">
+        {{ mode() === 'login' ? 'Connexion'
+        : mode() === 'register' ? 'Créer un compte'
+        : mode() === 'verify-email' ? 'Confirme adresse email'
+          : mode() === 'forgot' ? 'Mot de passe oublié'
+            : 'Nouveau mot de passe' }}
+      </h3>
+      <button class="close" (click)="toggleModal()" aria-label="Fermer">×</button>
+    </div>
+
+    <form class="modal-body" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="fields">
+
+        <!-- RESET -->
+        <ng-container *ngIf="mode()==='reset'">
+          <div class="field">
+            <label>Nouveau mot de passe</label>
+            <input #firstField type="password" formControlName="password" placeholder="••••••••" required minlength="6" />
+          </div>
+          <div class="field">
+            <label>Confirmer le mot de passe</label>
+            <input type="password" formControlName="confirm" placeholder="••••••••" required />
+          </div>
+        </ng-container>
+
+        <!-- LOGIN -->
+        <ng-container *ngIf="mode()==='login'">
+          <div class="field">
+            <label>Email</label>
+            <input #firstField type="email" formControlName="email" placeholder="vous@exemple.tn" required />
+          </div>
+          <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" formControlName="password" placeholder="••••••••" required minlength="6" />
+            <button class="link small" type="button" (click)="startForgot(form.value.email || '')">
+              Mot de passe oublié ?
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- REGISTER -->
+        <ng-container *ngIf="mode()==='register'">
+          <div class="row-2">
+            <div class="field">
+              <label>Nom et Prénom</label>
+              <input #firstField type="text" formControlName="name" placeholder="Nom et Prénom" required />
+            </div>
+            <div class="field">
+              <label>Téléphone</label>
+              <input type="tel" formControlName="phone" placeholder="+216 ..." />
+            </div>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="vous@exemple.tn" required />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Mot de passe</label>
+              <input type="password" formControlName="password" placeholder="••••••••" required minlength="6" />
+            </div>
+            <div class="field">
+              <label>Confirmer le mot de passe</label>
+              <input type="password" formControlName="confirm" placeholder="••••••••" required />
+            </div>
+          </div>
+          <div class="field">
+            <label>Adresse</label>
+            <input type="text" formControlName="address" placeholder="Rue, ville..." />
+          </div>
+        </ng-container>
+
+        <!-- FORGOT -->
+        <ng-container *ngIf="mode()==='forgot'">
+          <p class="muted">Saisis ton email, tu recevras un lien de réinitialisation.</p>
+          <div class="field">
+            <label>Email</label>
+            <input #firstField type="email" formControlName="email" placeholder="vous@exemple.tn" required />
+          </div>
+        </ng-container>
+        <!-- VERIFY-EMAIL -->
+        <ng-container *ngIf="mode()==='verify-email'">
+          <p class="muted">
+            Ton compte n’est pas encore activé.<br>
+            Entre ton email pour recevoir un nouveau lien de vérification.
+          </p>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="vous@exemple.tn" required />
+          </div>
+        </ng-container>
+
+
+        <!-- Messages -->
+        <p class="notice-ok" *ngIf="okMsg()">{{ okMsg() }}</p>
+        <p class="error" *ngIf="err()">{{ err() }}</p>
+
+        <!-- CTA -->
+        <button class="btn btn-primary w-full" type="submit" [disabled]="loading()">
+          {{
+            loading() ? 'Veuillez patienter…' :
+              mode()==='login'    ? 'Se connecter' :
+                mode()==='register' ? 'Créer le compte' :
+                  mode()==='verify-email' ? 'Envoyer le lien' :
+                  mode()==='forgot'   ? 'Envoyer le lien' :
+                    'Changer le mot de passe'
+
+          }}
+        </button>
+
+        <!-- Switch -->
+        <div class="switch" *ngIf="mode()!=='forgot' && mode()!=='reset' && mode()!=='verify-email'">
+          <ng-container *ngIf="mode() === 'login'; else regLink">
+            Pas de compte ?
+            <button class="link" type="button" (click)="switchMode('register')">Créer un compte</button>
+          </ng-container>
+          <ng-template #regLink>
+            Déjà inscrit ?
+            <button class="link" type="button" (click)="switchMode('login')">Se connecter</button>
+          </ng-template>
+        </div>
+
+        <div class="switch" *ngIf="mode()==='forgot' && !auth.user()" >
+          <button class="link" type="button" (click)="switchMode('login')">Retour à la connexion</button>
+        </div>
+      </div>
+
+      <!-- Social (hors reset/forgot si tu veux) -->
+      <div class="social" *ngIf="mode()!=='reset' && mode()!== 'verify-email' && !auth.user()  ">
+        <button class="btn social-btn google" type="button" (click)="loginWithGoogle()">
+          <span class="icon">
+            <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.3 29.2 35 24 35c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.2 0 6.2 1.2 8.5 3.1l5.7-5.7C34.9 6.1 29.7 4 24 4 16 4 9.1 8.1 6.3 14.7z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.4 16 18.8 13 24 13c3.2 0 6.2 1.2 8.5 3.1l5.7-5.7C34.9 6.1 29.7 4 24 4 16 4 9.1 8.1 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 46c5.1 0 9.8-1.9 13.4-5l-6.2-5.1C29.1 37.3 26.7 38 24 38c-5.1 0-9.4-3.3-10.9-7.8l-6.7 5.1C9.2 41 16 46 24 46z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.3 3.8-4.6 6.8-8.6 7.6l6.2 5.1C36.1 39.1 40 33.2 40 26c0-1.6-.2-3.1-.4-4.5z"/>
+            </svg>
+          </span>
+          <span>Google</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

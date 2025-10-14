@@ -1,0 +1,81 @@
+<!-- Bouton panier (toujours visible) -->
+<button class="cart-btn" (click)="toggleCart()" aria-label="Voir le panier">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M20 22a1 1 0 1 0 .001-2.001A1 1 0 0 0 20 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M1 1h3l3.6 12.59a2 2 0 0 0 2 1.41h7.92a2 2 0 0 0 1.98-1.64l1.2-6.36H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span *ngIf="totalCount()>0" class="cart-badge">{{ totalCount() }}</span>
+</button>
+
+<!-- Dropdown -->
+<!-- Cart dropdown + backdrop -->
+<div class="cart-backdrop" *ngIf="cartOpen()" (click)="cartOpen.set(false)"></div>
+
+<div class="cart-dropdown" *ngIf="cartOpen()">
+  <div class="cart-box" (click)="$event.stopPropagation()">
+    <!-- Close (X) -->
+    <button class="cart-x" (click)="cartOpen.set(false)" aria-label="Fermer">×</button>
+
+    <!-- Top ribbon -->
+    <div class="cart-top">
+      <span class="count">
+        {{ totalCount() }} {{ totalCount() > 1 ? 'Articles' : 'Article' }}
+      </span>
+      <span class="subtotal">
+        Sous-total :
+        <strong>{{ subtotal() | currency:'TND':'symbol':'1.0-3' }}</strong>
+      </span>
+    </div>
+
+    <button class="btn-checkout" (click)="checkout()">PASSER À LA CAISSE</button>
+
+    <!-- List -->
+    <div class="cart-list" *ngIf="cart.items().length; else empty">
+      <div class="line"><hr></div>
+
+      <div class="cart-row" *ngFor="let p of cart.items(); let i = index">
+        <img [src]="p.imageUrl || 'assets/images/placeholder.jpg'" [alt]="p.name" class="thumb"/>
+
+        <div class="meta">
+          <p class="title">{{ p.name }}</p>
+          <div class="price">{{ p.price | currency:'TND' }}</div>
+
+          <div class="controls">
+            <label>Qté:</label>
+            <div class="qty">
+              <button type="button" (click)="decQty(i)" aria-label="Diminuer">−</button>
+              <input type="number" min="1" [(ngModel)]="cart.items()[i].qty" (change)="onQtyChange(i)"/>
+              <button type="button" (click)="incQty(i)" aria-label="Augmenter">＋</button>
+            </div>
+
+            <div class="actions">
+              <button class="icon" (click)="edit(i)" aria-label="Modifier">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25Z" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M14.06 4.94l3.75 3.75" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </button>
+              <button class="icon" (click)="remove(i)" aria-label="Supprimer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 6h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="line"><hr></div>
+    </div>
+
+    <ng-template #empty>
+      <p class="muted empty">Aucun produit sélectionné</p>
+    </ng-template>
+
+    <a class="cart-link" routerLink="/panier" (click)="cartOpen.set(false)">Afficher et modifier le panier</a>
+  </div>
+</div>
+

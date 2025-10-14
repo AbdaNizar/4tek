@@ -1,0 +1,19 @@
+.loading, .empty {
+  color: var(--muted);
+  padding: 24px 0;
+  text-align: center;
+  font-size: 15px;
+  font-style: italic
+}
+
+.grid {
+  display: grid;
+  grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px
+}
+
+.list {
+  display: grid;
+  grid-template-columns:1fr;
+  gap: 16px
+}

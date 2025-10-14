@@ -1,0 +1,7 @@
+<div class="container">
+  <app-header *ngIf="!hideShell()"></app-header>
+  <app-subnav-mega *ngIf="!hideShell()"></app-subnav-mega>
+  <router-outlet></router-outlet>
+  <app-toasts></app-toasts>
+  <app-footer *ngIf="!hideShell()"></app-footer>
+</div>

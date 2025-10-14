@@ -1,0 +1,58 @@
+<!--<nav class="subnav-lite" aria-label="Navigation catégories">-->
+<!--  <div class="tabs">-->
+<!--    <a-->
+<!--      class="tab"-->
+<!--      *ngFor="let c of categories()"-->
+<!--      (mouseenter)="onEnterCat(c)"-->
+<!--      (focus)="onEnterCat(c)"-->
+<!--      [class.active]="activeCatId()===c._id"-->
+<!--      [routerLink]="['/categories', c._id]"-->
+<!--    >-->
+<!--      <span class="ico">-->
+<!--        <img [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'" [alt]="c.name" />-->
+<!--      </span>-->
+<!--      <span class="lbl">{{ c.name }}</span>-->
+<!--      <svg class="chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">-->
+<!--        <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>-->
+<!--      </svg>-->
+<!--    </a>-->
+<!--  </div>-->
+
+<!--  &lt;!&ndash; panneau 2 colonnes &ndash;&gt;-->
+<!--  <div class="panel" *ngIf="activeCatId()" (mouseleave)="activeSubId.set(null)">-->
+<!--    <div class="panel-inner">-->
+<!--      &lt;!&ndash; Colonne gauche : sous-catégories &ndash;&gt;-->
+<!--      <aside class="col left">-->
+<!--        <ul class="submenu">-->
+<!--          <li *ngFor="let s of subsOf(activeCatId()!)">-->
+<!--            <button-->
+<!--              class="submenu-item"-->
+<!--              (mouseenter)="onEnterSub(s)"-->
+<!--              (focus)="onEnterSub(s)"-->
+<!--              [class.current]="activeSubId()===s._id"-->
+<!--              type="button">-->
+<!--              {{ s.name }}-->
+<!--              <span class="arrow">›</span>-->
+<!--            </button>-->
+<!--          </li>-->
+<!--        </ul>-->
+<!--      </aside>-->
+
+<!--      <section class="col right" *ngIf="activeSubId()">-->
+<!--        <ul class="links">-->
+<!--          <li *ngFor="let p of prodsOf(activeSubId()!)">-->
+<!--            <a [routerLink]="['/produits', p._id]">-->
+<!--              {{ p.name }}-->
+<!--            </a>-->
+<!--          </li>-->
+<!--          &lt;!&ndash; Option: lien “Tous” &ndash;&gt;-->
+<!--          <li class="all">-->
+<!--            <a [routerLink]="['/categories', activeCatId(), 'sub', activeSubId()]">-->
+<!--              Tous les articles →-->
+<!--            </a>-->
+<!--          </li>-->
+<!--        </ul>-->
+<!--      </section>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</nav>-->

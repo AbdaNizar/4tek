@@ -1,0 +1,270 @@
+<!-- src/app/pages/admin/admin-categories/admin-categories.component.html -->
+<section class="admin-cats">
+  <header class="head">
+    <h2>Catégories</h2>
+    <div class="actions">
+      <input
+        class="search"
+        type="search"
+        placeholder="Rechercher nom / slug / description…"
+        [ngModel]="q()"
+        (ngModelChange)="q.set($event)" />
+
+      <select class="select" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="all">Toutes</option>
+        <option value="active">Actives</option>
+        <option value="inactive">Inactives</option>
+      </select>
+
+      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="grid" *ngIf="!loading() && list().length; else empty">
+    <article class="card" *ngFor="let c of list()" (click)="goDetail(c)" role="button" tabindex="0">
+      <div class="media">
+        <img
+          [src]="getUrl(c.imageUrl) || getUrl(c.banners?.[0]) || getUrl(c.bannerUrl) || getUrl(c.iconUrl) || '/assets/placeholder.jpg'"
+          alt="{{c.name}}" />
+      </div>
+
+      <div class="info">
+        <div class="top">
+          <h3>{{ c.name }}</h3>
+          <span class="badge" [class.on]="c.isActive" [class.off]="!c.isActive">
+            {{ c.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <p class="muted">{{ c.description || '—' }}</p>
+        <div class="meta">
+          <span class="slug">/{{ c.slug }}</span>
+        </div>
+
+        <div class="row" (click)="$event.stopPropagation()">
+          <button class="btn" (click)="openEdit(c)">Modifier</button>
+          <button class="btn ghost" (click)="openReplace(c)">Remplacer fichiers</button>
+          <button class="btn warn" (click)="toggle(c)">{{ c.isActive ? 'Désactiver' : 'Activer' }}</button>
+          <button class="btn danger" (click)="remove(c)">Supprimer</button>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <ng-template #empty>
+    <p class="empty muted">Aucune catégorie.</p>
+  </ng-template>
+</section>
+
+<!-- MODAL CRÉATION/ÉDITION (inchangé pour ajout/édition simple) -->
+<div class="backdrop" *ngIf="modalOpen()" (click)="closeModal()"></div>
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true" (click)="closeModal()">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>{{ editing() ? 'Modifier la catégorie' : 'Ajouter une catégorie' }}</h3>
+      <button class="x" type="button" (click)="closeModal()">×</button>
+    </div>
+    <div class="panel-body">
+      <form class="form" [formGroup]="f" (ngSubmit)="save()">
+        <div class="row-2">
+          <div class="field">
+            <label>Nom *</label>
+            <input formControlName="name" placeholder="Ex: Laptops"/>
+          </div>
+          <div class="field">
+            <label>Slug *</label>
+            <input formControlName="slug" placeholder="ex: laptops"/>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" placeholder="Description courte…"></textarea>
+        </div>
+
+        <!-- Uploads “ajout simple” -->
+        <div  class="uploads" *ngIf="!this.editing()">
+          <div class="u-block">
+            <div class="u-head">
+              <label>Icône</label>
+              <div class="u-actions" *ngIf="iconPreview()">
+                <button type="button" class="btn ghost sm" (click)="clearIcon()">Retirer</button>
+              </div>
+            </div>
+            <div class="u-body">
+              <div class="u-head">
+                <div class="u-actions" *ngIf="!iconPreview()">
+                  <label class="btn ghost sm">
+                    Ajouter
+                    <input type="file" accept="image/*" (change)="onPickIcon($event)" hidden/>
+                  </label>
+                </div>
+              </div>
+              <div class="preview icon" *ngIf="iconPreview()">
+                <img [src]="iconPreview()!" alt="icon preview"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="u-block">
+            <div class="u-head">
+              <label>Image (couverture)</label>
+              <div class="u-actions" *ngIf="imagePreview()">
+                <button type="button" class="btn ghost sm" (click)="clearImage()">Retirer</button>
+              </div>
+            </div>
+            <div class="u-body">
+              <div class="u-head">
+                <div class="u-actions" *ngIf="!imagePreview()">
+                  <label class="btn ghost sm">
+                    Ajouter
+                    <input type="file" accept="image/*" (change)="onPickImage($event)" hidden/>
+                  </label>
+                </div>
+              </div>
+              <div class="preview" *ngIf="imagePreview()">
+                <img [src]="imagePreview()!" alt="image preview"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="u-block">
+            <div class="u-head">
+              <label>Bannières (multiples)</label>
+              <div class="u-actions">
+                <label class="btn ghost sm">
+                  Ajouter
+                  <input type="file" accept="image/*" multiple (change)="onPickBanners($event)" hidden/>
+                </label>
+              </div>
+            </div>
+
+            <div class="thumbs" *ngIf="existingBanners().length">
+              <div class="thumb" *ngFor="let url of existingBanners(); let i = index">
+                <img [src]="getUrl(url)" alt="banner"/>
+                <button type="button" class="t-remove" (click)="removeExistingBannerAt(i)">×</button>
+                <span class="tag">existant</span>
+              </div>
+            </div>
+
+            <div class="thumbs" *ngIf="bannerPreviews().length">
+              <div class="thumb" *ngFor="let p of bannerPreviews(); let i = index">
+                <img [src]="p" alt="banner preview"/>
+                <button type="button" class="t-remove" (click)="removeBannerAt(i)">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field switch">
+          <input id="active" type="checkbox" formControlName="isActive"/>
+          <label for="active">Catégorie active</label>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeModal()">Annuler</button>
+          <button class="btn primary" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- NOUVEAU MODAL “REMPLACER FICHIERS” -->
+<div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
+<div class="modal" *ngIf="replaceOpen()" role="dialog" aria-modal="true" (click)="closeReplace()">
+  <div class="panel" role="document" (click)="$event.stopPropagation()">
+    <div class="panel-head">
+      <h3>Remplacer les fichiers</h3>
+      <button class="x" type="button" (click)="closeReplace()">×</button>
+    </div>
+
+    <div class="panel-body">
+      <form class="form" (ngSubmit)="saveReplace()">
+        <!-- Icône -->
+        <div class="u-block">
+          <div class="u-head">
+            <label>Icône (remplacement total)</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichier
+                <input type="file" accept="image/*" (change)="onPickIconReplace($event)" hidden>
+              </label>
+              <button *ngIf="iconChanged" type="button" class="btn warn sm" (click)="resetIconSelection()">Annuler</button>
+            </div>
+          </div>
+          <div class="u-body">
+            <div class="preview icon" *ngIf="editing()?.iconUrl && !iconChanged">
+              <img [src]="getUrl(editing()!.iconUrl!)" alt="icon old">
+              <span class="tag">actuel</span>
+            </div>
+            <div class="preview icon" *ngIf="iconChanged && iconPreview()">
+              <img [src]="iconPreview()!" alt="icon new">
+              <span class="tag">nouveau</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image couverture -->
+        <div class="u-block">
+          <div class="u-head">
+            <label>Image de couverture (remplacement total)</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichier
+                <input type="file" accept="image/*" (change)="onPickImageReplace($event)" hidden>
+              </label>
+              <button *ngIf="imageChanged" type="button" class="btn warn sm" (click)="resetImageSelection()">Annuler</button>
+            </div>
+          </div>
+          <div class="u-body">
+            <div class="preview" *ngIf="editing()?.imageUrl && !imageChanged">
+              <img [src]="getUrl(editing()!.imageUrl!)" alt="image old">
+              <span class="tag">actuelle</span>
+            </div>
+            <div class="preview" *ngIf="imageChanged && imagePreview()">
+              <img [src]="imagePreview()!" alt="image new">
+              <span class="tag">nouvelle</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bannières -->
+        <div class="u-block">
+          <div class="u-head">
+            <label>Bannières (remplacement total)</label>
+            <div class="u-actions">
+              <label class="btn ghost sm">
+                Choisir fichiers
+                <input type="file" accept="image/*" multiple (change)="onPickBannersReplace($event)" hidden>
+              </label>
+              <button *ngIf="bannersChanged" type="button" class="btn warn sm" (click)="resetBannersSelection()">Annuler</button>
+            </div>
+          </div>
+
+          <div class="thumbs" *ngIf="editing()?.banners?.length && !bannersChanged">
+            <div class="thumb" *ngFor="let url of editing()!.banners">
+              <img [src]="getUrl(url)" alt="banner old">
+              <span class="tag">actuelle</span>
+            </div>
+          </div>
+
+          <div class="thumbs" *ngIf="bannersChanged && bannerPreviews().length">
+            <div class="thumb" *ngFor="let p of bannerPreviews(); let i = index">
+              <img [src]="p" alt="banner new">
+              <button type="button" class="t-remove" (click)="removeNewBannerAt(i)">×</button>
+              <span class="tag">nouvelle</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
+          <button class="btn primary" type="submit">Remplacer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

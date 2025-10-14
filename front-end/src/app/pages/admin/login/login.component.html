@@ -1,0 +1,15 @@
+<section class="login-card">
+  <h1>Admin — Connexion</h1>
+  <form [formGroup]="f" (ngSubmit)="submit()">
+    <label>Email
+      <input type="email" formControlName="email" />
+    </label>
+    <label>Mot de passe
+      <input type="password" formControlName="password" />
+    </label>
+    <button class="btn" [disabled]="loading() || f.invalid" type="submit">
+      {{ loading() ? 'Connexion...' : 'Se connecter' }}
+    </button>
+    <p *ngIf="error()" class="err">{{ error() }}</p>
+  </form>
+</section>

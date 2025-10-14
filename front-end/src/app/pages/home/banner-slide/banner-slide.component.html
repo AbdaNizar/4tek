@@ -1,0 +1,21 @@
+<div class="slide" [class.active]="active" [style.backgroundImage]="'url(' + slide.imageUrl + ')'">
+  <div class="overlay"></div>
+
+  <div class="content" [class.left]="slide.align==='left'"
+       [class.center]="slide.align==='center'"
+       [class.right]="slide.align==='right'">
+    <h2 *ngIf="slide.title">{{ slide.title }}</h2>
+    <p class="subtitle" *ngIf="slide.subtitle">{{ slide.subtitle }}</p>
+
+    <a *ngIf="slide.ctaLabel && slide.ctaLink && isExternal(slide.ctaLink)"
+       class="btn" [href]="slide.ctaLink" target="_blank" rel="noopener">
+      {{ slide.ctaLabel }}
+    </a>
+
+    <a *ngIf="slide.ctaLabel && slide.ctaLink && !isExternal(slide.ctaLink)"
+       class="btn" [routerLink]="slide.ctaLink">
+      {{ slide.ctaLabel }}
+    </a>
+
+  </div>
+</div>

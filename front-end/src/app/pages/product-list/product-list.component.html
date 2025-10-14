@@ -1,0 +1,33 @@
+<section class="listing">
+  <app-product-controls
+    [view]="view()"
+    [featuredOnly]="featuredOnly()"
+    [sortBy]="sortBy()"
+    (viewChange)="view.set($event)"
+    (featuredChange)="featuredOnly.set($event); applyFilters()"
+    (sortChange)="onSortChange($event)">
+  </app-product-controls>
+
+  <div class="layout">
+    <app-product-filters
+      [form]="f"
+      [minValue]="minValue()"
+      [maxValue]="maxValue()"
+      [options]="sliderOptions"
+      (minValueChange)="minValue.set($event)"
+      (maxValueChange)="maxValue.set($event)"
+      (filterChange)="applyFilters()"
+      (reset)="applyFilters()">
+    </app-product-filters>
+
+    <app-product-grid
+      [products]="products()"
+      [view]="view()"
+      [loading]="loading()">
+    </app-product-grid>
+  </div>
+
+  <ng-container *ngIf="!loading && (!products || products()?.length === 0)">
+    <p class="muted" style="padding:12px 0;">Aucun produit dans cette sous-catégorie.</p>
+  </ng-container>
+</section>

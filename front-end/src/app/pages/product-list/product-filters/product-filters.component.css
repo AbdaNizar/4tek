@@ -1,0 +1,306 @@
+.filters { display: grid; gap: 16px; }
+
+.filters-head{
+  display:flex; align-items:center; justify-content:space-between;
+}
+.link-reset{
+  background:none; border:none; color:var(--accent); cursor:pointer; font-weight:700;
+}
+.link-reset:hover{ text-decoration: underline; }
+
+.brands h4, .prices h4{ margin:0; font-weight:800; letter-spacing:.2px; }
+
+.field.inline input{
+  width:100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.brand-grid{
+  display:grid; gap:10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.brand-chip{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--text);
+  cursor:pointer;
+  transition: background .18s, border-color .18s, box-shadow .18s, transform .08s;
+  text-align:left;
+}
+.brand-chip:hover{
+  background: rgba(34,211,238,.06);
+  border-color: rgba(34,211,238,.15);
+  box-shadow: 0 0 0 3px rgba(34,211,238,.06) inset;
+}
+.brand-chip.active{
+  background: rgba(34,211,238,.08);
+  border-color: rgba(34,211,238,.22);
+}
+
+.brand-chip .logo{
+  width:34px; height:34px;
+  border-radius:10px; overflow:hidden;
+  background:#fff; border:1px solid rgba(0,0,0,.06);
+  display:grid; place-items:center;
+}
+.brand-chip .logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.brand-chip .name{ font-weight:700; }
+
+.price-row{
+  display:flex; justify-content:space-between; margin-top:6px;
+  font-size: var(--fs-2); color: var(--muted);
+}
+
+/* Mobile */
+@media (max-width: 680px){
+  .brand-grid{ grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+/* container */
+.filters { display: grid; gap: 16px; }
+
+/* head */
+.filters-head{ display:flex; align-items:center; justify-content:space-between; }
+.link-reset{ background:none; border:none; color:var(--accent); cursor:pointer; }
+
+/* Brands */
+.brands h4, .prices h4{ margin:0 0 8px; font-weight:800; letter-spacing:.2px; }
+
+.brand-grid{
+  display:grid; gap:10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.brand-chip{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 12px;
+  border-radius:12px;
+  background: rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);
+  color:var(--text);
+  cursor:pointer;
+  transition: background .18s, border-color .18s, transform .08s, box-shadow .18s;
+  text-align:left;
+}
+.brand-chip:hover{
+  background: rgba(34,211,238,.06);
+  border-color: rgba(34,211,238,.15);
+  box-shadow: 0 0 0 3px rgba(34,211,238,.06) inset;
+}
+.brand-chip.active{
+  background: rgba(34,211,238,.08);
+  border-color: rgba(34,211,238,.22);
+}
+
+.brand-chip .logo{
+  width:34px; height:34px; border-radius:10px; overflow:hidden;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.05);
+  display:grid; place-items:center;
+}
+.brand-chip .logo img{ width:100%; height:100%; object-fit:cover; display:block; }
+.brand-chip .name{ font-weight:700; }
+
+/* Prices */
+.price-row{ display:flex; justify-content:space-between; font-size:var(--fs-2); color:var(--muted); margin-top:6px; }
+
+/* Mobile */
+@media (max-width: 680px){
+  .brand-grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+/* ====== PANNEAU FILTRES ====== */
+.filters {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(18, 24, 38, .65);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: 0 10px 26px rgba(0,0,0,.25);
+  color: #e6eaf2;
+}
+
+.filters-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filters-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #e6eaf2, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.link-reset {
+  background: none;
+  border: none;
+  color: #9ddfee;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: .2s ease;
+}
+.link-reset:hover {
+  background: rgba(34,211,238,.12);
+}
+
+/* ====== BLOCS ====== */
+section.brands, section.prices {
+  display: grid;
+  gap: 10px;
+}
+
+section h4 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 800;
+  color: #e6eaf2;
+}
+
+/* ====== Champ texte optionnel ====== */
+.field.inline input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,.12);
+  background: #0e1525;
+  color: #e6eaf2;
+  outline: none;
+  transition: .2s ease;
+}
+.field.inline input:focus {
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34,211,238,.15), inset 0 0 0 1px rgba(255,255,255,.1);
+}
+
+/* ====== GRILLE DES MARQUES ====== */
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+/* Chip cliquable marque */
+.brand-chip {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 8px;
+  align-items: center;
+  justify-items: center;
+  padding: 12px 10px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255,255,255,.10);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+  color: #e6eaf2;
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+  user-select: none;
+}
+.brand-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.2);
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+}
+.brand-chip.active {
+  border-color: rgba(34,211,238,.6);
+  box-shadow:
+    0 0 0 3px rgba(34,211,238,.15),
+    0 8px 22px rgba(34,211,238,.15);
+  background:
+    radial-gradient(100% 100% at 0% 0%, rgba(34,211,238,.12), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+}
+
+/* Logo carré */
+.logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: #0e1525;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* conserve le logo sans le couper */
+  transition: transform .2s ease;
+}
+.brand-chip:hover .logo img { transform: scale(1.05); }
+
+/* Nom de la marque (ellipsis) */
+.name {
+  font-size: .82rem;
+  font-weight: 700;
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #cfd6e4;
+}
+
+/* Aucune marque */
+.muted {
+  color: #9aa3b2;
+  font-size: .9rem;
+}
+
+/* ====== PRIX (slider + bornes) ====== */
+ngx-slider {
+  --track: rgba(255,255,255,.18);
+  --range: #22d3ee;
+  --thumb: #22d3ee;
+  display: block;
+}
+ngx-slider .ngx-slider .ngx-slider-bar {
+  background: var(--track) !important;
+  height: 6px !important;
+}
+ngx-slider .ngx-slider .ngx-slider-selection {
+  background: var(--range) !important;
+}
+ngx-slider .ngx-slider .ngx-slider-pointer {
+  width: 18px !important;
+  height: 18px !important;
+  top: -6px !important;
+  background: var(--thumb) !important;
+  border: 2px solid rgba(255,255,255,.9) !important;
+  box-shadow: 0 2px 8px rgba(34,211,238,.35) !important;
+}
+ngx-slider .ngx-slider .ngx-slider-pointer:after { display: none !important; }
+ngx-slider .ngx-slider .ngx-slider-bubble { color: #cfd6e4 !important; }
+
+.price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: #e6eaf2;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+  .filters { padding: 14px; }
+  .brand-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .logo { width: 56px; height: 56px; }
+}

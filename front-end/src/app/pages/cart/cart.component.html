@@ -1,0 +1,54 @@
+<section class="cart-page">
+  <h1>Panier</h1>
+
+  <div class="layout">
+    <!-- Tableau articles -->
+    <div class="table">
+      <div class="thead">
+        <span>Article</span>
+        <span>Prix</span>
+        <span>Qté</span>
+        <span>Sous-total</span>
+      </div>
+
+      <div class="row" *ngFor="let p of cart.items(); let i = index">
+        <div class="prod">
+          <img [src]="p.imageUrl || 'assets/images/placeholder.jpg'" [alt]="p.name">
+          <div class="name">{{ p.name }}</div>
+        </div>
+
+        <div class="price">{{ p.price | currency:'TND' }}</div>
+
+        <div class="qty">
+          <button type="button" (click)="cart.dec(i)" aria-label="Moins">−</button>
+          <input type="number" min="1" [(ngModel)]="cart.items()[i].qty"
+                 (change)="cart.setQty(i, cart.items()[i].qty)">
+          <button type="button" (click)="cart.inc(i)" aria-label="Plus">＋</button>
+        </div>
+
+        <div class="line-total">{{ (p.price * p.qty) | currency:'TND' }}</div>
+
+        <button class="remove" type="button" (click)="cart.remove(i)" aria-label="Supprimer">🗑️</button>
+      </div>
+
+      <div *ngIf="!cart.items().length" class="empty">Votre panier est vide.</div>
+    </div>
+
+    <!-- Résumé -->
+    <aside class="summary">
+      <h2>Sommaire</h2>
+
+      <div class="sum-row">
+        <span>Sous-total</span>
+        <strong>{{ cart.subtotal() | currency:'TND' }}</strong>
+      </div>
+
+      <div class="sum-row total">
+        <span>Total de la commande</span>
+        <strong>{{ cart.subtotal() | currency:'TND' }}</strong>
+      </div>
+
+      <button class="btn-primary w-full">PASSER À LA CAISSE</button>
+    </aside>
+  </div>
+</section>

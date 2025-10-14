@@ -1,0 +1,471 @@
+/* ========================================================================= */
+/* === VARIABLES MODERNES ================================================== */
+/* ========================================================================= */
+
+:host {
+  --glass-bg: linear-gradient(135deg, rgb(134 153 203 / 95%) 0%, rgb(62 81 139 / 98%) 50%, rgb(28 29 33 / 95%) 100%);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  --accent-glow: rgba(34, 211, 238, 0.6);
+  --text-primary: #eaf2ff;
+  --text-secondary: #b6c2d9;
+  /* Changement de la transition pour une ouverture plus rapide et élégante */
+  --transition-drawer: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== BACKDROP AVANCÉ (Ajustement de la durée de l'animation) ===== */
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg,
+  rgba(0, 0, 0, 0.8) 0%,
+  rgba(8, 12, 20, 0.9) 100%);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  z-index: 1000;
+  animation: backdropReveal 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Nouvelle durée/courbe */
+}
+
+@keyframes backdropReveal {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px) saturate(100%);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(15px) saturate(180%);
+  }
+}
+
+/* ===== DRAWER ULTRA-MODERNE (Nouvelle ouverture plus lisse) ===== */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 320px;
+  max-width: 85vw;
+  transform: translateX(-100%);
+
+  /* Glassmorphism avancé */
+  background: var(--glass-bg);
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
+
+  border-right: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05);
+
+  color: var(--text-primary);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px;
+  gap: 20px;
+  overflow-y: auto;
+
+  /* TRANSITION MISE À JOUR : Plus simple et élégante */
+  transition: var(--transition-drawer), opacity 0.4s;
+}
+
+.mobile-menu.open {
+  transform: translateX(0);
+  /* Suppression de l'animation @keyframes pour une transition plus fluide */
+}
+
+/* Suppression des keyframes menuSlideIn inutilisées */
+/* @keyframes menuSlideIn { ... } */
+
+/* Effet de bordure lumineuse */
+.mobile-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+  transparent 0%,
+  var(--accent-glow) 50%,
+  transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-menu.open::before {
+  opacity: 1;
+  animation: borderGlow 2s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ===== BOUTON FERMETURE FUTURISTE ===== */
+.close-btn {
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  backdrop-filter: blur(10px);
+}
+
+.close-btn:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: var(--accent-glow);
+  color: var(--text-primary);
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ========================================================================= */
+/* ===== LIENS PRINCIPAUX - DESIGN FLOATING ================================ */
+/* ========================================================================= */
+.main-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  padding: 16px 20px;
+  border-radius: 16px;
+  color: var(--text-primary);
+  text-decoration: none;
+
+  /* Effet glass flottant */
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: var(--transition-smooth); /* Remplacement de bounce par smooth */
+  position: relative;
+  overflow: hidden;
+}
+
+.main-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+  rgba(34, 211, 238, 0.1) 0%,
+  transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.main-link:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: var(--accent-glow);
+  transform: translateY(-2px) scale(1.01); /* Mouvement plus subtil */
+  box-shadow:
+    0 10px 30px rgba(34, 211, 238, 0.3),
+    0 0 0 1px var(--accent-glow);
+}
+
+.main-link:hover::before {
+  opacity: 1;
+}
+
+.main-link:active {
+  transform: translateY(-1px) scale(1);
+}
+
+.main-link .ico {
+  width: 24px;
+  height: 24px;
+  color: var(--accent-glow);
+  transition: var(--transition-smooth);
+}
+
+.main-link:hover .ico {
+  transform: scale(1.1) rotate(5deg); /* Rotation subtile */
+}
+
+/* ========================================================================= */
+/* ===== ACCORDION MODERNE ================================================= */
+/* ========================================================================= */
+.accordion-header {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: var(--text-primary);
+  font-weight: 700;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: var(--transition-smooth); /* Remplacement de bounce par smooth */
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.accordion-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+  transparent,
+  rgba(34, 211, 238, 0.1),
+  transparent);
+  transition: left 0.6s ease;
+}
+
+.accordion-header:hover::before {
+  left: 100%;
+}
+
+.accordion-header:hover {
+  background: rgba(34, 211, 238, 0.15);
+  border-color: var(--accent-glow);
+  transform: translateY(-2px); /* Mouvement plus subtil */
+  box-shadow: 0 8px 25px rgba(34, 211, 238, 0.2);
+}
+
+.accordion-header .ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  transition: var(--transition-smooth);
+}
+
+.accordion-header:hover .ico {
+  transform: scale(1.05); /* Zoom plus subtil */
+  box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+}
+
+.accordion-header .ico img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.chev {
+  margin-left: auto;
+  transition: var(--transition-smooth);
+  color: var(--text-secondary);
+}
+
+.chev.rotated {
+  transform: rotate(90deg);
+  color: var(--accent-glow);
+}
+
+.accordion-header:hover .chev {
+  color: var(--accent-glow);
+}
+
+/* ========================================================================= */
+/* ===== CONTENU ACCORDION ANIMÉ ========================================== */
+/* ========================================================================= */
+.accordion-body {
+  padding-left: 0;
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  animation: accordionReveal 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes accordionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== SOUS-CATÉGORIES ===== */
+.sub-link {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  text-align: left;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: var(--transition-smooth);
+  min-height: 48px;
+  backdrop-filter: blur(5px);
+}
+
+.sub-link:hover {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.3);
+  color: var(--accent-glow);
+  transform: translateX(4px); /* Mouvement plus subtil */
+  box-shadow: 0 4px 15px rgba(34, 211, 238, 0.15);
+}
+
+.sub-link.active {
+  background: rgba(34, 211, 238, 0.2);
+  border-color: var(--accent-glow);
+  color: var(--text-primary);
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
+.sub-link .chev.small {
+  margin-left: 12px;
+  transition: var(--transition-smooth);
+}
+
+.sub-link:hover .chev.small {
+  transform: translateX(2px);
+}
+
+/* ===== PRODUITS AVEC EFFET HIÉRARCHIQUE ===== */
+.sub-products {
+  list-style: none;
+  padding: 12px 0 12px 16px;
+  display: grid;
+  gap: 6px;
+  margin-left: 16px;
+  border-left: 2px solid rgba(34, 211, 238, 0.4);
+  position: relative;
+}
+
+.sub-products::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -2px;
+  height: 100%;
+  background: linear-gradient(to bottom,
+  transparent,
+  var(--accent-glow),
+  transparent);
+  opacity: 0.3;
+  animation: linePulse 3s ease-in-out infinite;
+}
+
+@keyframes linePulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.sub-products a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: transparent;
+  transition: var(--transition-smooth);
+  border: 1px solid transparent;
+}
+
+.sub-products a:hover {
+  background: rgba(34, 211, 238, 0.1);
+  color: var(--text-primary);
+  border-color: rgba(34, 211, 238, 0.2);
+  transform: translateX(2px);
+  text-decoration: none;
+}
+
+/* ===== BOUTON "TOUS LES ARTICLES" ===== */
+.sub-products .all a {
+  color: var(--accent-glow);
+  font-weight: 700;
+  background: rgba(34, 211, 238, 0.15);
+  border: 1px solid var(--accent-glow);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
+  text-decoration: none;
+  margin-top: 8px;
+  transition: var(--transition-smooth); /* Remplacement de bounce par smooth */
+  position: relative;
+  overflow: hidden;
+}
+
+.sub-products .all a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+  transparent,
+  rgba(255, 255, 255, 0.2),
+  transparent);
+  transition: left 0.6s ease;
+}
+
+.sub-products .all a:hover {
+  background: rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 25px rgba(34, 211, 238, 0.5);
+  transform: translateY(-1px);
+}
+
+.sub-products .all a:hover::before {
+  left: 100%;
+}
+
+/* ===== OPTIMISATIONS MOBILE ===== */
+.mobile-menu {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.mobile-menu::-webkit-scrollbar {
+  display: none;
+}
+
+/* Support reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu,
+  .main-link,
+  .accordion-header,
+  .sub-link,
+  .sub-products a {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .mobile-menu {
+    width: 280px;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .main-link,
+  .accordion-header {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .sub-link {
+    padding: 12px 16px;
+  }
+}

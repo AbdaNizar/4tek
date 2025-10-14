@@ -1,0 +1,32 @@
+/* src/app/pages/admin/shell/admin-shell.component.css */
+:root{
+  --bg:#0b0f1a; --surface:#121826; --card:#1a2234;
+  --text:#e6eaf2; --muted:#9aa3b2; --primary:#4f46e5; --accent:#22d3ee;
+  --ok:#10b981; --danger:#ef4444;
+  --r1:12px; --r2:16px; --shadow:0 12px 30px rgba(0,0,0,.35);
+}
+
+.admin-wrap{
+  min-height: 100dvh;
+  color: var(--text);
+}
+
+.admin-body{
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.admin-content{
+  background: rgb(112 112 129 / 25%);
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  min-height: calc(100dvh - 110px);
+  border-radius: 20px;
+}
+
+@media (max-width: 980px){
+  .admin-body{ grid-template-columns: 1fr; }
+}

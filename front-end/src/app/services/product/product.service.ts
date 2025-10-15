@@ -8,23 +8,23 @@ import {Category} from '../../interfaces/category';
 @Injectable({ providedIn: 'root' })
 export class ProductService {
   private http = inject(HttpClient);
-  API = 'http://localhost:3000/v1';
+
 
   list(params?: any): Observable<{items: Product[], total: number}> {
-    return this.http.get<{items: Product[], total: number}>(`${this.API}/products`, { params });
+    return this.http.get<{items: Product[], total: number}>(`/products`, { params });
   }
-  getOne(id: string){ return this.http.get<Product>(`${this.API}/products/${id}`); }
-  create(fd: FormData){ return this.http.post<Product>(`${this.API}/products`, fd); }
-  update(id: string, payload: any){ return this.http.patch<Product>(`${this.API}/products/${id}`, payload); }
-  toggle(id: string){ return this.http.post<Product>(`${this.API}/products/${id}/toggle`, {}); }
-  remove(id: string){ return this.http.delete<{ok:true}>(`${this.API}/products/${id}`); }
+  getOne(id: string){ return this.http.get<Product>(`/products/${id}`); }
+  create(fd: FormData){ return this.http.post<Product>(`/products`, fd); }
+  update(id: string, payload: any){ return this.http.patch<Product>(`/products/${id}`, payload); }
+  toggle(id: string){ return this.http.post<Product>(`/products/${id}/toggle`, {}); }
+  remove(id: string){ return this.http.delete<{ok:true}>(`/products/${id}`); }
   replace(id: string, fd: FormData) {
-    return this.http.put<Product>(`${this.API}/products/${id}/replace`, fd);
+    return this.http.put<Product>(`/products/${id}/replace`, fd);
   }
   listBySubcategory(subId: string, limit = 6): Observable<{items: Product[], total: number}> {
-    return this.http.get<{items: Product[], total: number}>(`${this.API}/products?subCat=${subId}&limit=${limit}`);
+    return this.http.get<{items: Product[], total: number}>(`/products?subCat=${subId}&limit=${limit}`);
   }
   getBySlug(slug: string): Observable<Product> {
-    return this.http.get<Product>(`${this.API}/products/one/slug/${encodeURIComponent(slug)}`);
+    return this.http.get<Product>(`/products/one/slug/${encodeURIComponent(slug)}`);
   }
 }

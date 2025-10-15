@@ -7,6 +7,7 @@ import {Router, ActivatedRoute, NavigationEnd} from '@angular/router';
 import {filter, Subscription} from 'rxjs';
 import {AuthService} from '../../../../services/auth/auth.service';
 import {ToastService} from '../../../../services/toast/toast.service';
+import {environment} from '../../../../../environments/environment';
 
 type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'verify-email';
 
@@ -420,7 +421,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
 
   // Google
   loginWithGoogle(){
-    const popup = this.auth.openOAuthPopup(`${this.auth.API_URL}/auth/google`);
+    const popup = this.auth.openOAuthPopup(`${environment.api_Url}/auth/google`);
     this.auth.waitForOAuthMessage(popup)
       .then(() => { this.open.set(false); this.unlockBody(); this.toast.show('Connecté', 'info'); })
       .catch(() => { this.toast.show('Connexion Google annulée', 'error'); });

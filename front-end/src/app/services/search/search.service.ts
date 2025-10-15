@@ -9,7 +9,7 @@ import {SearchHit} from '../../interfaces/SearchHit';
 @Injectable({ providedIn: 'root' })
 export class SearchService {
   private http = inject(HttpClient);
-  private base = '/api/search';
+  private base = '/search';
 
   suggest(q: string, limit = 8): Observable<SearchHit[]> {
     const params = new HttpParams().set('q', q).set('limit', limit);

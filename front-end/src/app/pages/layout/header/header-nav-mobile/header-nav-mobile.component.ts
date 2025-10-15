@@ -82,16 +82,5 @@ export class HeaderNavMobileComponent implements OnInit {
     }
   }
 
-  subsOf(catId: string) {
-    // TODO adapt to your backend model
-    const cat = this.api.getOne(catId);
-    return [];
-    // cat?.subs
-  }
 
-  prodsOf(subId: string) {
-    // TODO adapt to your backend model
-    return []
-    // this.api.products.filter(p => p.subCategoryId === subId);
-  }
 }

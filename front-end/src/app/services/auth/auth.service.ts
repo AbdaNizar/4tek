@@ -1,6 +1,7 @@
 // src/app/services/auth.service.ts
 import {Injectable, inject, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
+import {environment} from '../../../environments/environment';
 
 type User = { id: string; email?: string; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user' | 'admin' };
 type LoginResp = { token: string; user: User };
@@ -8,9 +9,7 @@ type LoginResp = { token: string; user: User };
 @Injectable({providedIn: 'root'})
 export class AuthService {
   private http = inject(HttpClient);
-  private CLIENT_URL = 'http://localhost:4200' ;
-  API_URL = 'http://localhost:3000/v1';
-  private CLIENT_ORIGIN = new URL(this.CLIENT_URL).origin;
+
 
   token = signal<string | null>(localStorage.getItem('auth_token'));
   user = signal<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'));
@@ -18,7 +17,7 @@ export class AuthService {
   async hydrateFromStorage() {
     if (!this.token()) return;
     try {
-      const me = await this.http.get<User>(`${this.API_URL}/auth/me`).toPromise();
+      const me = await this.http.get<User>(`/auth/me`).toPromise();
       if (me) {
         this.user.set(me);
         localStorage.setItem('auth_user', JSON.stringify(me));
@@ -30,9 +29,8 @@ export class AuthService {
 
   /** Email/password */
   async login(email: string, password: string) {
-    const res = await this.http.post<LoginResp>(`${this.API_URL}/auth/login`, { email, password }).toPromise();
+    const res = await this.http.post<LoginResp>(`/auth/login`, { email, password }).toPromise();
     if (!res) throw new Error('Réponse vide');
-    console.log(res.user.isVerified)
     if (!res.user.isVerified) {
       throw new Error('Email non vérifié. Vérifie ta boîte mail ou renvoie l’email de confirmation.');
     }
@@ -44,7 +42,7 @@ export class AuthService {
   }
 
   async register(payload: { name: string; email: string; password: string; phone?: string; address?: string }) {
-    const res = await this.http.post<LoginResp>(`${this.API_URL}/auth/register`, payload).toPromise();
+    const res = await this.http.post<LoginResp>(`/auth/register`, payload).toPromise();
     if (res?.token) this.applyLogin(res);
     return !!res?.token;
   }
@@ -54,19 +52,19 @@ export class AuthService {
     // backend route: POST { email }
     console.log(email)
 
-    await this.http.post(`${this.API_URL}/auth/forgot/password`, { email }).toPromise();
+    await this.http.post(`/auth/forgot/password`, { email }).toPromise();
 
 
 
   }
   async resetPassword(token: string, password: string): Promise<void> {
-    await this.http.post<{ ok: boolean }>(`${this.API_URL}/auth/reset`, { token, password }).toPromise();
+    await this.http.post<{ ok: boolean }>(`/auth/reset`, { token, password }).toPromise();
   }
 
   // --------- Vérification email : renvoi du lien ----------
   async resendVerification(email: string): Promise<void> {
     console.log('email ', email)
-    await this.http.post(`${this.API_URL}/auth/resend-verification`, { email }).toPromise();
+    await this.http.post(`/auth/resend-verification`, { email }).toPromise();
   }
 
   // --------- Interception du hash #data=... ----------
@@ -145,7 +143,7 @@ export class AuthService {
   waitForOAuthMessage(popup: Window): Promise<void> {
     return new Promise((resolve, reject) => {
       const onMessage = (ev: MessageEvent) => {
-        if (ev.origin !== this.CLIENT_ORIGIN) return; // we redirected popup to 4200, so origin is 4200
+        if (ev.origin !== environment.APP_URL) return; // we redirected popup to 4200, so origin is 4200
         let data = ev.data as LoginResp;
 
         if (!data || !data.token || !data.user) return;

@@ -16,7 +16,9 @@ import {AdminCategoryDetailComponent} from './app/pages/admin/admin-category-det
 import {AdminCategoriesComponent} from './app/pages/admin/admin-categories/admin-categories.component';
 import {adminCanMatch} from './app/guards/admin.can-match.guard';
 import {ProductListComponent} from './app/pages/product-list/product-list.component';
-
+import { environment } from './environments/environment';
+import { enableProdMode } from '@angular/core';
+import {apiPrefixInterceptor} from './app/core/api-prefix.interceptor';
 
 const routes: Routes = [
 
@@ -47,10 +49,13 @@ const routes: Routes = [
   { path: '**', redirectTo: '' },
 
 ];
+if (environment.production) {
+  enableProdMode();
+}
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiInterceptor, authInterceptor]))
+    provideHttpClient(withInterceptors([apiInterceptor,apiPrefixInterceptor, authInterceptor]))
   ]
 }).catch(console.error);

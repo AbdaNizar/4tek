@@ -13,44 +13,43 @@ import {ParentCategoryRef} from '../../interfaces/ParentCategoryRef';
 export class SubcategoryService {
 
   constructor(private http: HttpClient) {}
-  // change to your real base URL if needed
-  private API = 'http://localhost:3000/v1';
+
 
   list(): Observable<SubCategory[]> {
-    return this.http.get<SubCategory[]>(`${this.API}/subcategories`);
+    return this.http.get<SubCategory[]>(`/subcategories`);
   }
 
   getOne(id: string): Observable<SubCategory> {
-    return this.http.get<SubCategory>(`${this.API}/subcategories/${id}`);
+    return this.http.get<SubCategory>(`/subcategories/${id}`);
   }
 
   create(fd: FormData): Observable<SubCategory> {
-    return this.http.post<SubCategory>(`${this.API}/subcategories`, fd);
+    return this.http.post<SubCategory>(`/subcategories`, fd);
   }
 
   update(id: string, fd: FormData): Observable<SubCategory> {
-    return this.http.put<SubCategory>(`${this.API}/subcategories/${id}`, fd);
+    return this.http.put<SubCategory>(`/subcategories/${id}`, fd);
   }
 
   replaceFiles(id: string, fd: FormData): Observable<SubCategory> {
-    return this.http.post<SubCategory>(`${this.API}/subcategories/${id}/replace`, fd);
+    return this.http.post<SubCategory>(`/subcategories/${id}/replace`, fd);
   }
 
   toggle(id: string, isActive: boolean): Observable<SubCategory> {
-    return this.http.post<SubCategory>(`${this.API}/subcategories/${id}/toggle`, { isActive });
+    return this.http.post<SubCategory>(`/subcategories/${id}/toggle`, { isActive });
   }
 
   remove(id: string): Observable<{ ok: boolean }> {
-    return this.http.delete<{ ok: boolean }>(`${this.API}/subcategories/${id}`);
+    return this.http.delete<{ ok: boolean }>(`/subcategories/${id}`);
   }
 
   // parents for the select
   listParents(): Observable<Category[]> {
-    return this.http.get<Category[]>(`${this.API}/categories`);
+    return this.http.get<Category[]>(`/categories`);
   }
 
   listByCategory(categoryId: string): Observable<SubCategory[]> {
-    return this.http.get<SubCategory[]>(`${this.API}/subcategories/by-category/${categoryId}`);
+    return this.http.get<SubCategory[]>(`/subcategories/by-category/${categoryId}`);
   }
 
 

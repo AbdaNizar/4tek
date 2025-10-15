@@ -7,7 +7,7 @@ import {Brand} from '../../interfaces/brand';
 @Injectable({providedIn: 'root'})
 export class BrandService {
   private http = inject(HttpClient);
-  private base = '/api/brands';
+  private base = '/brands';
 
   list(activeOnly?: boolean): Observable<Brand[]> {
     let params = new HttpParams();

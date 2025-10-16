@@ -19,7 +19,7 @@ const fileUpload = require('express-fileupload');
 
 // DB & Routes
 const connectDB = require('./src/config/db');
-const apiRoutes = require('./src/routes'); // index de tes routes
+const apiRoutes = require('./src/routes');
 const passport = require('./src/config/passport');
 const {ensureDefaultAdmin} = require('./src/functions/seeder');
 

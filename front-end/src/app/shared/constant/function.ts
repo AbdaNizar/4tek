@@ -1,5 +1,6 @@
 
 import Swal, {SweetAlertResult} from "sweetalert2";
+import {environment} from '../../../environments/environment';
 
 export function showAlert(data: any): Promise<SweetAlertResult> {
   const classIcon = data.classIcon || ''
@@ -33,20 +34,28 @@ export function showAlert(data: any): Promise<SweetAlertResult> {
   });
 }
 
-export function getUrl(url: string | undefined): string {
+const API_BASE = (environment.apiBaseUrl || 'https://4tek.tn').replace(/\/+$/, '');
 
-  if(typeof url !== "string" || url?.includes('data:image/png;base64')){
-    return <string>url;
+export function getUrl(url?: string): string {
+  if (!url) return '';
+
+  // keep data: images untouched
+  if (typeof url === 'string' && url.startsWith('data:')) return url;
+
+  // If already absolute (http/https), just return it
+  try {
+    const abs = new URL(url as string);
+    return abs.href;
+  } catch {
+    // not an absolute URL -> treat as relative
   }
-  if (!url || typeof url !== 'string') {
-    return '';
-  } else {
-    if (url.startsWith('http://localhost:3000/uploads'))
-      return new URL(url).href;
-    else if (url.startsWith('http://localhost:3000'))
-      return new URL(url).href;
-    else
-      return new URL('http://localhost:3000'  + url).href;
-  }
+
+  // Ensure leading slash on the relative path
+  let rel = url.startsWith('/') ? url : `/${url}`;
+
+  // If the relative already contains /v1 at the start, drop it (API_BASE already has it in prod)
+  if (rel.startsWith('/v1/')) rel = rel.slice(3); // remove "/v1"
+
+  return `${API_BASE}${rel}`;
 }
 

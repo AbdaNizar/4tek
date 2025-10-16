@@ -34,7 +34,7 @@ export function showAlert(data: any): Promise<SweetAlertResult> {
   });
 }
 
-const API_BASE = (environment.apiBaseUrl || 'https://4tek.tn').replace(/\/+$/, '');
+const API_BASE = (environment.api_Url || 'https://4tek.tn/v1').replace(/\/+$/, '');
 
 export function getUrl(url?: string): string {
   if (!url) return '';

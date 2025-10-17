@@ -39,48 +39,27 @@ export class HeaderNavMobileComponent implements OnInit {
 
     }
   }
-
-
   async toggleCategory(catId: string) {
-    // fermer si on reclique la même
-    if (this.openCatId === catId) {
-      this.openCatId = null;
-      this.openSubId = null;
-      return;
-    }
-    this.openCatId = catId;
     this.openSubId = null;
+    this.openCatId = (this.openCatId === catId) ? null : catId;
 
-    // charge les sous-catégories si pas en cache
-    if (!this.subsCache.has(catId)) {
-      try {
-        const subs = await this.subsApi.listByCategory(catId).toPromise();
-        this.subsCache.set(catId, subs || []);
-      } catch {
-        this.subsCache.set(catId, []);
-      }
+    if (this.openCatId && !this.subsCache.has(catId)) {
+      const subs = await this.subsApi.listByCategory(catId).toPromise();
+      this.subsCache.set(catId, subs || []);
     }
   }
 
+// Toggle a subcategory’s products (does NOT navigate)
   async toggleSub(subId: string) {
-    // fermer si on reclique la même
-    if (this.openSubId === subId) {
-      this.openSubId = null;
-      return;
-    }
+    this.openSubId = (this.openSubId === subId) ? null : subId;
 
-    this.openSubId = subId;
-
-    // charge produits si pas en cache
-    if (!this.prodsCache.has(subId)) {
-      try {
-        const prods = await this.prodsApi.listBySubcategory(subId).toPromise();
-        this.prodsCache.set(subId, prods?.items || []);
-      } catch {
-        this.prodsCache.set(subId, []);
-      }
+    if (this.openSubId && !this.prodsCache.has(subId)) {
+      const prods = await this.prodsApi.listBySubcategory(subId).toPromise();
+      this.prodsCache.set(subId, prods?.items || []);
     }
   }
+
+
 
 
 }

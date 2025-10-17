@@ -3,39 +3,59 @@
 
 <!-- Drawer -->
 <nav class="mobile-menu" [class.open]="open" (click)="$event.stopPropagation()" aria-label="Menu mobile">
-
-  <!-- Close button -->
-  <button class="close-btn" (click)="closed.emit()" aria-label="Fermer">
-    ✕
-  </button>
+  <button class="close-btn" (click)="closed.emit()" aria-label="Fermer">✕</button>
 
   <!-- Main links -->
   <a class="main-link" routerLink="/" (click)="closed.emit()">
     <span class="ico">🏠</span> Accueil
   </a>
 
-  <!-- Category Accordion -->
+  <!-- Categories -->
   <div class="accordion" *ngFor="let c of categories()">
-    <button class="accordion-header"
-            (click)="toggleCategory(c._id)">
-      <div class="ico">
-        <img [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'" [alt]="c.name" />
-      </div>
-      <span>{{ c.name }}</span>
-      <span class="chev" [class.rotated]="openCatId === c._id">›</span>
-    </button>
+    <div class="accordion-header">
 
-    <!-- Subcategories -->
+      <!-- Click = GO to category -->
+      <a class="head-link"
+         [routerLink]="['/categories', c._id]"
+         (click)="closed.emit()">
+        <div class="ico">
+          <img [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'"
+               [alt]="c.name" />
+        </div>
+        <span>{{ c.name }}</span>
+      </a>
+
+      <!-- Chevron = TOGGLE only -->
+      <button type="button"
+              class="chev-btn"
+              (click)="toggleCategory(c._id); $event.stopPropagation()"
+              [attr.aria-expanded]="openCatId === c._id">
+        <span class="chev" [class.rotated]="openCatId === c._id">›</span>
+      </button>
+    </div>
+
     <!-- Subcategories -->
     <div class="accordion-body" *ngIf="openCatId === c._id">
       <ul>
-        <li *ngFor="let s of subsCache.get(c._id) || []">
-          <button class="sub-link" (click)="toggleSub(s._id)">
-            {{ s.name }}
-            <span class="chev small" [class.rotated]="openSubId === s._id">›</span>
-          </button>
+        <li *ngFor="let s of (subsCache.get(c._id) || [])">
+          <div class="sub-line">
+            <!-- Click = GO to subcategory list page -->
+            <a class="sub-link"
+               [routerLink]="['/categories', c._id]"
+               (click)="closed.emit()">
+              {{ s.name }}
+            </a>
 
-          <!-- Produits de la sous-catégorie (afficher seulement s'il y en a) -->
+            <!-- Chevron = TOGGLE products of this sub -->
+            <button type="button"
+                    class="chev-btn sm"
+                    (click)="toggleSub(s._id); $event.stopPropagation()"
+                    [attr.aria-expanded]="openSubId === s._id">
+              <span class="chev small" [class.rotated]="openSubId === s._id">›</span>
+            </button>
+          </div>
+
+          <!-- Products (only if any) -->
           <ul class="sub-products" *ngIf="openSubId === s._id && (prodsCache.get(s._id)?.length || 0) > 0">
             <li *ngFor="let p of prodsCache.get(s._id) || []">
               <a [routerLink]="['/produits', p._id]" (click)="closed.emit()">
@@ -43,20 +63,16 @@
               </a>
             </li>
             <li class="all">
-              <a [routerLink]="['/categories', c._id, 'sub', s._id]" (click)="closed.emit()">
-                Tous les articles →
-              </a>
+              <a [routerLink]="['/categories', c._id, 'sub', s._id]" (click)="closed.emit()">Tous les articles →</a>
             </li>
           </ul>
         </li>
 
-        <!-- Si aucune sous-catégorie -->
         <li *ngIf="(subsCache.get(c._id)?.length || 0) === 0" class="muted" style="padding:6px 12px;">
           Aucune sous-catégorie.
         </li>
       </ul>
     </div>
-
   </div>
 
   <a class="main-link" routerLink="/contact" (click)="closed.emit()">

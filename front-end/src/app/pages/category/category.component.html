@@ -17,54 +17,31 @@
   </header>
 
   <div class="container">
-    <div class="grid" *ngIf="loading()">
-      <article class="card skel" *ngFor="let x of [1,2,3,4,5,6]">
-        <div class="media skel-box"></div>
-        <div class="pad">
-          <div class="title skel-line"></div>
-          <div class="desc skel-line short"></div>
-        </div>
-      </article>
-    </div>
-
     <div class="grid" *ngIf="!loading() && !selectedCatId() && list().length; else emptyWhenNoCats">
       <ng-container *ngFor="let c of list()">
         <div class="card-wrapper">
-
           <a class="card"
              [routerLink]="['/categories', c._id]"
              aria-label="Ouvrir la catégorie">
 
             <div class="media">
               <img [src]="getUrl(c.imageUrl) || getUrl(c.banners?.[0]) || getUrl(c.iconUrl) || '/assets/placeholder.jpg'"
-                   alt="{{ c.name }}" />
-            </div>
+                   [alt]="c.name" />
 
-            <div class="pad">
-              <h3 class="title"><i class="icon-tag"></i> {{ c.name }}</h3>
-
-              <p class="desc-content" [class.expanded]="c.isExpanded" [title]="c.description || ''">
-                {{ c.description || '—' }}
-              </p>
-
-              <span class="slug"><i class="icon-link-2"></i> /{{ c.slug }}</span>
+              <div class="overlay">
+                <h3 class="title"><i class="icon-tag"></i> {{ c.name }}</h3>
+              </div>
 
               <div class="icon" *ngIf="c.iconUrl">
                 <img [src]="getUrl(c.iconUrl)" [alt]="'Icône ' + c.name" />
               </div>
             </div>
+            <div class="pad"></div>
           </a>
-
-          <button *ngIf="(c.description||'').length > 90"
-                  class="read-more-btn"
-                  (click)="c.isExpanded = !c.isExpanded"
-                  type="button">
-            {{ c.isExpanded ? 'Masquer la suite ↑' : 'Afficher la suite ↓' }}
-          </button>
-
         </div>
       </ng-container>
     </div>
+
     <ng-template #emptyWhenNoCats>
       <p class="empty muted" *ngIf="!selectedCatId()">Aucune catégorie disponible.</p>
     </ng-template>
@@ -78,21 +55,20 @@
 
           <div class="media">
             <img [src]="getUrl(s.imageUrl) || getUrl(s.banners?.[0]) || getUrl(s.iconUrl) || '/assets/placeholder.jpg'"
-                 alt="{{ s.name }}" />
-          </div>
+                 [alt]="s.name" />
 
-          <div class="pad">
-            <h3 class="title"><i class="icon-tag"></i> {{ s.name }}</h3>
+            <div class="overlay">
+              <h3 class="title">
+                <i class="icon-tag"></i> {{ s.name }}
+                <span class="product-count">{{ s.productsCount || 0 }}</span>
+              </h3>
+            </div>
 
-            <p class="desc-content" [title]="s.description || ''">
-              {{ s.description || '—' | slice:0:90 }}<ng-container *ngIf="(s.description||'').length>90">…</ng-container>
-            </p>
-
-            <span class="slug"><i class="icon-link-2"></i> /{{ s.slug }}</span>
             <div class="icon" *ngIf="s.iconUrl">
               <img [src]="getUrl(s.iconUrl)" [alt]="'Icône ' + s.name" />
             </div>
           </div>
+          <div class="pad"></div>
         </a>
       </ng-container>
 

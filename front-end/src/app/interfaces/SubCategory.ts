@@ -13,4 +13,5 @@ export interface SubCategory {
   banners?: string[];
   createdAt?: string;
   updatedAt?: string;
+  productsCount?:Number;
 }

@@ -2,6 +2,8 @@
 import {Injectable, inject, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {environment} from '../../../environments/environment';
+import {Router} from '@angular/router';
+import {ToastService} from '../toast/toast.service';
 
 type User = { id: string; email?: string; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user' | 'admin' };
 type LoginResp = { token: string; user: User };
@@ -9,7 +11,12 @@ type LoginResp = { token: string; user: User };
 @Injectable({providedIn: 'root'})
 export class AuthService {
   private http = inject(HttpClient);
+  private router = inject(Router);
+  private toast = inject(ToastService);
 
+  constructor() {
+    window.addEventListener('focus', () => this.rehydrateFromStorage());
+  }
 
   token = signal<string | null>(localStorage.getItem('auth_token'));
   user = signal<User | null>(JSON.parse(localStorage.getItem('auth_user') || 'null'));
@@ -49,9 +56,6 @@ export class AuthService {
 
 
   async forgotPassword(email: string) {
-    // backend route: POST { email }
-    console.log(email)
-
     await this.http.post(`/auth/forgot/password`, { email }).toPromise();
 
 
@@ -140,53 +144,43 @@ export class AuthService {
   }
 
 
-  waitForOAuthMessage(popup: Window): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const onMessage = (ev: MessageEvent) => {
-        if (ev.origin !== environment.APP_URL) return; // we redirected popup to 4200, so origin is 4200
-        let data = ev.data as LoginResp;
+  // auth.service.ts
+// auth.service.ts
+  CLIENT_URL  = environment.APP_URL; // 'http://localhost:4200' in dev
 
-        if (!data || !data.token || !data.user) return;
 
-        this.applyLogin({token: data.token, user: data.user});
-        cleanup();
-        resolve();
-      };
 
-      const t = setTimeout(() => {
-        cleanup();
-        reject(new Error('Temps dépassé lors de la connexion.'));
-      }, 60_000);
 
-      const cleanup = () => {
-        window.removeEventListener('message', onMessage);
-        clearTimeout(t);
-        try {
-          popup.close();
-        } catch {
-        }
-      };
-
-      window.addEventListener('message', onMessage);
-    });
-  }
 
   /** Persist + signal update */
-  private applyLogin(res: { token: string; user: User }) {
+  applyLogin(res: { token: string; user: User }) {
     this.token.set(res.token);
     this.user.set(res.user);
     localStorage.setItem('auth_token', res.token);
     localStorage.setItem('auth_user', JSON.stringify(res.user));
   }
-
+  rehydrateFromStorage() {
+    const tok = localStorage.getItem('auth_token');
+    const usrStr = localStorage.getItem('auth_user');
+    if (tok && usrStr) {
+      try {
+        const usr = JSON.parse(usrStr);
+        this.token.set(tok);
+        this.user.set(usr);
+      } catch {
+        this.logout();
+      }
+    }
+  }
+// src/app/services/auth/auth.service.ts
   openOAuthPopup(url: string): Window {
-    // Optional: append state
     const state = crypto.getRandomValues(new Uint32Array(4)).join('-');
     const u = `${url}?state=${encodeURIComponent(state)}`;
 
     const w = 520, h = 620;
     const y = window.top!.outerHeight / 2 + window.top!.screenY - (h / 2);
     const x = window.top!.outerWidth / 2 + window.top!.screenX - (w / 2);
+
     const popup = window.open(
       u,
       'oauth_popup',
@@ -194,6 +188,34 @@ export class AuthService {
     );
     if (!popup) throw new Error('Popup bloquée par le navigateur.');
     return popup;
+  }
+
+  waitForOAuthMessage(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        try { window.removeEventListener('message', onMessage); } catch {}
+
+      };
+
+      // 1) postMessage
+      const onMessage = (ev: MessageEvent) => {
+        // If origins differ in dev/prod, don’t block; validate structure instead
+        if (!ev.data || ev.data.type !== 'OAUTH_RESULT' || !ev.data.token || !ev.data.user)
+          this.applyLogin({ token: localStorage.getItem('auth_token'), user: JSON.parse(localStorage.getItem('auth_user')) });
+
+      };
+      window.addEventListener('message', onMessage);
+      resolve()
+
+
+
+
+
+    });
   }
 
 }

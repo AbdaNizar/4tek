@@ -54,11 +54,11 @@
         <button type="button" (click)="inc()" aria-label="Augmenter">＋</button>
       </div>
 
-      <button class="btn-primary" [disabled]="!(p.stock ?? 0)" (click)="addToCart()">
-        Ajouter au panier
-      </button>
-    </div>
 
+    </div>
+    <button class="btn-primary" [disabled]="!(p.stock ?? 0)" (click)="addToCart()">
+      Ajouter au panier
+    </button>
     <div class="specs" *ngIf="p.specs && (p.specs | keyvalue)?.length">
       <h3>Caractéristiques principales</h3>
       <ul>

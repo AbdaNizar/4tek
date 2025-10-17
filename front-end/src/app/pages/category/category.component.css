@@ -1,22 +1,35 @@
 /* ========================================================================= */
-/* === VARIABLES ET PARAMÈTRES (Codés en dur comme demandé) ================ */
+/* === VARIABLES ET PARAMÈTRES ============================================= */
 /* ========================================================================= */
-:host {
-  display: block;
-  /* Fond de la page (pour le contexte du glassmorphism) */
+:root {
+  /* Couleurs de base */
+  --color-primary: #22d3ee; /* Teal */
+  --color-accent: #059669; /* Green Accent (pour le badge) */
+  --color-text-light: #eaf2ff; /* Texte clair */
+  --color-text-muted: #8a99b8; /* Texte discret */
+  --color-bg-dark: #0c101a;
+
+  /* Ombres et Bords */
+  --shadow-glass: 0 8px 32px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.1);
+  --border-glass: 1px solid rgba(255,255,255,.08);
 }
 
-/* Respecte la préférence utilisateur */
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif; /* Exemple de police moderne */
+}
+
+/* Réduction de mouvement */
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
 
 /* ========================================================================= */
-/* === SECTION / HEADER ===================================================== */
+/* === SECTION / HEADER (Optimisé) ========================================= */
 /* ========================================================================= */
 .contact {
   display: grid;
-  gap: 20px; /* Légèrement réduit */
+  gap: 30px;
   padding: 0 4px;
 }
 
@@ -25,316 +38,235 @@
 }
 
 .contact-head h2 {
-  margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 800;
-  color: #eaf2ff;
-}
-
-.contact-head .link {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  padding: 4px;
+  font-weight: 900;
+  color: var(--color-text-light);
 }
 
 .contact-head .link:hover {
-  color: rgba(34,211,238,1);
-  background: rgba(34,211,238,.1);
-  transform: translateX(-2px);
+  color: var(--color-primary);
+  background: rgba(34,211,238,.15);
+  transform: translateX(-4px);
 }
 
-.contact-head .muted {
-  color: #8a99b8;
-  font-size: 1.0rem; /* Légèrement réduit */
+.contact .muted {
+  color: var(--color-text-muted);
+  font-size: 1rem;
   margin-top: 6px;
   font-weight: 500;
 }
 
 .contact .container {
-  /* Glassmorphism élégant */
-  background: linear-gradient(135deg, rgb(18 24 38 / 44%), rgb(11 15 24 / 6%));
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow:
-    0 8px 32px rgba(0,0,0,.2),
-    0 2px 8px rgba(0,0,0,.1),
-    inset 0 1px 0 rgba(255,255,255,.05);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, rgb(18 24 38 / 50%), rgb(11 15 24 / 10%));
+  border: var(--border-glass);
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: var(--shadow-glass);
+  backdrop-filter: blur(15px);
 }
 
-/* === GRID ================================================================ */
+/* === GRID / LAYOUT ======================================================= */
 .grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-}
-.card-wrapper {
-  position: relative; /* Point d'ancrage pour le positionnement absolu */
-  display: contents; /* Permet au wrapper de ne pas casser la grille */
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
-@media (min-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Cartes plus larges sur grand écran */
-    gap: 20px;
-  }
-}
-
-/* === CARD ================================================================ */
+/* ========================================================================= */
+/* === CARD (Full Image) =================================================== */
+/* ========================================================================= */
 .card {
   position: relative;
-  display: grid;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  grid-template-rows: auto auto;
-  gap: 0;
-  text-decoration: none;
-  border-radius: 16px;
-  /* Fond dark glass */
-  background:
-    radial-gradient(100% 100% at 0% 0%, rgba(34,211,238,.12), transparent 60%),
-    linear-gradient(135deg, rgba(18,24,38,.9), rgba(12,16,26,.95));
+  display: block; /* La carte sera un bloc conteneur */
+  width: 100%;
+  padding-bottom: 100%; /* Ratio 5:4 pour une carte verticale moderne */
+
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(20, 27, 41, 0.95), rgba(10, 14, 23, 0.98));
   border: 1px solid rgba(255,255,255,.1);
-  box-shadow:
-    0 4px 20px rgba(0,0,0,.15),
-    0 1px 3px rgba(0,0,0,.1);
+  box-shadow: 0 8px 25px rgba(0,0,0,.2);
   overflow: hidden;
-  color: #eaf2ff;
-  transform: translateZ(0);
-  cursor: pointer;
+  color: var(--color-text-light);
+  text-decoration: none; /* Important pour les liens */
 }
 
-/* Glow subtil au survol */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(34,211,238,.03), transparent 30%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
+/* Effet 3D survol */
 .card:hover {
-  transform: translateY(-6px) scale(1.01); /* Ajusté pour moins d'agressivité */
+  transform: translateY(-8px) scale(1.02);
   box-shadow:
-    0 12px 40px rgba(0,0,0,.25),
-    0 4px 12px rgba(0,0,0,.15),
-    0 0 0 1px rgba(34,211,238,.2);
-  border-color: rgba(34,211,238,.3);
-}
-
-.card:hover::before {
-  opacity: 1;
+    0 16px 48px rgba(0,0,0,.35),
+    0 0 0 1px var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 
-/* media (image on top) */
+/* === MEDIA (Image en arrière-plan) ======================================= */
 .media {
-  position: relative;
-  background: linear-gradient(135deg, #0e1525, #0a0f1c);
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  position: absolute; /* Prend toute la place de la carte */
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-}
-
-.media::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(34,211,238,.4), transparent);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.card:hover .media::after {
-  transform: scaleX(1);
+  background: var(--color-bg-dark);
 }
 
 .media img {
   width: 100%;
-  height: 160px; /* Réduire la hauteur de l'image de 180px à 160px */
+  height: 100%;
   object-fit: cover;
-  display: block;
-  transform: scale(1);
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: brightness(0.95);
+  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.6s;
+  filter: brightness(0.7) grayscale(0.2); /* Plus sombre et désaturé pour la lisibilité du texte */
 }
 
 .card:hover .media img {
-  transform: scale(1.05); /* Réduire légèrement le zoom */
-  filter: brightness(1.05);
+  transform: scale(1.08); /* Zoom plus prononcé sur l'image */
+  filter: brightness(0.9) grayscale(0); /* Plus clair et couleur au survol */
 }
 
 
-/* body */
-.pad {
-  padding: 16px; /* Padding réduit */
-  display: grid;
-  gap: 10px;
-  position: relative;
-  z-index: 1;
+/* === OVERLAY (Conteneur pour le texte et le badge) ====================== */
+.overlay {
+  position: absolute;
+  inset: 0; /* Prend toute la surface du media */
+
+  /* Dégradé semi-transparent pour améliorer la lisibilité */
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 40%, transparent 100%);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Aligner le contenu en bas */
+  padding: 20px;
+  transition: all 0.3s ease;
+  z-index: 1; /* Au-dessus de l'image */
 }
 
-/* title */
+.card:hover .overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 40%, transparent 100%);
+}
+
 .title {
   display: flex;
   align-items: center;
+  flex-grow: 0; /* Ne pas étirer le titre */
   gap: 10px;
-  margin: 0;
   font-weight: 800;
-  font-size: clamp(16px, 1.8vw, 18px);
-  color: #eaf2ff;
-  line-height: 1.3;
-  /* Autres propriétés de troncature conservées */
+  font-size: clamp(18px, 2.5vw, 22px); /* Taille plus grande pour un titre central */
+  color: var(--color-text-light);
+  line-height: 1.2;
+  margin-bottom: 10px; /* Espace sous le titre */
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6); /* Ombre pour la lisibilité */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* ========================================================================= */
-/* === DESCRIPTION EXPANDABLE (CORE FIX) =================================== */
-/* ========================================================================= */
-
-/* Description par défaut (tronquée) */
-/* Description par défaut (tronquée à 3 lignes) */
-.desc-content {
-  margin: 0;
-  color: #8a99b8;
-  line-height: 1.5;
-  font-size: 14px;
-
-  overflow: hidden;
-
-  /* Limite de hauteur par défaut (≈ 3 lignes) */
-  max-height: 4.5em;
-
-  /* Transition pour l'effet d'ouverture/fermeture doux */
-  transition: max-height 0.4s ease-in-out;
+.title i {
+  font-size: 1.2em; /* Icône plus grande pour le titre */
 }
 
-/* Mode étendu : Afficher le contenu complet */
-.desc-content.expanded {
-  /* Une grande valeur pour s'assurer que tout le contenu s'affiche */
-  max-height: 500px;
-  overflow: visible;
-}
 
-/* Bouton "Afficher la suite" (Remplaçant l'ancien lien) */
-.read-more-btn {
-  /* Styles visuels conservés: font-size, color, background:none, border:none, etc. */
+/* === BADGE DE COMPTE DE PRODUITS (Intégré à l'overlay) =================== */
+.product-count {
+  margin-left: auto; /* Pousser à droite du titre */
+
+  display: inline-flex;
+  align-items: center;
+  min-width: 30px; /* Plus large */
+  height: 24px; /* Plus grand */
+  padding: 0 10px;
+
   font-size: 13px;
-  font-weight: 700;
-  color: rgba(34,211,238, 0.9);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-  width: max-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  font-weight: 900;
+  color: var(--color-bg-dark);
 
-  /* NOUVEAU: Positionnement absolu */
-  position: absolute;
-  /* Placer le bouton dans le coin inférieur gauche de la carte */
-  bottom: 24px; /* Ajustement pour qu'il soit bien visible au-dessus du slug */
-  left: 32px; /* Marge par rapport au bord */
-  z-index: 10;
-}
-
-/* Ajuster la position au survol pour qu'il suive la carte si elle se déplace */
-.card-wrapper:hover .read-more-btn {
-  /* Applique la même translation Y que la carte au survol */
-  transform: translateY(-6px);
-}
-.read-more-btn:hover {
-  color: #fff;
-}
-/* ========================================================================= */
-
-/* slug "chip" */
-.slug {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #8a99b8;
+  background: var(--color-primary);
   border-radius: 12px;
-  padding: 6px 12px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.1);
-  width: max-content;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
+
+  transition: all 0.3s ease;
+  flex-shrink: 0; /* Ne pas se rétrécir */
 }
 
-.card:hover .slug {
-  background: rgba(34,211,238,.1);
-  border-color: rgba(34,211,238,.2);
-  color: rgba(34,211,238,.9);
+.card:hover .product-count {
+  background: #81c5f6;
+  color: var(--color-accent);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(34,211,238,0.7);
 }
 
-/* optional icon block (if category has icon) */
+
+/* === ICONE EN COIN (Superposée sur l'image) ============================== */
 .icon {
   position: absolute;
-  top: -22px;
-  right: 4px;
+  top: 15px; /* Marge du haut */
+  right: 15px; /* Marge de droite */
 
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 52px; /* Icône plus grande */
+  height: 52px;
+  border-radius: 50%; /* Icône ronde */
   overflow: hidden;
-  background: rgba(12,16,26,.8);
-  border: 1px solid rgba(255,255,255,.12);
-  box-shadow:
-    0 8px 24px rgba(0,0,0,.3),
-    0 2px 6px rgba(0,0,0,.2);
-  backdrop-filter: blur(10px);
-  z-index: 2;
+
+  background: rgba(12,16,26,.7); /* Fond légèrement plus opaque */
+  border: 2px solid rgba(255,255,255,.2); /* Bordure plus visible */
+  box-shadow: 0 6px 20px rgba(0,0,0,.6); /* Ombre plus intense */
+  backdrop-filter: blur(8px);
+  z-index: 2; /* Au-dessus de l'image et du dégradé inférieur */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px; /* Plus de padding interne */
   transition: all 0.3s ease;
 }
 
-/* ... (Reste des styles : skeletons, responsive, animations) ... */
+.icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 3px rgba(34,211,238,0.7)); /* Ombre plus prononcée */
+}
 
-/* === RESPONSIVE TWEAKS =================================================== */
+.card:hover .icon {
+  transform: scale(1.08) rotate(7deg); /* Effet plus dynamique */
+  border-color: var(--color-primary);
+  box-shadow: 0 8px 25px rgba(34,211,238,0.5); /* Lueur au survol */
+}
+
+/* Le `pad` vide ne sert plus à rien visuellement mais peut être utile pour la structure */
+.pad {
+  display: none; /* Cache complètement l'ancien "pad" vide */
+}
+
+/* === ÉLÉMENTS VIDES / RESPONSIVE ========================================= */
+.empty {
+  font-size: 1.1rem;
+  padding: 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Responsive ajusté */
 @media (max-width: 768px) {
-  .contact { gap: 20px; padding: 0 4px; }
-  .contact .container { padding: 20px 16px; border-radius: 16px; }
-  .media img { height: 140px; } /* Encore plus petit sur tablette */
-  .pad { padding: 14px; gap: 8px; }
-
-  .icon { width: 36px; height: 36px; top: 12px; right: 12px; } /* Ajusté pour l'image 140px */
-
-  .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .contact .container { padding: 24px 16px; border-radius: 18px; }
+  .card { padding-bottom: 110%; } /* Ratio un peu moins vertical */
+  .title { font-size: clamp(16px, 2.2vw, 20px); }
+  .product-count { min-width: 26px; height: 20px; font-size: 12px; }
+  .icon { width: 48px; height: 48px; top: 12px; right: 12px; padding: 8px; }
 }
 
 @media (max-width: 480px) {
-  .grid { gap: 12px; grid-template-columns: 1fr; }
-  .media img { height: 120px; }
-  .title { font-size: 15px; }
-  .contact .container { padding: 16px 12px; }
-  .contact-head { padding: 0 4px; }
-  .icon { top: 10px; right: 10px; }
+  .grid { grid-template-columns: 1fr; gap: 12px; }
+  .card { padding-bottom: 100%; } /* Carte carrée sur mobile */
+  .title { font-size: clamp(16px, 4vw, 18px); margin-bottom: 8px; }
+  .overlay { padding: 15px; }
+  .icon { width: 44px; height: 44px; top: 10px; right: 10px; padding: 6px; }
 }
 
-/* Animation pour l'apparition des cartes */
+/* Animations (Conservées) */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.card { animation: fadeInUp 0.5s ease-out; }
+.card { animation: fadeInUp 0.5s ease-out backwards; }
 .card:nth-child(2) { animation-delay: 0.1s; }
 .card:nth-child(3) { animation-delay: 0.2s; }
 .card:nth-child(4) { animation-delay: 0.3s; }

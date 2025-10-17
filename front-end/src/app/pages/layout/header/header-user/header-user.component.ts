@@ -2,7 +2,14 @@ import {
   Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject, signal
 } from '@angular/core';
 import {CommonModule, NgIf} from '@angular/common';
-import {FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidatorFn, ValidationErrors} from '@angular/forms';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidatorFn,
+  ValidationErrors
+} from '@angular/forms';
 import {Router, ActivatedRoute, NavigationEnd} from '@angular/router';
 import {filter, Subscription} from 'rxjs';
 import {AuthService} from '../../../../services/auth/auth.service';
@@ -17,7 +24,7 @@ function matchOther(otherKey: string): ValidatorFn {
     if (!parent) return null;
     const other = parent.get(otherKey);
     if (!other) return null;
-    return control.value === other.value ? null : { mismatch: true };
+    return control.value === other.value ? null : {mismatch: true};
   };
 }
 
@@ -33,16 +40,16 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   protected auth = inject(AuthService);
   private host = inject(ElementRef<HTMLElement>);
   private router = inject(Router);
-  private route  = inject(ActivatedRoute);
-  private toast  = inject(ToastService);
+  private route = inject(ActivatedRoute);
+  private toast = inject(ToastService);
 
   hasAvatar = signal(true);
   open = signal(false);
   mode = signal<Mode>('login');
   loading = signal(false);
   userMenuOpen = signal(false);
-  err = signal<string|undefined>(undefined);
-  okMsg = signal<string|undefined>(undefined);
+  err = signal<string | undefined>(undefined);
+  okMsg = signal<string | undefined>(undefined);
 
   // token pour /reset-password/:token
   private resetToken = signal<string | null>(null);
@@ -56,12 +63,12 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   private scrollY = 0;
 
   form = this.fb.group({
-    email:    ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.required, Validators.email]],
     password: ['', []],
-    confirm:  ['', []],
-    name:     ['', []],
-    phone:    ['', []],
-    address:  ['', []],
+    confirm: ['', []],
+    name: ['', []],
+    phone: ['', []],
+    address: ['', []],
   });
 
   async ngOnInit() {
@@ -140,18 +147,25 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   // --------- état user
-  isLoggedIn(){ return this.auth.isLoggedIn(); }
-  user(){ return this.auth.user(); }
+  isLoggedIn() {
+    return this.auth.isLoggedIn();
+  }
 
-  shortName(){
+  user() {
+    return this.auth.user();
+  }
+
+  shortName() {
     const u = this.user();
     if (!u) return '';
     if (u.name) return u.name;
     return (u.email || '').split('@')[0];
   }
+
   onAvatarError() {
     this.hasAvatar.set(false);
   }
+
   avatarUrlSafe(): string | null {
     const raw = this.auth.user()?.avatar ?? null;
     if (!raw || typeof raw !== 'string') return null;
@@ -166,18 +180,23 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   // --------- menu user
-  toggleUserMenu(){ this.userMenuOpen.update(v => !v); }
-  closeUserMenu(){ this.userMenuOpen.set(false); }
+  toggleUserMenu() {
+    this.userMenuOpen.update(v => !v);
+  }
+
+  closeUserMenu() {
+    this.userMenuOpen.set(false);
+  }
 
   @HostListener('document:click', ['$event'])
-  onDocClick(ev: MouseEvent){
+  onDocClick(ev: MouseEvent) {
     if (!this.userMenuOpen()) return;
     const inside = this.host.nativeElement.contains(ev.target as Node);
     if (!inside) this.closeUserMenu();
   }
 
   // --------- modal
-  toggleModal(){
+  toggleModal() {
     const next = !this.open();
     this.open.set(next);
     if (next) {
@@ -188,7 +207,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       this.err.set(undefined);
       this.okMsg.set(undefined);
       const u = this.auth.user();
-      if (u?.email) this.form.patchValue({ email: u.email });
+      if (u?.email) this.form.patchValue({email: u.email});
       this.lockBody();
       queueMicrotask(() => {
         this.collectFocusables();
@@ -200,12 +219,12 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       if (this.resetToken()) {
         this.setupValidatorsForMode();
         this.resetToken.set(null);
-        this.router.navigateByUrl('/', { replaceUrl: true });
+        this.router.navigateByUrl('/', {replaceUrl: true});
       }
     }
   }
 
-  switchMode(m: Mode){
+  switchMode(m: Mode) {
     this.mode.set(m);
     this.err.set(undefined);
     this.okMsg.set(undefined);
@@ -216,67 +235,67 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
     });
   }
 
-  startForgot(prefillEmail?: string){
+  startForgot(prefillEmail?: string) {
     this.err.set(undefined);
     this.okMsg.set(undefined);
     if (!this.open()) this.toggleModal();
     this.mode.set('forgot');
-    if (prefillEmail) this.form.patchValue({ email: prefillEmail });
+    if (prefillEmail) this.form.patchValue({email: prefillEmail});
     this.setupValidatorsForMode();
     this.closeUserMenu()
   }
 
   // --------- validators par mode
-  private setupValidatorsForMode(){
+  private setupValidatorsForMode() {
     const m = this.mode();
     const set = (name: string, validators: any[]) => {
       const c = this.form.get(name);
       if (!c) return;
       c.clearValidators();
       c.setValidators(validators);
-      c.updateValueAndValidity({ emitEvent: false });
+      c.updateValueAndValidity({emitEvent: false});
     };
 
     if (m === 'login') {
-      set('email',    [Validators.required, Validators.email]);
+      set('email', [Validators.required, Validators.email]);
       set('password', [Validators.required, Validators.minLength(6)]);
-      set('confirm',  []);
-      set('name',     []);
-      set('phone',    []);
-      set('address',  []);
+      set('confirm', []);
+      set('name', []);
+      set('phone', []);
+      set('address', []);
     } else if (m === 'register') {
-      set('email',    [Validators.required, Validators.email]);
+      set('email', [Validators.required, Validators.email]);
       set('password', [Validators.required, Validators.minLength(6)]);
-      set('confirm',  [Validators.required, matchOther('password')]);
-      set('name',     [Validators.required]);
-      set('phone',    [Validators.pattern(/^[0-9 +\-().]{6,20}$/)]);
-      set('address',  [Validators.minLength(4)]);
+      set('confirm', [Validators.required, matchOther('password')]);
+      set('name', [Validators.required]);
+      set('phone', [Validators.pattern(/^[0-9 +\-().]{6,20}$/)]);
+      set('address', [Validators.minLength(4)]);
     } else if (m === 'forgot') {
-      set('email',    [Validators.required, Validators.email]);
+      set('email', [Validators.required, Validators.email]);
       set('password', []);
-      set('confirm',  []);
-      set('name',     []);
-      set('phone',    []);
-      set('address',  []);
+      set('confirm', []);
+      set('name', []);
+      set('phone', []);
+      set('address', []);
     } else if (m === 'reset') {
-      set('email',    []);
+      set('email', []);
       set('password', [Validators.required, Validators.minLength(6)]);
-      set('confirm',  [Validators.required, matchOther('password')]);
-      set('name',     []);
-      set('phone',    []);
-      set('address',  []);
-    }else {// verify-email
-      set('email',    [Validators.required, Validators.email]);
+      set('confirm', [Validators.required, matchOther('password')]);
+      set('name', []);
+      set('phone', []);
+      set('address', []);
+    } else {// verify-email
+      set('email', [Validators.required, Validators.email]);
       set('password', []);
-      set('confirm',  []);
-      set('name',     []);
-      set('phone',    []);
-      set('address',  []);
+      set('confirm', []);
+      set('name', []);
+      set('phone', []);
+      set('address', []);
     }
   }
 
   // --------- submit
-  async submit(){
+  async submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.err.set('Veuillez remplir correctement le formulaire.');
@@ -298,18 +317,24 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       }
 
       if (this.mode() === 'login') {
-        const { email, password } = this.form.getRawValue();
+        const {email, password} = this.form.getRawValue();
         this.loading.set(true);
         const ok = await this.auth.login(email!, password!);
         this.loading.set(false);
-        if (ok) { this.open.set(false); this.unlockBody(); this.toast.show('Connecté', 'info'); }
-        else     this.err.set('Identifiants invalides.');
+        if (ok) {
+          this.open.set(false);
+          this.unlockBody();
+          this.toast.show('Connecté', 'info');
+        } else this.err.set('Identifiants invalides.');
         return;
       }
 
       if (this.mode() === 'register') {
         const v = this.form.getRawValue();
-        if (v.password !== v.confirm) { this.err.set('Les mots de passe ne correspondent pas.'); return; }
+        if (v.password !== v.confirm) {
+          this.err.set('Les mots de passe ne correspondent pas.');
+          return;
+        }
         this.loading.set(true);
         await this.auth.register({
           email: v.email!, password: v.password!,
@@ -318,20 +343,27 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         this.okMsg.set('Compte créé. Vérifie ta boîte mail si la vérification est requise.');
         this.toast.show('Compte créé', 'success');
-        setTimeout(() => { this.open.set(false);
+        setTimeout(() => {
+          this.open.set(false);
           this.mode.set('login')
           this.unlockBody();
           this.setupValidatorsForMode()
 
-          }, 3000);
+        }, 3000);
         return;
       }
 
       if (this.mode() === 'reset') {
         const token = this.resetToken();
-        if (!token) { this.err.set('Lien invalide.'); return; }
-        const { password, confirm } = this.form.getRawValue();
-        if (password !== confirm) { this.err.set('Les mots de passe ne correspondent pas.'); return; }
+        if (!token) {
+          this.err.set('Lien invalide.');
+          return;
+        }
+        const {password, confirm} = this.form.getRawValue();
+        if (password !== confirm) {
+          this.err.set('Les mots de passe ne correspondent pas.');
+          return;
+        }
 
         this.loading.set(true);
         await this.auth.resetPassword(token, password!);
@@ -341,19 +373,25 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
         this.unlockBody();
         // Nettoie l’URL et repasse en login
         this.resetToken.set(null);
-        this.router.navigateByUrl('/', { replaceUrl: true });
+        this.router.navigateByUrl('/', {replaceUrl: true});
         this.mode.set('login');
         return;
       }
 
       if (this.mode() === 'verify-email') {
         const email = this.form.value.email?.trim();
-        if (!email) { this.err.set('Email requis.'); return; }
+        if (!email) {
+          this.err.set('Email requis.');
+          return;
+        }
         this.loading.set(true);
         await this.auth.resendVerification(email);
         this.loading.set(false);
         this.okMsg.set('Un nouveau lien de vérification a été envoyé. Vérifie ta boîte mail.');
-        setTimeout(() => { this.open.set(false); this.unlockBody(); }, 3000);
+        setTimeout(() => {
+          this.open.set(false);
+          this.unlockBody();
+        }, 3000);
         return;
       }
     } catch (e: any) {
@@ -362,7 +400,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
     }
   }
 
-  logout(){
+  logout() {
     this.auth.logout();
     this.open.set(false);
     this.unlockBody();
@@ -372,13 +410,14 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   // --------- body scroll lock
-  private lockBody(){
+  private lockBody() {
     this.scrollY = window.scrollY || 0;
     document.body.style.top = `-${this.scrollY}px`;
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
   }
-  private unlockBody(){
+
+  private unlockBody() {
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.width = '';
@@ -387,7 +426,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
 
   // --------- focus trap
   @HostListener('document:keydown', ['$event'])
-  onKeydown(e: KeyboardEvent){
+  onKeydown(e: KeyboardEvent) {
     if (!this.open()) return;
 
     if (e.key === 'Escape') {
@@ -404,13 +443,19 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
     const active = document.activeElement as HTMLElement | null;
 
     if (e.shiftKey) {
-      if (active === first || !active) { e.preventDefault(); last.focus(); }
+      if (active === first || !active) {
+        e.preventDefault();
+        last.focus();
+      }
     } else {
-      if (active === last) { e.preventDefault(); first.focus(); }
+      if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   }
 
-  private collectFocusables(){
+  private collectFocusables() {
     const panel = this.host.nativeElement.querySelector('.modal-panel') as HTMLElement | null;
     this.focusables = panel
       ? Array.from(panel.querySelectorAll<HTMLElement>(
@@ -420,12 +465,18 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   // Google
-  loginWithGoogle(){
-    const popup = this.auth.openOAuthPopup(`${environment.api_Url}/auth/google`);
-    this.auth.waitForOAuthMessage(popup)
-      .then(() => { this.open.set(false); this.unlockBody(); this.toast.show('Connecté', 'info'); })
-      .catch(() => { this.toast.show('Connexion Google annulée', 'error'); });
+  async loginWithGoogle() {
+    this.open.set(false);
+    this.unlockBody();
+    try {
+      this.auth.openOAuthPopup(`${environment.api_Url}/auth/google`);
+
+    } catch (e) {
+      this.toast.show('Connexion Google annulée/échouée ❌', 'error');
+    }
   }
+
+
 
 
 }

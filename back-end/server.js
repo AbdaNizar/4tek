@@ -20,6 +20,7 @@ const fileUpload = require('express-fileupload');
 // DB & Routes
 const connectDB = require('./src/config/db');
 const apiRoutes = require('./src/routes');
+const redirectBrowserRequests = require('./src/middlewares/redirectBrowserRequests');
 const passport = require('./src/config/passport');
 const {ensureDefaultAdmin} = require('./src/functions/seeder');
 
@@ -44,6 +45,8 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .filter(Boolean);
 
 // Autorise aussi les requêtes sans origin (curl, health checks)
+app.use(redirectBrowserRequests(process.env.CLIENT_URL));
+
 app.use(
     cors({
         origin: (origin, cb) => {
@@ -81,7 +84,7 @@ app.use(
 const PUBLIC_UPLOADS_DIR =
     process.env.PUBLIC_UPLOADS_DIR || path.join(__dirname, 'src', 'uploads');
 
-app.use('/uploads', express.static(PUBLIC_UPLOADS_DIR, {
+app.use('/v1/uploads', express.static(PUBLIC_UPLOADS_DIR, {
     fallthrough: true, // ne renvoie pas 404 ici, laisse la suite gérer
 }));
 

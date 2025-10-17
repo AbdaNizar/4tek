@@ -1,9 +1,11 @@
 // src/app/pages/oauth-complete/oauth-complete.component.ts
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 
-type OauthPayload = { type: 'OAUTH_RESULT'; token: string; user: any; state?: string };
+type User = { id: string; email?: string; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user'|'admin' };
+type OauthPayload = { type: 'OAUTH_RESULT'; token: string; user: User; state?: string };
+type LoginResp   = { token: string; user: User };
 
 @Component({
   standalone: true,
@@ -11,58 +13,60 @@ type OauthPayload = { type: 'OAUTH_RESULT'; token: string; user: any; state?: st
   template: `<div style="display:grid;place-items:center;height:100dvh">Connexion en cours…</div>`
 })
 export class OauthCompleteComponent implements OnInit {
-  private route = inject(ActivatedRoute);
+  private route  = inject(ActivatedRoute);
   private router = inject(Router);
-  private auth  = inject(AuthService);
+  private auth   = inject(AuthService);
+  private zone   = inject(NgZone);
 
   ngOnInit(): void {
     try {
-      const dataParam = this.route.snapshot.queryParamMap.get('data'); // /#/oauth-complete?data=...
-      const hashMatch = (window.location.hash || '').match(/(?:^|#|&)data=([^&]+)/); // /oauth-complete#data=...
+      const dataParam = this.route.snapshot.queryParamMap.get('data');
+      const hashMatch = (window.location.hash || '').match(/(?:^|#|&)data=([^&]+)/);
       const b64url = dataParam || (hashMatch ? hashMatch[1] : null);
-
       if (!b64url) throw new Error('Missing payload');
 
-      const jsonStr = this.base64UrlDecode(b64url);
-      const payload: OauthPayload = JSON.parse(jsonStr);
-
+      const json = this.b64urlDecode(b64url);
+      const payload: OauthPayload = JSON.parse(json);
       if (!payload || payload.type !== 'OAUTH_RESULT' || !payload.token || !payload.user) {
         throw new Error('Bad payload');
       }
 
-      // Persist + update UI
+      this.zone.run(() => {
+        const res: LoginResp = { token: payload.token, user: payload.user };
+        // update local state (handy if this tab navigates)
+        this.auth.applyLogin(res);
 
-      if ((this.auth as any).applyLogin) {
-        (this.auth as any).applyLogin(payload);
-        console.log('here')
-      } else {
-        console.log('here2')
-        this.auth.user.set(payload.user);
-        this.auth['token'].set(payload.token);
-        localStorage.setItem('auth_token', payload.token);
-        localStorage.setItem('auth_user', JSON.stringify(payload.user));
+        // 🔊 1) postMessage (to the opener)
+        try { window.opener?.postMessage(payload, '*'); } catch {}
 
-      }
+        // 🔊 2) localStorage signal (fires “storage” in the opener)
+        try { localStorage.setItem('oauth_result', JSON.stringify(payload)); } catch {}
 
-      // If opened as a popup, notify opener then close
-      try { window.opener?.postMessage(payload, window.location.origin); } catch {}
-      setTimeout(() => { try { window.close(); } catch {} }, 60);
+        // 🔊 3) BroadcastChannel
+        try {
+          const bc = new BroadcastChannel('auth');
+          bc.postMessage(payload);
+          bc.close();
+        } catch {}
 
-      // If not a popup (navigated main tab), go home
-      if (!window.opener) this.router.navigateByUrl('/.');
+        // 🧹 try to close the popup (multiple fallbacks)
+        setTimeout(() => {
+          try { window.close(); } catch {}
+          try { window.opener && window.open('', '_self')?.close(); } catch {}
+          // If still not closed and it’s not a popup, navigate home
+          if (!window.opener) this.router.navigateByUrl('/');
+        }, 60);
+
+      });
+
     } catch (e) {
       console.error('OAuth complete error:', e);
-      // Fallback: go home
       this.router.navigateByUrl('/');
     }
   }
 
-  private base64UrlDecode(input: string): string {
-    // convert base64url -> base64
-    const b64 = input.replace(/-/g, '+').replace(/_/g, '/');
-    // pad with '=' if needed
-    const pad = b64.length % 4 ? 4 - (b64.length % 4) : 0;
-    const padded = b64 + '='.repeat(pad);
-    return atob(padded);
+  private b64urlDecode(s: string): string {
+    const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+    return atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
   }
 }

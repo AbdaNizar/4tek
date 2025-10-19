@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/productSchema');
-const Category = require('../models/Category');
-const SubCategory = require('../models/SubCategory');
+const Category = require('../models/category');
+const SubCategory = require('../models/subCategory');
 
 router.get('/products'   ,  async (req, res) => {
     try {

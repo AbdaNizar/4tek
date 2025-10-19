@@ -1,5 +1,4 @@
 const express = require('express');
-const multer  = require('multer');
 const router  = express.Router();
 const sub = require('../controllers/subcategoryController');
 const {requireAuth, requireAdmin} = require('../middlewares/auth');

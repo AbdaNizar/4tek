@@ -38,7 +38,7 @@
 
   <div class="user-menu" *ngIf="userMenuOpen()">
 
-    <a routerLink="/commandes" (click)="closeUserMenu()">Mes commandes</a>
+    <a routerLink="/mes-commandes" (click)="closeUserMenu()">Mes commandes</a>
     <button type="button" (click)="startForgot(auth.user()?.email || undefined)">Changer mon mot de passe</button>
     <button type="button" (click)="logout()">Se déconnecter</button>
   </div>

@@ -1,19 +1,95 @@
-.loading, .empty {
+.loading, .empty{
   color: var(--muted);
   padding: 24px 0;
   text-align: center;
   font-size: 15px;
-  font-style: italic
+  font-style: italic;
 }
 
-.grid {
+.grid{
   display: grid;
-  grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px
+  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+  gap: 20px;
+}
+.list{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
 
-.list {
-  display: grid;
-  grid-template-columns:1fr;
-  gap: 16px
+/* ===== Pagination ===== */
+.pager{
+  margin: 18px 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+}
+
+.pg-btn{
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .08s;
+}
+.pg-btn:hover{ background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.22); }
+.pg-btn:active{ transform: translateY(1px); }
+.pg-btn[disabled]{ opacity: .45; cursor: not-allowed; }
+
+.pg-btn.active{
+  background: linear-gradient(145deg, var(--accent), #0ea5b7);
+  border-color: transparent;
+  color: #0b0f1a;
+}
+
+/* “…” : on mappe NaN à un style */
+/* Dans le template, NaN arrive via pageNums → on affiche un séparateur */
+.pager .pg-btn:nth-child(n){ }
+.pager .pg-btn::after{ }
+.pager .pg-btn:empty{ display:none; }
+.pager .pg-btn[data-ellipsis="true"]{
+  pointer-events: none;
+  border-style: dashed;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* On stylise les NaN avec un attr via directive courte */
+.pager .pg-btn.ellipsis{
+  min-width: 26px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: default;
+}
+
+/* Sélecteur taille */
+.pg-size{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.pg-size select{
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  padding: 0 10px;
+}
+
+/* Mobile */
+@media (max-width: 520px){
+  .pg-btn{ min-width: 34px; height: 34px; border-radius: 10px; }
+  .pg-size{ display:none; } /* option: cacher le select en mobile */
 }

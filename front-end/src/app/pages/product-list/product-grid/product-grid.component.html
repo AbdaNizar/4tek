@@ -1,6 +1,36 @@
 <div *ngIf="loading" class="loading">Chargement…</div>
 <div *ngIf="!loading && products.length === 0" class="empty">Aucun produit trouvé.</div>
 
-<div *ngIf="!loading && products.length" [class.grid]="view==='grid'" [class.list]="view==='list'">
-  <app-product-card *ngFor="let p of products" [product]="p" [view]="view"></app-product-card>
+<!-- Liste paginée -->
+<div *ngIf="!loading && products.length"
+     [class.grid]="view==='grid'"
+     [class.list]="view==='list'">
+  <app-product-card
+    *ngFor="let p of pagedProducts"
+    [product]="p"
+    [view]="view">
+  </app-product-card>
 </div>
+
+<!-- Pagination -->
+<nav *ngIf="!loading && totalPages > 1" class="pager" aria-label="Pagination">
+  <button class="pg-btn"
+          [disabled]="page === 1"
+          (click)="goPrev()"
+          aria-label="Page précédente">‹</button>
+
+  <ng-container *ngFor="let n of pageNums">
+    <button *ngIf="!Number.isNaN(n)"
+            class="pg-btn"
+            [class.active]="n === page"
+            (click)="goTo(n)">{{ n }}</button>
+    <span *ngIf="Number.isNaN(n)" class="pg-btn ellipsis">…</span>
+  </ng-container>
+
+  <button class="pg-btn"
+          [disabled]="page === totalPages"
+          (click)="goNext()"
+          aria-label="Page suivante">›</button>
+
+
+</nav>

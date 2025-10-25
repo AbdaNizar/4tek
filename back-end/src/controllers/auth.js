@@ -151,6 +151,26 @@ exports.verifyEmail = async (req, res) => {
 };
 
 
+exports.updateUser = async (req, res) => {
+    try {
+        console.log('req.body',req.body)
+            const { phone, name, address, avatar } = req.body || {};
+            const updates = {};
+            if (typeof phone === 'string')  updates.phone  = phone.trim();
+            if (typeof name === 'string')   updates.name   = name.trim();
+            if (typeof address === 'string')updates.address= address.trim();
+            if (typeof avatar === 'string') updates.avatar = avatar.trim();
+
+            const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, select: '-password' });
+            return res.json(user);
+
+    } catch (e) {
+        console.error('update error:', err);
+        return res.status(500).json({ ok: false });
+    }
+};
+
+
 
 
 // ---------- 1) Demande de reset ----------

@@ -1,0 +1,134 @@
+<section class="admin-contacts">
+  <header class="head">
+    <h2>Demandes de contact</h2>
+
+    <div class="tools">
+      <input type="search" #q (input)="search(q.value)" placeholder="Rechercher…" />
+      <select #s (change)="filterStatus(s.value)">
+        <option value="">Tous statuts</option>
+        <option value="new">Nouveau</option>
+        <option value="in_progress">En cours</option>
+        <option value="done">Terminé</option>
+      </select>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+
+        <th>Statut</th>
+        <th></th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let c of items(); trackBy: trackById"
+          (click)="open(c)"
+          class="clickable"
+          tabindex="0"
+          (keyup.enter)="open(c)">
+        <td>{{ c.createdAt | date:'short' }}</td>
+        <td class="person">
+          <img *ngIf="c.userId?.avatar" [src]="avatarUrlSafe(c.userId)" alt="avatar">
+          <span>{{ c.fullName }}</span>
+        </td>
+        <td>{{ c.email }}</td>
+        <td>{{ c.phone }}</td>
+
+        <td>
+            <span class="badge"
+                  [class.new]="c.status==='new'"
+                  [class.ip]="c.status==='in_progress'"
+                  [class.done]="c.status==='done'">
+              {{ c.status }}
+            </span>
+        </td>
+        <td class="actions" (click)="$event.stopPropagation()">
+          <button type="button" class="btn ghost" (click)="mark(c._id!, 'in_progress')" [disabled]="c.status==='done'">En cours</button>
+          <button type="button" class="btn primary" (click)="mark(c._id!, 'done')" [disabled]="c.status==='done'">Terminer</button>
+        </td>
+      </tr>
+
+      <tr *ngIf="items().length===0">
+        <td colspan="7" class="empty">Aucune demande.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" *ngIf="pages() > 1">
+    <button type="button" [disabled]="page()===1" (click)="setPage(page()-1)">‹</button>
+    <span>Page {{ page() }} / {{ pages() }}</span>
+    <button type="button" [disabled]="page()===pages()" (click)="setPage(page()+1)">›</button>
+  </div>
+</section>
+
+<!-- ================= MODALE DÉTAIL ================= -->
+<div class="modal-backdrop" *ngIf="modalOpen()" (click)="close()" aria-hidden="true"></div>
+
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+  <button class="modal-x" (click)="close()" aria-label="Fermer">✕</button>
+
+  <header class="modal-head">
+    <div class="who">
+      <img *ngIf="selected()?.userId?.avatar" [src]="avatarUrlSafe(selected().userId)" alt="avatar">
+      <div>
+        <h3 id="contactTitle">{{ selected()?.fullName || '—' }}</h3>
+        <p class="small">
+          {{ selected()?.email }} · {{ selected()?.phone || '—' }}
+        </p>
+      </div>
+    </div>
+
+    <span class="badge big"
+          [class.new]="selected()?.status==='new'"
+          [class.ip]="selected()?.status==='in_progress'"
+          [class.done]="selected()?.status==='done'">
+      {{ selected()?.status }}
+    </span>
+  </header>
+
+  <section class="modal-body">
+    <dl class="kv">
+      <div>
+        <dt>Date</dt>
+        <dd>{{ selected()?.createdAt | date:'full' }}</dd>
+      </div>
+      <div>
+        <dt>Email</dt>
+        <dd>{{ selected()?.email }}</dd>
+      </div>
+      <div>
+        <dt>Téléphone</dt>
+        <dd>{{ selected()?.phone || '—' }}</dd>
+      </div>
+      <div *ngIf="selected()?.userId">
+        <dt>Utilisateur</dt>
+        <dd>
+          <img *ngIf="selected().userId?.avatar" [src]="avatarUrlSafe(selected().userId)!" alt="avatar">
+
+          {{ selected()?.userId?.name || selected()?.fullName }}
+          <span class="muted">({{ selected()?.userId?.email || selected()?.email }})</span>
+        </dd>
+      </div>
+    </dl>
+
+    <div class="message">
+      <h4>Message</h4>
+      <p>{{ selected()?.message }}</p>
+    </div>
+  </section>
+
+  <footer class="modal-actions" *ngIf="selected()?.status !== 'done'">
+    <button class="btn ghost" (click)="markFromModal('in_progress')">Marquer « en cours »</button>
+    <button class="btn primary" (click)="markFromModal('done')">Terminer</button>
+  </footer>
+</div>

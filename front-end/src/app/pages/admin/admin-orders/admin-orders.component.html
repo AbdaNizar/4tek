@@ -1,0 +1,140 @@
+<section class="admin-orders">
+  <header class="head">
+    <h2>Commandes</h2>
+    <div class="tools">
+      <input type="search" #q (input)="search(q.value)" placeholder="Rechercher…" />
+      <select #s (change)="filterStatus(s.value)">
+        <option value="">Tous statuts</option>
+        <option value="pending">En attente</option>
+        <option value="confirmed">Confirmée</option>
+        <option value="shipped">Expédiée</option>
+        <option value="delivered">Livrée</option>
+        <option value="cancelled">Annulée</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="loading" *ngIf="loading()">Chargement…</div>
+
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Client</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Total</th>
+        <th>Statut</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let o of items()" class="clickable" (click)="open(o)" tabindex="0" (keyup.enter)="open(o)">
+        <td>{{ o.createdAt | date:'short' }}</td>
+        <td>{{ o.user?.name || '—' }}</td>
+        <td>{{ o.user?.email }}</td>
+        <td>{{ o.user?.phone }}</td>
+        <td>{{ o.total | number:'1.0-3' }} {{ o.currency }}</td>
+        <td><span class="badge" [class]="o.status">{{ o.status }}</span></td>
+      </tr>
+      <tr *ngIf="items().length===0">
+        <td colspan="6" class="empty">Aucune commande.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" *ngIf="pages()>1">
+    <button [disabled]="page()===1" (click)="setPage(page()-1)">‹</button>
+    <span>Page {{ page() }} / {{ pages() }}</span>
+    <button [disabled]="page()===pages()" (click)="setPage(page()+1)">›</button>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal-backdrop" *ngIf="modalOpen()" (click)="close()"></div>
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true">
+  <button class="modal-x" (click)="close()" aria-label="Fermer">✕</button>
+
+  <header class="modal-head">
+    <div class="who">
+      <div>
+        <h3>Commande #{{ selected()?._id }}</h3>
+        <p class="small">{{ selected()?.user?.name }} · {{ selected()?.user?.email }} · {{ selected()?.user?.phone }}</p>
+      </div>
+    </div>
+    <span class="badge big" [class]="selected()?.status">{{ selected()?.status }}</span>
+  </header>
+
+  <section class="modal-body">
+    <dl class="kv">
+      <div>
+        <dt>Date de création</dt>
+        <dd>{{ selected()?.createdAt | date:'full' }}</dd>
+      </div>
+      <div>
+        <dt>Adresse</dt>
+        <dd>{{ selected()?.user?.address }}</dd>
+      </div>
+      <div>
+        <dt>Montant</dt>
+        <dd>{{ selected()?.total }} {{ selected()?.currency }}</dd>
+      </div>
+    </dl>
+
+    <!-- ✅ Status timeline -->
+    <div class="timeline">
+      <div class="trow" *ngIf="selected()?.confirmedAt">
+        <span class="tlabel">Confirmée</span>
+        <span class="tdate">{{ selected()?.confirmedAt | date:'short' }}</span>
+      </div>
+      <div class="trow" *ngIf="selected()?.shippedAt">
+        <span class="tlabel">Expédiée</span>
+        <span class="tdate">{{ selected()?.shippedAt | date:'short' }}</span>
+      </div>
+      <div class="trow" *ngIf="selected()?.deliveredAt">
+        <span class="tlabel">Livrée</span>
+        <span class="tdate">{{ selected()?.deliveredAt | date:'short' }}</span>
+      </div>
+      <div class="trow" *ngIf="selected()?.canceledAt">
+        <span class="tlabel">Annulée</span>
+        <span class="tdate">{{ selected()?.canceledAt | date:'short' }}</span>
+      </div>
+    </div>
+
+    <div class="message">
+      <h4>Articles</h4>
+      <ul class="lines">
+        <li *ngFor="let it of selected()?.items">
+          <img *ngIf="it.imageUrl" [src]="it.imageUrl" alt="">
+          <span class="n">{{ it.name }}</span>
+          <span class="q">x{{ it.qty }}</span>
+          <span class="p">{{ it.price | number:'1.0-3' }} {{ selected()?.currency }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="note-edit">
+      <label>Note interne</label>
+      <textarea
+        [ngModel]="noteDraft()"
+        (ngModelChange)="noteDraft.set($event)"
+        rows="3"
+        placeholder="Ajouter une note…">
+    </textarea>
+      <button class="btn primary sm" (click)="saveNote()">Enregistrer</button>
+    </div>
+  </section>
+
+  <footer class="modal-actions">
+    <ng-container [ngSwitch]="selected()?.status">
+      <button class="btn ghost" (click)="close()">Fermer</button>
+      <button class="btn confirm" *ngSwitchCase="'pending'"    (click)="setStatus('confirmed')">Confirmer</button>
+      <button class="btn ship" *ngSwitchCase="'confirmed'"  (click)="setStatus('shipped')">Marquer expédiée</button>
+      <button class="btn deliver" *ngSwitchCase="'shipped'"    (click)="setStatus('delivered')">Marquer livrée</button>
+    </ng-container>
+    <button class="btn cancel" *ngIf="selected()?.status!=='cancelled' && selected()?.status!=='delivered'"
+            (click)="setStatus('cancelled')">Annuler</button>
+  </footer>
+
+</div>

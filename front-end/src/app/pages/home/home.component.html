@@ -1,21 +1,23 @@
 <section class="home">
   <app-banner [slides]="slides()" [intervalMs]="3000" [autoPlay]="true"></app-banner>
-
-  <!-- ici tu peux composer d'autres sous-composants :
-       <app-category></app-category>
-       <app-featured></app-featured> etc. -->
 </section>
-<app-section-separator label="Produits en vedette"></app-section-separator>
+<app-section-separator label="Catégories Populaires"></app-section-separator>
 
-<section class="home-products">
-  <div class="grid">
-<!--    <app-product-card *ngFor="let p of products()" [product]="p" view="grid"></app-product-card>-->
+<app-popular-cats-carousel [title]="'Catégories Populaires'" [cats]="popularCats()"></app-popular-cats-carousel>
 
-  </div>
-</section>
+
+<!-- === Meilleures offres (par réduction) === -->
+<app-section-separator label="Meilleures offres"></app-section-separator>
+<app-product-carousel
+  title="Meilleures Offres"
+  [products]="bestDeals()"
+  [intervalMs]="4000"
+  [autoplay]="true">
+</app-product-carousel>
+
 
 <app-section-separator label="Contactez nous"></app-section-separator>
 <app-contact-us></app-contact-us>
+
 <app-section-separator label="Pourquoi choisir 4tek ?"></app-section-separator>
 <app-home-advantages></app-home-advantages>
-

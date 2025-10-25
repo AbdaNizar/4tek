@@ -1,0 +1,236 @@
+.pc {
+  display: grid;
+  gap: 14px;
+}
+
+.pc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pc-title {
+  margin: 0;
+  font-weight: 900;
+  color: #e6edf7;
+  letter-spacing: .2px;
+  font-size: 1.35rem;
+}
+
+.pc-ctrl {
+  display: flex;
+  gap: 8px;
+}
+
+.pc-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .04);
+  color: #e6edf7;
+  backdrop-filter: blur(10px);
+  transition: border-color .2s, background .2s, transform .08s;
+}
+
+.pc-btn:hover {
+  background: rgba(34, 211, 238, .12);
+  border-color: rgba(34, 211, 238, .28);
+}
+
+.pc-btn:active {
+  transform: translateY(1px);
+}
+
+.pc-shell {
+  position: relative;
+  isolation: isolate;
+  padding-inline: 8px;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.pc-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 56px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pc-fade.right {
+  right: 0;
+  transform: scaleX(-1);
+}
+
+.pc-fade.left {
+  left: 0;
+}
+
+/* Track en grille horizontale */
+.pc-track {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 14px;
+  width: max-content;
+  grid-auto-columns: minmax(220px, 1fr);
+  padding-block: 2px;
+  border-radius: 18px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.pc-track::-webkit-scrollbar {
+  display: none;
+}
+
+.pc-item {
+  width: clamp(220px, 24vw, 290px);
+}
+
+/* Règles responsives pour coller aux colonnes 4/2/1 visuelles */
+@media (min-width: 1201px) {
+  .pc-item {
+    width: calc((100vw - 14px * 5) / 4);
+    max-width: 320px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .pc-item {
+    width: calc((100vw - 14px * 4) / 3);
+  }
+}
+
+@media (min-width: 521px) and (max-width: 900px) {
+  .pc-item {
+    width: calc((100vw - 14px * 3) / 2);
+  }
+}
+
+/* Mobile : 1 carte pleine largeur “par page” */
+@media (max-width: 520px) {
+  .pc-shell {
+    padding-inline: 0;
+  }
+
+  .pc-fade {
+    display: none;
+  }
+
+  .pc-track {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    padding: 0 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .pc-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pc-item {
+    flex: 0 0 calc(100% - 24px);
+    min-width: calc(100% - 24px);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .pc-fab {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    z-index: 3;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(18, 24, 38, .7);
+    color: #e6edf7;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+  }
+
+  .pc-fab.prev {
+    left: 6px;
+  }
+
+  .pc-fab.next {
+    right: 6px;
+  }
+}
+/* Desktop: show header arrows, hide floating (FAB) arrows */
+.pc-ctrl { display: flex; gap: 8px; }
+.pc-fab  { display: none; }
+
+/* Mobile: hide header arrows, show FAB arrows */
+@media (max-width: 768px) {
+  .pc-ctrl { display: none; }
+  .pc-fab  {
+    display: inline-flex;
+    position: absolute;
+    bottom: 10px;
+    /* center vertically if you prefer:
+       top: 50%; transform: translateY(-50%); bottom:auto; */
+    width: 38px; height: 38px;
+    align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(0,0,0,.35);
+    color: #fff;
+    z-index: 3;
+    backdrop-filter: blur(8px);
+  }
+  .pc-fab.prev { left: 8px; }
+  .pc-fab.next { right: 8px; }
+}
+
+/* Make sure the shell is the positioning context */
+.pc-shell {
+  position: relative;
+}
+
+/* Optional: fade overlays shouldn’t block clicks */
+.pc-fade { pointer-events: none; }
+
+.pc-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, .25);
+  transition: transform .15s, background .2s, width .2s;
+}
+
+.dot.active {
+  background: var(--accent, #22d3ee);
+  transform: scale(1.15);
+  width: 16px;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-track {
+    scroll-behavior: auto;
+  }
+}
+@media (max-width: 768px) {
+  .pc-dots { display: none !important; }
+}

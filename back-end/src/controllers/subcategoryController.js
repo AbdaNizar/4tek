@@ -4,7 +4,8 @@ const fsp = require('fs/promises');
 const slugify = require('slugify');
 const SubCategory = require('../models/subCategory');
 const Category = require('../models/category');
-
+const mongoose = require('mongoose');
+const Product = require('../models/productSchema');
 // util
 const ensureDir = p => { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); };
 
@@ -155,14 +156,41 @@ exports.remove = async (req, res) => {
     await sc.deleteOne();
     res.json({ ok: true });
 };
+
+
 exports.listByCategory = async (req, res) => {
     try {
         const { categoryId } = req.params;
         if (!categoryId) return res.status(400).json({ error: 'categoryId requis' });
+        if (!mongoose.isValidObjectId(categoryId)) {
+            return res.status(400).json({ error: 'categoryId invalide' });
+        }
 
-        const subs = await SubCategory.find({ parent: categoryId, isActive: true })
-            .sort({ name: 1 })
-            .lean();
+        const catId = new mongoose.Types.ObjectId(categoryId);
+
+        // One aggregation: fetch active subs of the category, then count products per sub
+        const subs = await SubCategory.aggregate([
+            { $match: { parent: catId, isActive: true } },
+            { $sort: { name: 1 } },
+            {
+                $lookup: {
+                    from: Product.collection.name, // resolves to the real collection name (e.g., 'products')
+                    let: { subId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$subCategory', '$$subId'] }, isActive: true } },
+                        { $count: 'count' }
+                    ],
+                    as: 'pc'
+                }
+            },
+            {
+                $addFields: {
+                    productsCount: { $ifNull: [{ $arrayElemAt: ['$pc.count', 0] }, 0] }
+                }
+            },
+            { $project: { pc: 0 } }
+        ]);
+
         res.json(subs);
     } catch (e) {
         console.error('listByCategory error', e);

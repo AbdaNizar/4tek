@@ -4,6 +4,8 @@ const Product = require('../models/productSchema');
 const Category = require('../models/category');
 const SubCategory = require('../models/subCategory');
 const Brand = require('../models/brand');
+const Rating  = require('../models/rating');
+
 const {checkAndCreateFolder, uniqueName, normalizeFiles} = require('../middlewares/upload');
 const fs = require('fs');
 const PUB = {
@@ -17,35 +19,81 @@ checkAndCreateFolder(PUB.gallery);
 
 
 /** LIST (public) avec filtres basiques */
+// models
+
+// controllers/product.controller.js
+
+
 exports.list = async (req, res) => {
     try {
         const {
-            q, cat,subCat,bran ,min, max, active, sort = '-createdAt',
+            q, cat, subCat, bran, min, max, active,
+            sort = '-createdAt',
             page = 1, limit = 20
         } = req.query;
+
         const where = {};
-        if (active === 'true') where.isActive = true;
+        if (active === 'true')  where.isActive = true;
         if (active === 'false') where.isActive = false;
-        if (cat) where.category = cat;
-        if (subCat) where.subCategory = subCat;
-        if (bran) where.brand = bran;
-        if (min || max) where.price = {
-            ...(min ? {$gte: Number(min)} : {}),
-            ...(max ? {$lte: Number(max)} : {})
-        };
-        if (q) where.$text = {$search: q};
+        if (cat)     where.category    = cat;
+        if (subCat)  where.subCategory = subCat;
+        if (bran)    where.brand       = bran;
+        if (min || max) {
+            where.price = {
+                ...(min ? { $gte: Number(min) } : {}),
+                ...(max ? { $lte: Number(max) } : {})
+            };
+        }
+        if (q) where.$text = { $search: q };
+
+        const pageNum  = Math.max(1, Number(page)  || 1);
+        const limitNum = Math.max(1, Number(limit) || 20);
+        const skipNum  = (pageNum - 1) * limitNum;
 
         const docs = await Product.find(where)
             .sort(sort)
-            .skip((Number(page) - 1) * Number(limit))
-            .limit(Number(limit))
+            .skip(skipNum)
+            .limit(limitNum)
             .lean();
 
         const total = await Product.countDocuments(where);
-        res.json({items: docs, total});
+        if (!docs.length) {
+            return res.json({ items: [], total, page: pageNum, limit: limitNum });
+        }
+
+        const ids = docs.map(d => d._id);
+
+        // ⚠️ Ici on utilise productId + status: 'approved'
+        const ratingsAgg = await Rating.aggregate([
+            { $match: { productId: { $in: ids }, status: 'approved' } },
+            {
+                $group: {
+                    _id: '$productId',
+                    ratingCount: { $sum: 1 },
+                    ratingAvg:   { $avg: '$stars' }
+                }
+            },
+            { // arrondi à 1 décimale (optionnel)
+                $project: {
+                    ratingCount: 1,
+                    ratingAvg: { $round: ['$ratingAvg', 1] }
+                }
+            }
+        ]);
+
+        const byProd = new Map(
+            ratingsAgg.map(r => [String(r._id), { ratingAvg: r.ratingAvg || 0, ratingCount: r.ratingCount || 0 }])
+        );
+
+        const items = docs.map(p => {
+            const r = byProd.get(String(p._id)) || { ratingAvg: 0, ratingCount: 0 };
+            return { ...p, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount };
+        });
+
+        res.json({ items, total, page: pageNum, limit: limitNum });
     } catch (e) {
         console.error('product list error:', e);
-        res.status(500).json({error: 'Erreur serveur'});
+        res.status(500).json({ error: 'Erreur serveur' });
     }
 };
 

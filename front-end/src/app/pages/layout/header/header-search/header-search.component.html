@@ -27,7 +27,7 @@
       <ng-container *ngIf="!loading() && !error() && results().length">
         <a class="hit" *ngFor="let p of results(); trackBy: trackById"
            [routerLink]="['/produits', p._id]">
-          <img class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
+          <img loading="lazy" class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
           <div class="meta">
             <div class="name">{{ p.name }}</div>
             <div class="crumbs" *ngIf="p.category?.name">
@@ -85,7 +85,7 @@
       <a class="hit" *ngFor="let p of results(); trackBy: trackById"
          [routerLink]="['/produits', p._id]"
          (click)="closeMobile()">
-        <img class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
+        <img loading="lazy" class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
         <div class="meta">
           <div class="name">{{ p.name }}</div>
           <div class="crumbs" *ngIf="p.category?.name">

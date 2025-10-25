@@ -1,0 +1,587 @@
+/* ===== General styles (assuming a dark theme context from colors) ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  /* Assuming some base dark background for the admin panel */
+  background: #0d121e;
+  color: #e5e7eb;
+  font-family: sans-serif; /* Use a common font family */
+  margin: 0;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Base button reset for custom styles */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: 100%;
+  margin: 0;
+  line-height: inherit;
+  background: none;
+  border: none;
+  color: inherit;
+}
+
+button:focus, a:focus, input:focus, select:focus, textarea:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.7); /* Blue focus ring */
+  outline-offset: 2px;
+}
+
+/* Remove default focus ring on elements that get a custom one */
+[tabindex]:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===== Layout & header ===== */
+.admin-orders {
+  display: grid;
+  gap: 14px;
+  /* Add max width for better content presentation */
+  max-width: 1400px;
+  margin: 20px auto;
+  padding: 0 16px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.head h2 {
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tools input, .tools select {
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(18, 24, 38, .75);
+  color: #e5e7eb;
+  padding: 0 12px;
+}
+
+/* ===== Table ===== */
+.table-wrap {
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f1524, #0b111f);
+  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.list {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px; /* Base minimum width for desktop/tablet */
+}
+
+.list thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-weight: 700;
+  color: #9aa3b2;
+  background: rgba(10, 15, 27, .85);
+  backdrop-filter: blur(6px);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.list tbody td {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+  vertical-align: top;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  background: rgba(255, 255, 255, .02);
+}
+
+.empty, .loading {
+  text-align: center;
+  padding: 14px;
+  color: #9aa3b2;
+}
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 84px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, .12);
+  color: #e5e7eb;
+  text-transform: capitalize;
+}
+
+.badge.pending {
+  background: rgba(234, 179, 8, .15);
+  border-color: rgba(234, 179, 8, .35);
+  color: #fde68a;
+}
+
+.badge.confirmed {
+  background: rgba(34, 211, 238, .15);
+  border-color: rgba(34, 211, 238, .35);
+  color: #baf3ff;
+}
+
+.badge.shipped {
+  background: rgba(59, 130, 246, .15);
+  border-color: rgba(59, 130, 246, .35);
+  color: #bfdbfe;
+}
+
+.badge.delivered {
+  background: rgba(16, 185, 129, .15);
+  border-color: rgba(16, 185, 129, .35);
+  color: #bbf7d0;
+}
+
+.badge.cancelled {
+  background: rgba(239, 68, 68, .15);
+  border-color: rgba(239, 68, 68, .35);
+  color: #fecaca;
+}
+
+.badge.big {
+  height: 32px;
+  min-width: 104px;
+}
+
+/* ===== Pager ===== */
+.pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pager button {
+  height: 34px;
+  width: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: #e5e7eb;
+}
+
+/* ===== Modal ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .6);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(860px, 96vw);
+  max-height: min(92vh, 900px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .03));
+  border: 1.5px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .45);
+  z-index: 1001;
+}
+
+.modal-x {
+  position: absolute;
+  inset-inline-end: 10px;
+  inset-block-start: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: #e6eaf2;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, rgba(16, 22, 36, .98), rgba(16, 22, 36, .92));
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.modal-head h3 {
+  margin: 0;
+  font-weight: 900;
+}
+
+.small {
+  margin: 0;
+  color: #9aa3b2;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow: auto;
+}
+
+/* key-values */
+.kv {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 0 0 14px;
+}
+
+.kv dt {
+  color: #9aa3b2;
+  font-weight: 700;
+}
+
+.kv dd {
+  margin: 0;
+  color: #e6eaf2;
+}
+
+/* timeline */
+.timeline {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .06);
+}
+
+.timeline .trow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: .9375rem;
+}
+
+.timeline .tlabel {
+  color: #e6eaf2;
+  font-weight: 700;
+}
+
+.timeline .tdate {
+  color: #9aa3b2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* articles */
+.message {
+  background: rgba(255, 255, 255, .03);
+  border: 1.5px solid rgba(255, 255, 255, .08);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.lines {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lines li {
+  /* Default desktop/tablet grid: Image | Name | Quantity | Price */
+  grid-template-columns: 52px 1fr auto auto;
+  display: grid;
+  gap: 10px;
+  align-items: center;
+}
+
+.lines img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #0e1525;
+  border: 1px solid rgba(255, 255, 255, .08);
+}
+
+.lines .n {
+  font-weight: 700;
+}
+
+.lines .q {
+  color: #9aa3b2;
+}
+
+.lines .p {
+  font-weight: 800;
+  text-align: right; /* Ensure price aligns to the right */
+}
+
+/* note */
+.note-edit {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.note-edit textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: #0e1525;
+  color: #e6eaf2;
+  padding: 10px;
+}
+
+/* modal actions */
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: linear-gradient(180deg, rgba(16, 22, 36, .92), rgba(16, 22, 36, .98));
+}
+
+.modal-actions .btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: #e6eaf2;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.modal-actions .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+}
+
+.modal-actions .btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.modal-actions .btn.ghost {
+  background: rgba(255, 255, 255, .06);
+  border-color: rgba(255, 255, 255, .18);
+}
+
+.modal-actions .btn.primary { /* Added support for generic primary button */
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-color: rgba(59, 130, 246, .35);
+  color: #fff;
+}
+
+.modal-actions .btn.confirm {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-color: rgba(34, 197, 94, .35);
+  color: #041017;
+}
+
+.modal-actions .btn.ship {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-color: rgba(59, 130, 246, .35);
+  color: #fff;
+}
+
+.modal-actions .btn.deliver {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: rgba(16, 185, 129, .35);
+  color: #041017;
+}
+
+.modal-actions .btn.cancel {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border-color: rgba(239, 68, 68, .4);
+  color: #fff;
+}
+
+/* ===== Mobile tweaks ===== */
+
+/* 780px and down: Main table layout */
+@media (max-width: 780px) {
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tools {
+    width: 100%;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .tools input, .tools select {
+    flex: 1 1 160px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .list {
+    min-width: 680px; /* Reduced min-width slightly */
+  }
+}
+
+/* 640px and down: Articles list in modal */
+@media (max-width: 640px) {
+  .lines li {
+    /* New grid for smaller screens: Image | Name | Price, Quantity on a separate line or merged */
+    /* To fix: Grid template was previously: 48px | 1fr | auto. This makes Quantity (q) and Price (p) share the last column.
+       Let's adjust it to make it more mobile-friendly. A common pattern is to put Qty/Price in the last two columns.
+       The initial template was: 52px | 1fr | auto | auto.
+       With 'q' and 'p' as the last two, the grid should be: 48px | Name (1fr) | Qty (auto) | Price (auto).
+       The original CSS had: grid-template-columns: 48px 1fr auto; - This removes a column!
+
+       We'll keep the 4 columns for readability: Image | Name | Quantity | Price, but reduce image size.
+       Let's revert to the 4-column structure but with smaller sizes if needed, or adjust the layout significantly.
+
+       To make it better, let's keep the image and name on the left, and Qty/Price on the right.
+    */
+    grid-template-columns: 48px 1fr auto auto; /* Image | Name | Qty | Price */
+    gap: 8px;
+  }
+
+  .lines img {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+/* 560px and down: Further table reduction */
+@media (max-width: 560px) {
+  .list {
+    min-width: 560px;
+  }
+
+  .list thead th, .list tbody td {
+    padding: 10px;
+  }
+
+  .kv {
+    /* Stack key-value pairs vertically if screen is small */
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 520px and down: Modal size and actions */
+@media (max-width: 520px) {
+  .modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    transform: translate(-50%, -50%);
+    border-radius: 14px;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .modal-head {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 14px;
+  }
+
+  .modal-head .who {
+    width: 100%;
+  }
+
+  .modal-head .badge.big {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+
+  .modal-actions {
+    gap: 8px;
+    justify-content: stretch;
+  }
+
+  .modal-actions .btn {
+    flex: 1 1 44%; /* Allows two buttons per row */
+    min-width: 44%;
+  }
+}
+
+/* 480px and down: Smallest screen articles list and timeline */
+@media (max-width: 480px) {
+  .lines li {
+    /* Image | Name (1fr) | Qty (auto) | Price (auto) */
+    grid-template-columns: 44px 1fr auto auto;
+  }
+
+  .lines img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .lines .q {
+    font-size: 0.8rem;
+  }
+
+  .timeline {
+    padding: 8px;
+  }
+
+  .timeline .trow {
+    font-size: .875rem;
+  }
+
+  .timeline .trow {
+    /* Stack timeline rows vertically on very small screens if necessary, though side-by-side might be fine */
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

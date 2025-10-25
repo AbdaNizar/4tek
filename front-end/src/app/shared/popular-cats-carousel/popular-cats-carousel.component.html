@@ -1,0 +1,32 @@
+<section class="pc" (mouseenter)="stop()" (mouseleave)="start()">
+  <div class="pc-head">
+    <h2 class="pc-title">{{ title }}</h2>
+
+    <!-- Afficher les flèches seulement si pages() > 1 -->
+    <div class="pc-ctrl" *ngIf="pages() > 1">
+      <button class="pc-btn" aria-label="Précédent" (click)="prev()">‹</button>
+      <button class="pc-btn" aria-label="Suivant"   (click)="next()">›</button>
+    </div>
+  </div>
+
+  <div class="pc-shell" #shell>
+    <div class="pc-fade left"></div>
+    <div class="pc-fade right"></div>
+
+    <div class="pc-track" #track>
+      <div class="pc-item" *ngFor="let c of cats; trackBy: trackByCat">
+        <app-category-card [cat]="c"></app-category-card>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dots aussi seulement s'il y a plusieurs pages -->
+  <div class="pc-dots" *ngIf="pages() > 1">
+    <button
+      class="dot"
+      *ngFor="let i of pagesArr()"
+      [class.active]="i === page()"
+      (click)="setPage(i)">
+    </button>
+  </div>
+</section>

@@ -22,6 +22,9 @@ export interface Product {
   specs?: string[];
   brand?: string;
   brands?: Brand;
+  ratingAvg?: number;
+  ratingCount?: number;
+  ratings?: Array<{ stars: number }>;
 
 }
 

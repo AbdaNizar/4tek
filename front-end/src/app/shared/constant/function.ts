@@ -11,7 +11,7 @@ export function showAlert(data: any): Promise<SweetAlertResult> {
     confirmButtonText: data.confirmButtonText || 'Confirmer',
     cancelButtonText: data.cancelButtonText || 'Annuler',
     cancelButtonColor: data.cancelButtonColor || 'red',
-    background: data.background || 'linear-gradient(135deg, #1e1e33, #ececec)',
+    background: data.background || 'linear-gradient(180deg, rgba(18, 24, 38, .96), rgba(15, 20, 32, .96))',
     width: data.width || '500',
     showCancelButton: data.showCancelButton || false,
     showConfirmButton: data.showConfirmButton || true,

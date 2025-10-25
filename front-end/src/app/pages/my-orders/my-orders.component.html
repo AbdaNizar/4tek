@@ -1,0 +1,62 @@
+<!-- src/app/pages/account/my-orders/my-orders.component.html -->
+<section class="orders">
+  <header class="head">
+    <h2>Mes commandes</h2>
+    <div class="tools">
+      <select #s (change)="filterStatus(s.value)">
+        <option value="">Tous statuts</option>
+        <option value="pending">En attente</option>
+        <option value="confirmed">Confirmée</option>
+        <option value="shipped">Expédiée</option>
+        <option value="delivered">Livrée</option>
+        <option value="cancelled">Annulée</option>
+      </select>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <!-- TABLE Desktop / CARDS Mobile -->
+  <div class="table-wrap" *ngIf="!loading() && items().length">
+    <table class="list hide-on-mobile">
+      <thead>
+      <tr>
+        <th>Ref</th><th>Date</th><th>Articles</th><th>Total</th><th>Statut</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let o of items(); trackBy: trackById">
+        <td>{{ o._id }}</td>
+        <td>{{ o.createdAt | date:'short' }}</td>
+        <td>{{ o.items.length }}</td>
+        <td>{{ o.total }} {{ o.currency }}</td>
+        <td><span class="badge" [class]="o.status">{{ o.status }}</span></td>
+      </tr>
+      </tbody>
+    </table>
+
+    <!-- Cards mobile -->
+    <div class="cards only-mobile">
+      <article class="card" *ngFor="let o of items(); trackBy: trackById">
+        <div class="row">
+          <h3 class="ref">#{{ o._id }}</h3>
+          <span class="badge" [class]="o.status">{{ o.status }}</span>
+        </div>
+        <div class="kv">
+          <div><dt>Date</dt><dd>{{ o.createdAt | date:'short' }}</dd></div>
+          <div><dt>Articles</dt><dd>{{ o.items.length }}</dd></div>
+          <div><dt>Livraison</dt><dd>{{ o.shippingFee }} {{ o.currency }}</dd></div>
+          <div><dt>Total</dt><dd class="total">{{ o.total }} {{ o.currency }}</dd></div>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <p *ngIf="!loading() && items().length===0" class="empty">Aucune commande.</p>
+
+  <div class="pager" *ngIf="pages()>1">
+    <button (click)="setPage(page()-1)" [disabled]="page()===1">‹</button>
+    <span>Page {{ page() }} / {{ pages() }}</span>
+    <button (click)="setPage(page()+1)" [disabled]="page()===pages()">›</button>
+  </div>
+</section>

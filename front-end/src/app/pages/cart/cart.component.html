@@ -2,7 +2,6 @@
   <h1>Panier</h1>
 
   <div class="layout">
-    <!-- Tableau articles -->
     <div class="table">
       <div class="thead">
         <span>Article</span>
@@ -17,7 +16,7 @@
           <div class="name">{{ p.name }}</div>
         </div>
 
-        <div class="price">{{ p.price | currency:'TND' }}</div>
+        <div class="price">{{ p.price +' TND' }}</div>
 
         <div class="qty">
           <button type="button" (click)="cart.dec(i)" aria-label="Moins">−</button>
@@ -26,7 +25,7 @@
           <button type="button" (click)="cart.inc(i)" aria-label="Plus">＋</button>
         </div>
 
-        <div class="line-total">{{ (p.price * p.qty) | currency:'TND' }}</div>
+        <div class="line-total">{{ (p.price * p.qty) +' TND' }}</div>
 
         <button class="remove" type="button" (click)="cart.remove(i)" aria-label="Supprimer">🗑️</button>
       </div>
@@ -34,21 +33,28 @@
       <div *ngIf="!cart.items().length" class="empty">Votre panier est vide.</div>
     </div>
 
-    <!-- Résumé -->
     <aside class="summary">
       <h2>Sommaire</h2>
 
       <div class="sum-row">
         <span>Sous-total</span>
-        <strong>{{ cart.subtotal() | currency:'TND' }}</strong>
+        <strong>{{ cart.subtotal() }} TND</strong>
+      </div>
+
+      <div class="sum-row">
+        <span>Livraison</span>
+        <strong>{{ shipping }} TND</strong>
       </div>
 
       <div class="sum-row total">
-        <span>Total de la commande</span>
-        <strong>{{ cart.subtotal() | currency:'TND' }}</strong>
+        <span>Total à payer</span>
+        <strong>{{ total }} TND</strong>
       </div>
 
-      <button class="btn-primary w-full">PASSER À LA CAISSE</button>
+      <button class="btn-primary w-full" (click)="checkout()">
+        PASSER À LA CAISSE
+      </button>
     </aside>
+
   </div>
 </section>

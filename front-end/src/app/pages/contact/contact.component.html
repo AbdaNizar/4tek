@@ -22,8 +22,6 @@
         <input id="phone" type="tel" formControlName="phone" placeholder="ex: +216 12 345 678" />
         <small *ngIf="showError('phone')">Téléphone invalide.</small>
       </div>
-
-
     </div>
 
     <div class="field">
@@ -32,7 +30,6 @@
       <small *ngIf="showError('message')">Message requis (10–1000 caractères).</small>
     </div>
 
-    <!-- Honeypot (ne pas supprimer) -->
     <input formControlName="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true"/>
 
     <div class="actions">
@@ -40,7 +37,6 @@
         {{ sending() ? 'Envoi…' : 'Envoyer' }}
       </button>
     </div>
-
 
     <p *ngIf="ok()" class="notice-ok">Merci ! Ton message a été envoyé.</p>
     <p *ngIf="err()" class="notice-warn">{{ err() }}</p>

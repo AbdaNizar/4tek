@@ -17,12 +17,12 @@ async function requireAuth(req, res, next) {
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
         const user = await User.findById(payload.sub).lean();
-
         if (!user) {
             return res.status(401).json({ error: "Utilisateur introuvable" });
         }
         if (!user || !user.active) return res.status(401).json({ error: 'Unauthorized' });
         req.user = { id: user._id.toString(), role: user.role, email: user.email  , name : user.name , phone : user.phone, address : user.address,};
+        console.log(req.user.address)
         next();
     } catch (err) {
         return res.status(401).json({ error: "Token invalide ou expiré" });

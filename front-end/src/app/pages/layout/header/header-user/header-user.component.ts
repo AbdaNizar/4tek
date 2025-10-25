@@ -10,13 +10,13 @@ import {
   ValidatorFn,
   ValidationErrors
 } from '@angular/forms';
-import {Router, ActivatedRoute, NavigationEnd} from '@angular/router';
+import {Router, ActivatedRoute, NavigationEnd, RouterLink} from '@angular/router';
 import {filter, Subscription} from 'rxjs';
 import {AuthService} from '../../../../services/auth/auth.service';
 import {ToastService} from '../../../../services/toast/toast.service';
 import {environment} from '../../../../../environments/environment';
+import {AuthModalService, Mode} from '../../../../services/authModal/auth-modal.service';
 
-type Mode = 'login' | 'register' | 'forgot' | 'reset' | 'verify-email';
 
 function matchOther(otherKey: string): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
@@ -31,7 +31,7 @@ function matchOther(otherKey: string): ValidatorFn {
 @Component({
   standalone: true,
   selector: 'app-header-user',
-  imports: [CommonModule, NgIf, ReactiveFormsModule],
+  imports: [CommonModule, NgIf, ReactiveFormsModule, RouterLink],
   templateUrl: './header-user.component.html',
   styleUrls: ['./header-user.component.css']
 })
@@ -42,6 +42,8 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private authModal = inject(AuthModalService);
+  private modalSub?: Subscription;
 
   hasAvatar = signal(true);
   open = signal(false);
@@ -72,6 +74,33 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   });
 
   async ngOnInit() {
+    this.modalSub = this.authModal.open$.subscribe(opts => {
+      // mode demandé ?
+      if (opts.mode) this.mode.set(opts.mode);
+
+      // reset des messages
+      this.err.set(undefined);
+      this.okMsg.set(undefined);
+
+      // préremplissage éventuel
+      if (opts.patch) this.form.patchValue(opts.patch, { emitEvent: false });
+
+      // ouvre si pas déjà ouvert
+      if (!this.open()) {
+        this.open.set(true);
+        this.lockBody();
+      }
+
+      // autofocus ?
+      queueMicrotask(() => {
+        this.collectFocusables();
+        if (opts.autofocus !== false) this.firstField?.nativeElement?.focus();
+      });
+
+      // ajuster les validateurs au mode
+      this.setupValidatorsForMode();
+    });
+
     // auto open modal en mode reset quand on visite /reset-password/:token
     this.navSub = this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
@@ -130,6 +159,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.modalSub?.unsubscribe();
     this.navSub?.unsubscribe();
     if (this.open()) this.unlockBody();
   }

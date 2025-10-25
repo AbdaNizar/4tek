@@ -19,7 +19,7 @@
          [routerLink]="['/categories', c._id]"
          (click)="closed.emit()">
         <div class="ico">
-          <img [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'"
+          <img loading="lazy" [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'"
                [alt]="c.name" />
         </div>
         <span>{{ c.name }}</span>

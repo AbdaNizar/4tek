@@ -63,6 +63,7 @@ export class ProductListComponent implements OnInit {
     try {
       const data = await this.productsApi.listBySubcategory(subId).toPromise();
       this.allProducts = (data?.items || []);
+      console.log('allProducts',this.allProducts)
       // if no products, show nothing
       this.products.set(this.allProducts);
       // reset slider bounds from data if needed

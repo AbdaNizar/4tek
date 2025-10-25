@@ -21,7 +21,7 @@ export class ProductService {
   replace(id: string, fd: FormData) {
     return this.http.put<Product>(`/products/${id}/replace`, fd);
   }
-  listBySubcategory(subId: string, limit = 6): Observable<{items: Product[], total: number}> {
+  listBySubcategory(subId: string, limit = 12): Observable<{items: Product[], total: number}> {
     return this.http.get<{items: Product[], total: number}>(`/products?subCat=${subId}&limit=${limit}`);
   }
   getBySlug(slug: string): Observable<Product> {

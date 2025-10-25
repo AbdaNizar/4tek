@@ -47,6 +47,19 @@
 
     <!-- bas de carte -->
     <div class="bottom">
+
+      <div class="rating-line" *ngIf="product.ratingCount! > 0"
+           [attr.aria-label]="'Note ' + (product.ratingAvg | number:'1.1-1') + ' sur 5 pour ' + product.name">        <div class="stars-meter" [style.--fill]="(Math.min(5, Math.max(0, product.ratingAvg || 0)) * 20) + '%'">
+          <span class="bg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+          <span class="fg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+        </div>
+        <span class="rating-avg">{{ product.ratingAvg | number:'1.1-1' }}</span>
+        <span class="rating-cnt">({{ product.ratingCount }})</span>
+      </div>
+      <ng-template #noRating>
+        <div class="rating-line muted">Pas d’avis</div>
+      </ng-template>
+
       <div class="price-wrap">
         <span class="price">{{ product.price | currency:(product.currency || 'TND') }}</span>
         <span class="old" *ngIf="product.oldPrice">{{ product.oldPrice | currency:(product.currency || 'TND') }}</span>

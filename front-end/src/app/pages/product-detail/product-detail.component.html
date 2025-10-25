@@ -1,11 +1,33 @@
 <section class="detail" *ngIf="product() as p">
-  <!-- Col gauche : galerie -->
+  <!-- Galerie -->
   <div class="gallery">
-    <div class="main">
+    <div class="main"
+         [class.zoom-active]="zoomed"
+         (click)="toggleZoom($event)"
+         (mousemove)="onZoomMove($event)"
+         (touchmove)="onZoomMove($event)"
+         (touchstart)="onZoomMove($event)">
+      <!-- FRACTIONAL STAR METER -->
+      <div class="rating-meter"
+           *ngIf="avgRating() > 0"
+           [attr.aria-label]="'Note moyenne ' + (avgRating() | number:'1.1-1') + ' sur 5'">
+        <div class="stars-meter" [style.--fill]="(avgRating()*20) + '%'">
+          <span class="bg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+          <span class="fg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+        </div>
+      </div>
+
       <img [src]="getUrl(images()[activeIndex()]) || 'assets/images/placeholder.jpg'"
-           [alt]="p.name"/>
+           [alt]="p.name"
+           [style.transform-origin]="zoomCX + '% ' + zoomCY + '%'"
+           [style.transform]="zoomed ? 'scale(2.2)' : 'scale(1)'" />
       <div *ngIf="discount()" class="badge">-{{ discount() }}%</div>
+
+      <!-- petite aide visuelle -->
+      <div class="zoom-hint" *ngIf="!zoomed"> Cliquez pour zoomer</div>
+      <div class="zoom-hint" *ngIf="zoomed">↔ Déplacez / Cliquez pour quitter</div>
     </div>
+
 
     <div class="thumbs" *ngIf="images().length > 1">
       <button type="button"
@@ -19,7 +41,7 @@
     </div>
   </div>
 
-  <!-- Col droite : infos / achat -->
+  <!-- Fiche -->
   <aside class="sheet">
     <h1 class="title">{{ p.name }}</h1>
 
@@ -77,7 +99,101 @@
     </div>
 
     <div class="ship">
-      <strong>Livraison</strong> : Gratuite — <small>Expédition en 24h</small>
+      <strong>Livraison</strong> : 8TND <small>Expédition en 24h</small>
     </div>
   </aside>
+</section>
+
+<!-- ================== Avis & Notes ================== -->
+<section class="reviews">
+  <header class="rev-head">
+    <h3>Avis des utilisateurs</h3>
+
+    <!-- moyenne en étoiles + valeur (garde la valeur si tu veux) -->
+    <div class="rev-meta" *ngIf="ratingsCount() > 0">
+      <div class="stars-meter mini" [style.--fill]="(avgRating()*20) + '%'">
+        <span class="bg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+        <span class="fg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+      </div>
+      <span class="rev-avg">{{ avgRating() | number:'1.1-1' }}/5</span>
+    </div>
+  </header>
+
+  <!-- grille 2 colonnes -->
+  <div class="reviews-grid">
+    <div class="add-review">
+      <h4>Ajouter un avis</h4>
+
+      <div *ngIf="!auth.isLoggedIn()" class="login-wall">
+        <button class="btn-primary" (click)="askLoginOrRegister()">Se connecter / Créer un compte</button>
+      </div>
+
+      <div *ngIf="auth.isLoggedIn()" class="rev-form">
+        <div class="stars-pick" role="radiogroup" aria-label="Note sur 5">
+          <button
+            *ngFor="let s of [1,2,3,4,5]"
+            type="button"
+            class="star-btn"
+            [class.on]="s <= formStars()"
+            (click)="setStars(s)"
+            [attr.aria-checked]="s === formStars()"
+            role="radio"
+            [attr.aria-label]="s + ' étoiles'">★</button>
+        </div>
+
+        <textarea
+          class="rev-input"
+          rows="3"
+          maxlength="2000"
+          [(ngModel)]="formComment"
+          placeholder="Partage ton expérience…"></textarea>
+
+        <div class="rev-actions">
+          <button class="btn-primary"
+                  [disabled]="formStars()===0 || saving()"
+                  (click)="submitRating()">
+            {{ myRating() ? 'Mettre à jour' : 'Envoyer l’avis' }}
+          </button>
+          <span class="muted" *ngIf="myRating() && myRating()!.status !== 'approved'">
+            (Ton avis est <strong>{{ myRating()!.status }}</strong> par l’admin)
+          </span>
+        </div>
+      </div>
+    </div>
+    <!-- LISTE A GAUCHE -->
+
+    <!-- LISTE A GAUCHE -->
+    <div class="rev-scroll" [class.scroll]="ratings().length > 2" *ngIf="ratings().length; else noRev">
+      <div class="rev-list">
+          <article class="rev" *ngFor="let r of ratings()">
+            <header class="rev-top">
+              <div class="who">
+                <div class="avatar">
+                  {{ r.user?.name| uppercase  | slice:0:1 }}
+                </div>
+                <div class="id">
+                  <strong>{{ r.user?.name || (r.user?.email || '').split('@')[0] }}</strong>
+                  <small>{{ r.createdAt | date:'mediumDate' }}</small>
+                </div>
+              </div>
+              <div class="stars read-only">
+                <ng-container *ngFor="let s of [1,2,3,4,5]">
+                  <i class="s" [class.f]="s <= r.stars">★</i>
+                </ng-container>
+              </div>
+            </header>
+            <p class="rev-body" *ngIf="r.comment">{{ r.comment }}</p>
+          </article>
+
+      </div>
+    </div>
+    <ng-template #noRev>
+      <p class="muted">Aucun avis pour l’instant.</p>
+    </ng-template>
+
+
+
+    <!-- FORM A DROITE -->
+
+  </div>
 </section>

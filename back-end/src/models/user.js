@@ -5,6 +5,8 @@ const UserSchema = new mongoose.Schema({
     email:   { type: String, lowercase: true, index: true, unique: true, sparse: true },
     name:    { type: String },
     avatar:  { type: String },
+    phone:  { type: String },
+    address:  { type: String },
     role:    { type: String, enum: ['user','admin'], default: 'user' },
     active:{ type: Boolean, default: false },
     isVerified:{ type: Boolean, default: false },

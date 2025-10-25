@@ -95,7 +95,7 @@ a.link:hover{ text-decoration:underline; }
 ========================= */
 .btn{
   display:inline-flex; align-items:center; justify-content:center;
-  padding:10px 12px; border-radius:12px; cursor:pointer;
+   border-radius:12px; cursor:pointer;
   border:1px solid rgba(255,255,255,.12); color:var(--text); background:transparent;
   transition: transform .1s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
 }

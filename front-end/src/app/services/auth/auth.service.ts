@@ -1,18 +1,16 @@
 // src/app/services/auth.service.ts
 import {Injectable, inject, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {environment} from '../../../environments/environment';
 import {Router} from '@angular/router';
 import {ToastService} from '../toast/toast.service';
 
-type User = { id: string; email?: string; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user' | 'admin' };
+type User = { id: string; email?: string; phone?: string; address?: string ; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user' | 'admin' };
 type LoginResp = { token: string; user: User };
 
 @Injectable({providedIn: 'root'})
 export class AuthService {
   private http = inject(HttpClient);
-  private router = inject(Router);
-  private toast = inject(ToastService);
+
 
   constructor() {
     window.addEventListener('focus', () => this.rehydrateFromStorage());
@@ -144,9 +142,11 @@ export class AuthService {
   }
 
 
-  // auth.service.ts
-// auth.service.ts
-  CLIENT_URL  = environment.APP_URL; // 'http://localhost:4200' in dev
+  async updateProfile(patch: Partial<User>) {
+    const res = await this.http.patch<User>(`/auth/me`, patch).toPromise();
+    if (!res) throw new Error('Réponse vide');
+    this.user.set(res)
+  }
 
 
 

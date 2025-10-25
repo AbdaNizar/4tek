@@ -1,0 +1,42 @@
+<section class="pc">
+  <div class="pc-head">
+    <h2 class="pc-title">{{ title }}</h2>
+    <div class="pc-ctrl">
+      <button class="pc-btn" (click)="scroll('left')" aria-label="Précédent">‹</button>
+      <button class="pc-btn" (click)="scroll('right')" aria-label="Suivant">›</button>
+    </div>
+  </div>
+
+  <div class="pc-shell" #shell>
+    <div class="pc-fade left"></div>
+    <div class="pc-fade right"></div>
+
+    <div
+      class="pc-track"
+      #track
+      (touchstart)="onUserStart()"
+      (touchend)="onUserEnd()"
+      (mouseenter)="onUserStart()"
+      (mouseleave)="onUserEnd()"
+    >
+      <div class="pc-item" *ngFor="let p of products; let i = index">
+        <app-product-card [product]="p" view="grid"></app-product-card>
+      </div>
+    </div>
+
+    <!-- mobile FAB arrows -->
+    <button class="pc-fab prev" (click)="scroll('left')" aria-label="Précédent">‹</button>
+    <button class="pc-fab next" (click)="scroll('right')" aria-label="Suivant">›</button>
+  </div>
+
+  <!-- dots -->
+  <div class="pc-dots" *ngIf="products.length > 1">
+    <button
+      *ngFor="let _ of products; let i = index"
+      class="dot"
+      [class.active]="i === index"
+      (click)="goToDot(i)"
+
+    ></button>
+  </div>
+</section>

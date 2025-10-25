@@ -1,5 +1,5 @@
 import {Component, HostListener, inject, OnInit, signal} from '@angular/core';
-import {RouterLink, RouterLinkActive} from '@angular/router';
+import {Router, RouterLink, RouterLinkActive} from '@angular/router';
 import {getUrl} from '../../../../shared/constant/function';
 import {NgForOf, NgIf} from '@angular/common';
 import {CategoryService} from '../../../../services/category/category.service';
@@ -28,7 +28,7 @@ export class HeaderNavDesktopComponent implements OnInit {
   private catsApi = inject(CategoryService);
   private subsApi = inject(SubcategoryService);
   private prodApi = inject(ProductService);
-
+  private router: Router
   loading = signal(true);
   open = signal(false);
   categories = signal<Category[]>([]);
@@ -108,7 +108,6 @@ export class HeaderNavDesktopComponent implements OnInit {
   }
 
   prodsOf(subCategory: ID) {
-    console.log(this.prodCache.values())
     return this.prodCache.get(subCategory) || [];
   }
 
@@ -131,6 +130,30 @@ export class HeaderNavDesktopComponent implements OnInit {
   onWinScroll() {
     this.activeCatId.set(null);
     this.activeSubId.set(null);
+  }
+  hoverOutTimer: any = null;
+
+  onPanelEnter() {
+    if (this.hoverOutTimer) {
+      clearTimeout(this.hoverOutTimer);
+      this.hoverOutTimer = null;
+    }
+  }
+
+  onPanelLeave() {
+    // laisse 120 ms pour que le click parte avant de fermer le panel
+    this.hoverOutTimer = setTimeout(() => {
+      this.activeCatId.set(null);
+      this.activeSubId.set(null);
+    }, 120);
+  }
+
+  goTo(ev: MouseEvent, commands: any[]) {
+
+    console.log('hereeeee' ,commands)
+    ev.preventDefault();
+    ev.stopPropagation();
+    this.router.navigate(commands);
   }
 
 }

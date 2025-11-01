@@ -1,6 +1,6 @@
 const express = require("express");
 const ctrl = require("../controllers/auth");
-const {requireAuth} = require("../middlewares/auth");
+const {requireAuth,requireAdmin} = require("../middlewares/auth");
 const passport = require('../config/passport');
 const jwt = require("jsonwebtoken");
 
@@ -16,6 +16,8 @@ r.post('/register', ctrl.register);
 r.post('/resend-verification', ctrl.resendVerify);
 r.get('/verify/email', ctrl.verifyEmail);
 r.patch('/me', requireAuth,ctrl.updateUser);
+r.get('/admin/users', requireAuth,requireAdmin,ctrl.getAdminUsers);
+r.get('/admin/users/:id',requireAuth, requireAdmin, ctrl.getAdminUserDetail);
 /** GOOGLE */
 r.get('/google',
     passport.authenticate('google', {session: false}));
@@ -28,8 +30,7 @@ r.get('/google/callback',
 
 
 /** crée un JWT et renvoie la page de succès (popup) */
-// sendTokenPage.js
-// sendTokenPage.js
+
 function sendTokenPage(res, user) {
     const { CLIENT_URL, JWT_SECRET, JWT_EXPIRES } = process.env;
 

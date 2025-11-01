@@ -1,11 +1,27 @@
 // src/app/services/auth.service.ts
 import {Injectable, inject, signal} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {Router} from '@angular/router';
-import {ToastService} from '../toast/toast.service';
 
-type User = { id: string; email?: string; phone?: string; address?: string ; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user' | 'admin' };
-type LoginResp = { token: string; user: User };
+
+export type User = {
+  id: string;
+  _id?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  name?: string;
+  isVerified?: boolean;
+  active?: boolean;
+  avatar?: string;
+  role?: 'user' | 'admin',
+  providers?: {
+    google: { type: String, index: true, sparse: true },
+    facebook: { type: String, index: true, sparse: true }
+  },
+  createdAt?: string,
+  ordersCount?: number
+};
+export type LoginResp = { token: string; user: User };
 
 @Injectable({providedIn: 'root'})
 export class AuthService {
@@ -34,7 +50,7 @@ export class AuthService {
 
   /** Email/password */
   async login(email: string, password: string) {
-    const res = await this.http.post<LoginResp>(`/auth/login`, { email, password }).toPromise();
+    const res = await this.http.post<LoginResp>(`/auth/login`, {email, password}).toPromise();
     if (!res) throw new Error('Réponse vide');
     if (!res.user.isVerified) {
       throw new Error('Email non vérifié. Vérifie ta boîte mail ou renvoie l’email de confirmation.');
@@ -54,19 +70,19 @@ export class AuthService {
 
 
   async forgotPassword(email: string) {
-    await this.http.post(`/auth/forgot/password`, { email }).toPromise();
-
+    await this.http.post(`/auth/forgot/password`, {email}).toPromise();
 
 
   }
+
   async resetPassword(token: string, password: string): Promise<void> {
-    await this.http.post<{ ok: boolean }>(`/auth/reset`, { token, password }).toPromise();
+    await this.http.post<{ ok: boolean }>(`/auth/reset`, {token, password}).toPromise();
   }
 
   // --------- Vérification email : renvoi du lien ----------
   async resendVerification(email: string): Promise<void> {
     console.log('email ', email)
-    await this.http.post(`/auth/resend-verification`, { email }).toPromise();
+    await this.http.post(`/auth/resend-verification`, {email}).toPromise();
   }
 
   // --------- Interception du hash #data=... ----------
@@ -76,7 +92,7 @@ export class AuthService {
    * Retourne true si un login a été appliqué.
    */
   // Parse #data=... and act
-  async handleAuthHash(): Promise<{type?: string, email?: string} | null> {
+  async handleAuthHash(): Promise<{ type?: string, email?: string } | null> {
     const hash = window.location.hash || '';
     const m = hash.match(/#data=([^&]+)/);
     if (!m) return null;
@@ -90,16 +106,16 @@ export class AuthService {
 
       switch (data?.type) {
         case 'VERIFY_OK':
-          if (data?.token && data?.user) this.applyLogin({ token: data.token, user: data.user });
-          return { type: 'VERIFY_OK' };
-          case 'EMAIL_VALID':
-            return { type: 'EMAIL_VALID', email: data?.email };
+          if (data?.token && data?.user) this.applyLogin({token: data.token, user: data.user});
+          return {type: 'VERIFY_OK'};
+        case 'EMAIL_VALID':
+          return {type: 'EMAIL_VALID', email: data?.email};
 
         case 'VERIFY_EXPIRED':
-          return { type: 'VERIFY_EXPIRED', email: data?.email };
+          return {type: 'VERIFY_EXPIRED', email: data?.email};
 
         case 'VERIFY_INVALID':
-          return { type: 'VERIFY_INVALID', email: data?.email };
+          return {type: 'VERIFY_INVALID', email: data?.email};
 
         default:
           return null;
@@ -108,13 +124,6 @@ export class AuthService {
       return null;
     }
   }
-
-
-
-
-
-
-
 
 
   /** === GOOGLE OAUTH ===
@@ -149,9 +158,6 @@ export class AuthService {
   }
 
 
-
-
-
   /** Persist + signal update */
   applyLogin(res: { token: string; user: User }) {
     this.token.set(res.token);
@@ -159,6 +165,7 @@ export class AuthService {
     localStorage.setItem('auth_token', res.token);
     localStorage.setItem('auth_user', JSON.stringify(res.user));
   }
+
   rehydrateFromStorage() {
     const tok = localStorage.getItem('auth_token');
     const usrStr = localStorage.getItem('auth_user');
@@ -172,7 +179,7 @@ export class AuthService {
       }
     }
   }
-// src/app/services/auth/auth.service.ts
+
   openOAuthPopup(url: string): Window {
     const state = crypto.getRandomValues(new Uint32Array(4)).join('-');
     const u = `${url}?state=${encodeURIComponent(state)}`;
@@ -190,32 +197,5 @@ export class AuthService {
     return popup;
   }
 
-  waitForOAuthMessage(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-
-      const cleanup = () => {
-        if (settled) return;
-        settled = true;
-        try { window.removeEventListener('message', onMessage); } catch {}
-
-      };
-
-      // 1) postMessage
-      const onMessage = (ev: MessageEvent) => {
-        // If origins differ in dev/prod, don’t block; validate structure instead
-        if (!ev.data || ev.data.type !== 'OAUTH_RESULT' || !ev.data.token || !ev.data.user)
-          this.applyLogin({ token: localStorage.getItem('auth_token'), user: JSON.parse(localStorage.getItem('auth_user')) });
-
-      };
-      window.addEventListener('message', onMessage);
-      resolve()
-
-
-
-
-
-    });
-  }
 
 }

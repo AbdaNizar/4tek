@@ -1,0 +1,184 @@
+<section class="admin-ratings">
+  <header class="head">
+    <h2>Avis & notes</h2>
+
+    <div class="tools">
+      <input type="search" placeholder="Rechercher (nom, email, commentaire)…"
+             [ngModel]="q()" (ngModelChange)="search($event)" />
+      <select [ngModel]="status()" (ngModelChange)="filterStatus($event)">
+        <option value="">Tous statuts</option>
+        <option value="pending">En attente</option>
+        <option value="approved">Approuvés</option>
+        <option value="rejected">Rejetés</option>
+      </select>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Produit</th>
+        <th>Utilisateur</th>
+        <th>Note</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let r of items()" class="clickable" (click)="open(r)" tabindex="0" (keyup.enter)="open(r)">
+        <td class="product">
+          <img [src]="productImage(r)" alt="" />
+          <span class="ellipsis">{{ productName(r) }}</span>
+        </td>
+
+        <td class="person">
+          <span class="ellipsis">
+            {{ r.user?.name || '—' }}
+            <small class="muted">· {{ r.user?.email || '—' }}</small>
+          </span>
+        </td>
+
+        <td>
+          <span class="stars">
+            <i *ngFor="let on of starsArray(r.stars)" [class.on]="on">★</i>
+          </span>
+        </td>
+
+        <td>
+          <span class="badge"
+                [class.pending]="r.status==='pending'"
+                [class.approved]="r.status==='approved'"
+                [class.rejected]="r.status==='rejected'">
+            {{ r.status }}
+          </span>
+        </td>
+
+        <td class="actions" (click)="$event.stopPropagation()">
+          <!-- Montrer seulement les actions pertinentes -->
+          <button class="btn primary"
+                  *ngIf="r.status !== 'approved'"
+                  (click)="approve(r)"
+                  [disabled]="actionBusy()">
+            <span class="spinner" *ngIf="actionLoading()==='approve'"></span>
+            Approuver
+          </button>
+
+          <button class="btn warn"
+                  *ngIf="r.status !== 'rejected'"
+                  (click)="reject(r)"
+                  [disabled]="actionBusy()">
+            <span class="spinner" *ngIf="actionLoading()==='reject'"></span>
+            Rejeter
+          </button>
+
+          <button class="btn danger"
+                  (click)="remove(r)"
+                  [disabled]="actionBusy()">
+            <span class="spinner" *ngIf="actionLoading()==='remove'"></span>
+            Supprimer
+          </button>
+        </td>
+      </tr>
+
+      <tr *ngIf="items().length===0">
+        <td colspan="7" class="empty">Aucun avis.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" *ngIf="pages() > 1">
+    <button type="button" [disabled]="page()===1" (click)="setPage(page()-1)">‹</button>
+    <span>Page {{ page() }} / {{ pages() }}</span>
+    <button type="button" [disabled]="page()===pages()" (click)="setPage(page()+1)">›</button>
+  </div>
+</section>
+
+<!-- =============== MODAL =============== -->
+<div class="modal-backdrop" *ngIf="modalOpen()" (click)="close()"></div>
+
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true" (click)="close()">
+  <button class="modal-x" (click)="close()" aria-label="Fermer">✕</button>
+
+  <header class="modal-head" (click)="$event.stopPropagation()">
+    <div class="who">
+      <img [src]="productImage(selected()!)" alt="product"/>
+      <div>
+        <h3>{{ productName(selected()!) }}</h3>
+        <p class="small">
+          {{ selected()?.user?.name || '—' }}
+          <span class="muted">({{ selected()?.user?.email || '—' }})</span>
+        </p>
+      </div>
+    </div>
+
+    <span class="badge big"
+          [class.pending]="selected()?.status==='pending'"
+          [class.approved]="selected()?.status==='approved'"
+          [class.rejected]="selected()?.status==='rejected'">
+      {{ selected()?.status }}
+    </span>
+  </header>
+
+  <section class="modal-body" (click)="$event.stopPropagation()">
+    <div class="row2">
+      <div class="card">
+        <h4>Détails de l’avis</h4>
+        <dl class="kv">
+          <div><dt>Date</dt><dd>{{ selected()?.createdAt | date:'full' }}</dd></div>
+          <div><dt>Note</dt>
+            <dd class="stars big"><i *ngFor="let on of starsArray(selected()?.stars || 0)" [class.on]="on">★</i></dd>
+          </div>
+          <div><dt>Produit</dt>
+            <!-- utilise routerLink de manière sûre -->
+            <dd><a [routerLink]="productLink(selected()!)" target="_blank">{{ productName(selected()!) }}</a></dd>
+          </div>
+          <div><dt>ID produit</dt><dd><code>{{ selected()?.productId }}</code></dd></div>
+        </dl>
+
+        <div class="message" *ngIf="selected()?.comment">
+          <h5>Commentaire</h5>
+          <p>{{ selected()?.comment }}</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>Utilisateur</h4>
+        <dl class="kv">
+          <div><dt>Nom</dt><dd>{{ selected()?.user?.name || '—' }}</dd></div>
+          <div><dt>Email</dt><dd>{{ selected()?.user?.email || '—' }}</dd></div>
+          <div><dt>ID</dt><dd><code>{{ selected()?.user?.id }}</code></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <footer class="modal-actions" (click)="$event.stopPropagation()">
+    <button class="btn primary"
+            *ngIf="selected()?.status !== 'approved'"
+            (click)="approve(selected()!)"
+            [disabled]="actionBusy()">
+      <span class="spinner" *ngIf="actionLoading()==='approve'"></span>
+      Approuver
+    </button>
+
+    <button class="btn warn"
+            *ngIf="selected()?.status !== 'rejected'"
+            (click)="reject(selected()!)"
+            [disabled]="actionBusy()">
+      <span class="spinner" *ngIf="actionLoading()==='reject'"></span>
+      Rejeter
+    </button>
+
+    <button class="btn danger"
+            (click)="remove(selected()!)"
+            [disabled]="actionBusy()">
+      <span class="spinner" *ngIf="actionLoading()==='remove'"></span>
+      Supprimer
+    </button>
+  </footer>
+</div>

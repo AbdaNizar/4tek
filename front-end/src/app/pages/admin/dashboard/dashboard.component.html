@@ -1,11 +1,62 @@
 <!-- src/app/pages/admin/dashboard/admin-dashboard.component.html -->
 <section class="dash">
   <h2>Bienvenue 👋</h2>
+
   <div class="grid">
-    <div class="card"><h3>📦 Produits</h3><p class="muted">Vue et gestion.</p></div>
-    <div class="card"><h3>🗂️ Catégories</h3><p class="muted">Ajout / édition / médias.</p></div>
-    <div class="card"><h3>🗂️ Sous-catégories</h3><p class="muted">Ajout / édition / médias.</p></div>
-    <div class="card"><h3>👥 Utilisateurs</h3><p class="muted">Accès, rôles, sécurité.</p></div>
-    <div class="card"><h3>📩 Demandes de contact</h3><p class="muted">Accès, rôles, sécurité.</p></div>
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/commandes')"
+             (keydown.enter)="goTo('/admin/commandes')">
+      <h3><span class="icon">🛒</span> Commandes</h3>
+      <p class="muted">Suivi, statuts, détails et gestion des commandes.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/utilisateurs')"
+             (keydown.enter)="goTo('/admin/utilisateurs')">
+      <h3><span class="icon">👥</span> Utilisateurs</h3>
+      <p class="muted">Profils, vérification email, rôles et activité.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/brands')"
+             (keydown.enter)="goTo('/admin/brands')">
+      <h3><span class="icon">🏷️</span> Marques</h3>
+      <p class="muted">Création, édition, médias et visibilité.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/categories')"
+             (keydown.enter)="goTo('/admin/categories')">
+      <h3><span class="icon">🗂️</span> Catégories</h3>
+      <p class="muted">Gestion des catégories, icônes et bannières.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/sous-categories')"
+             (keydown.enter)="goTo('/admin/sous-categories')">
+      <h3><span class="icon">🧩</span> Sous-catégories</h3>
+      <p class="muted">Organisation fine, médias et statut.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/produits')"
+             (keydown.enter)="goTo('/admin/produits')">
+      <h3><span class="icon">📦</span> Produits</h3>
+      <p class="muted">Catalogue, stocks, prix et publications.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/avis')"
+             (keydown.enter)="goTo('/admin/avis')">
+      <h3><span class="icon">✨</span> Avis</h3>
+      <p class="muted">Modération des notes et commentaires.</p>
+    </article>
+
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/contacts')"
+             (keydown.enter)="goTo('/admin/contacts')">
+      <h3><span class="icon">📩</span> Contacts</h3>
+      <p class="muted">Demandes clients : suivi et résolution.</p>
+    </article>
   </div>
 </section>

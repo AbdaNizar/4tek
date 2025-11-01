@@ -1,0 +1,76 @@
+<div class="subcat-detail" *ngIf="!loading(); else loadingTpl">
+  <ng-container *ngIf="subcat() as s; else emptyTpl">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="cover">
+        <img [src]="getUrl(s.imageUrl || s.banners?.[0] || s.iconUrl)" [alt]="s.name" />
+      </div>
+
+      <div class="hero-content">
+        <div class="title-line">
+          <span class="icon" *ngIf="s.iconUrl">
+            <img [src]="getUrl(s.iconUrl)" [alt]="s.name + ' icon'"/>
+          </span>
+          <h1>{{ s.name }}</h1>
+          <span class="dot"></span>
+          <span class="badge" [class.on]="s.isActive" [class.off]="!s.isActive">
+            {{ s.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <div class="slug">/{{ s.slug }}</div>
+
+        <div class="desc" [class.expanded]="descExpanded()">
+          <p>{{ s.description || '—' }}</p>
+          <button
+            *ngIf="(s.description || '').length > 140"
+            type="button"
+            class="read-more"
+            (click)="toggleDesc()">
+            {{ descExpanded() ? 'Lire moins' : 'Lire la suite' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="gallery" *ngIf="s.banners?.length">
+      <h3>Bannières</h3>
+      <div class="thumbs">
+        <figure class="thumb" *ngFor="let b of s.banners">
+          <img [src]="getUrl(b)" [alt]="s.name + ' banner'"/>
+        </figure>
+      </div>
+    </section>
+
+    <!-- META -->
+    <section class="meta">
+      <div class="card">
+        <h4>Informations</h4>
+        <ul>
+          <li><span>Nom</span><code>{{ s.name }}</code></li>
+          <li><span>Slug</span><code>{{ s.slug }}</code></li>
+          <li><span>Parent</span><code>{{ parentName() }}</code></li>
+          <li><span>Statut</span>
+            <b [class.on]="s.isActive" [class.off]="!s.isActive">{{ s.isActive ? 'Actif' : 'Inactif' }}</b>
+          </li>
+          <li *ngIf="s.createdAt"><span>Créée</span><code>{{ s.createdAt | date:'medium' }}</code></li>
+          <li *ngIf="s.updatedAt"><span>Modifiée</span><code>{{ s.updatedAt | date:'medium' }}</code></li>
+        </ul>
+      </div>
+
+      <div class="card res">
+        <h4>Ressources</h4>
+        <div class="flexy">
+          <img class="mini" *ngIf="s.iconUrl" [src]="getUrl(s.iconUrl)" alt="icône"/>
+          <img class="mini wide" *ngIf="s.imageUrl" [src]="getUrl(s.imageUrl)" alt="image"/>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl><div class="muted">Chargement…</div></ng-template>
+<ng-template #emptyTpl><div class="muted">Sous-catégorie introuvable.</div></ng-template>

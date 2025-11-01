@@ -19,6 +19,7 @@ import {FormsModule} from '@angular/forms';
 import {AuthModalService} from '../../services/authModal/auth-modal.service';
 import {AuthService} from '../../services/auth/auth.service';
 import {RatingService} from '../../services/rating/rating.service';
+import { ToastService } from '../../services/toast/toast.service';
 
 @Component({
   standalone: true,
@@ -46,6 +47,7 @@ export class ProductDetailComponent implements OnInit {
   private ratingApi = inject(RatingService);
   protected auth = inject(AuthService);
   private authModal = inject(AuthModalService);
+  private toast = inject(ToastService);
 
 // signals for ratings
   avgRating = signal(0);
@@ -87,6 +89,8 @@ export class ProductDetailComponent implements OnInit {
       qty: this.qty(),
       imageUrl: this.images()[0] ? getUrl(this.images()[0]) : undefined
     });
+    this.toast.show('Produit ajouté avec succès.', 'success');
+
   }
 
   protected readonly getUrl = getUrl;
@@ -98,7 +102,6 @@ export class ProductDetailComponent implements OnInit {
 private loadRatings(productId: string) {
   this.ratingApi.listForProduct(productId).subscribe(res => {
     this.ratings.set(res.items);
-    console.log( this.ratings())
     this.ratingsCount.set(res.count);
     this.avgRating.set(res.avg || 0);
   });

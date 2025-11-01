@@ -1,4 +1,3 @@
-<!-- src/app/pages/admin/admin-categories/admin-categories.component.html -->
 <section class="admin-cats">
   <header class="head">
     <h2>Catégories</h2>
@@ -16,7 +15,12 @@
         <option value="inactive">Inactives</option>
       </select>
 
-      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+      <button class="btn primary"
+              (click)="openCreate()"
+              [disabled]="busy && actionKind()==='create'">
+        <span class="spinner" *ngIf="busy && actionKind()==='create'"></span>
+        + Ajouter
+      </button>
     </div>
   </header>
 
@@ -44,10 +48,32 @@
         </div>
 
         <div class="row" (click)="$event.stopPropagation()">
-          <button class="btn" (click)="openEdit(c)">Modifier</button>
-          <button class="btn ghost" (click)="openReplace(c)">Remplacer fichiers</button>
-          <button class="btn warn" (click)="toggle(c)">{{ c.isActive ? 'Désactiver' : 'Activer' }}</button>
-          <button class="btn danger" (click)="remove(c)">Supprimer</button>
+          <button class="btn"
+                  (click)="openEdit(c)"
+                  [disabled]="busy && actionId()===c._id && actionKind()==='update'">
+            <span class="spinner" *ngIf="busy && actionId()===c._id && actionKind()==='update'"></span>
+            Modifier
+          </button>
+
+          <button class="btn ghost"
+                  (click)="openReplace(c)"
+                  [disabled]="busy && actionId()===c._id && actionKind()==='replace'">
+            Remplacer fichiers
+          </button>
+
+          <button class="btn warn"
+                  (click)="toggle(c)"
+                  [disabled]="busy && actionId()===c._id && actionKind()==='toggle'">
+            <span class="spinner" *ngIf="busy && actionId()===c._id && actionKind()==='toggle'"></span>
+            {{ c.isActive ? 'Désactiver' : 'Activer' }}
+          </button>
+
+          <button class="btn danger"
+                  (click)="remove(c)"
+                  [disabled]="busy && actionId()===c._id && actionKind()==='remove'">
+            <span class="spinner" *ngIf="busy && actionId()===c._id && actionKind()==='remove'"></span>
+            Supprimer
+          </button>
         </div>
       </div>
     </article>
@@ -58,7 +84,7 @@
   </ng-template>
 </section>
 
-<!-- MODAL CRÉATION/ÉDITION (inchangé pour ajout/édition simple) -->
+<!-- MODAL CRÉATION/ÉDITION -->
 <div class="backdrop" *ngIf="modalOpen()" (click)="closeModal()"></div>
 <div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true" (click)="closeModal()">
   <div class="panel" role="document" (click)="$event.stopPropagation()">
@@ -84,8 +110,8 @@
           <textarea formControlName="description" rows="3" placeholder="Description courte…"></textarea>
         </div>
 
-        <!-- Uploads “ajout simple” -->
-        <div  class="uploads" *ngIf="!this.editing()">
+        <!-- Uploads (création uniquement) -->
+        <div class="uploads" *ngIf="!editing()">
           <div class="u-block">
             <div class="u-head">
               <label>Icône</label>
@@ -94,14 +120,10 @@
               </div>
             </div>
             <div class="u-body">
-              <div class="u-head">
-                <div class="u-actions" *ngIf="!iconPreview()">
-                  <label class="btn ghost sm">
-                    Ajouter
-                    <input type="file" accept="image/*" (change)="onPickIcon($event)" hidden/>
-                  </label>
-                </div>
-              </div>
+              <label class="btn ghost sm" *ngIf="!iconPreview()">
+                Ajouter
+                <input type="file" accept="image/*" (change)="onPickIcon($event)" hidden/>
+              </label>
               <div class="preview icon" *ngIf="iconPreview()">
                 <img [src]="iconPreview()!" alt="icon preview"/>
               </div>
@@ -116,14 +138,10 @@
               </div>
             </div>
             <div class="u-body">
-              <div class="u-head">
-                <div class="u-actions" *ngIf="!imagePreview()">
-                  <label class="btn ghost sm">
-                    Ajouter
-                    <input type="file" accept="image/*" (change)="onPickImage($event)" hidden/>
-                  </label>
-                </div>
-              </div>
+              <label class="btn ghost sm" *ngIf="!imagePreview()">
+                Ajouter
+                <input type="file" accept="image/*" (change)="onPickImage($event)" hidden/>
+              </label>
               <div class="preview" *ngIf="imagePreview()">
                 <img [src]="imagePreview()!" alt="image preview"/>
               </div>
@@ -165,14 +183,18 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeModal()">Annuler</button>
-          <button class="btn primary" type="submit">Enregistrer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="busy && (actionKind()==='create' || actionKind()==='update')">
+            <span class="spinner" *ngIf="busy && (actionKind()==='create' || actionKind()==='update')"></span>
+            Enregistrer
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- NOUVEAU MODAL “REMPLACER FICHIERS” -->
+<!-- MODAL “REMPLACER FICHIERS” -->
 <div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
 <div class="modal" *ngIf="replaceOpen()" role="dialog" aria-modal="true" (click)="closeReplace()">
   <div class="panel" role="document" (click)="$event.stopPropagation()">
@@ -207,7 +229,7 @@
           </div>
         </div>
 
-        <!-- Image couverture -->
+        <!-- Image de couverture -->
         <div class="u-block">
           <div class="u-head">
             <label>Image de couverture (remplacement total)</label>
@@ -262,7 +284,11 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
-          <button class="btn primary" type="submit">Remplacer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="busy && actionKind()==='replace'">
+            <span class="spinner" *ngIf="busy && actionKind()==='replace'"></span>
+            Remplacer
+          </button>
         </div>
       </form>
     </div>

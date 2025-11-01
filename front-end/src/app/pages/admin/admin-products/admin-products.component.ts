@@ -1,17 +1,19 @@
-import {Component, OnInit, inject, signal, computed} from '@angular/core';
-import {CommonModule, NgFor, NgIf} from '@angular/common';
-import {FormsModule, ReactiveFormsModule, FormBuilder, Validators} from '@angular/forms';
-import {ProductService} from '../../../services/product/product.service';
-import {CategoryService} from '../../../services/category/category.service';
-import {Category} from '../../../interfaces/category';
-import {getUrl} from '../../../shared/constant/function';
-import {Product} from '../../../interfaces/product';
-import {SubCategory} from '../../../interfaces/SubCategory';
-import {lastValueFrom} from 'rxjs';
-import {SubcategoryService} from '../../../services/subcategory/subcategory.service';
-import {log} from '@angular-devkit/build-angular/src/builders/ssr-dev-server';
-import {Brand} from '../../../interfaces/brand';
-import {BrandService} from '../../../services/brand/brand.service';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ProductService } from '../../../services/product/product.service';
+import { CategoryService } from '../../../services/category/category.service';
+import { SubcategoryService } from '../../../services/subcategory/subcategory.service';
+import { BrandService } from '../../../services/brand/brand.service';
+import { Category } from '../../../interfaces/category';
+import { SubCategory } from '../../../interfaces/SubCategory';
+import { Brand } from '../../../interfaces/brand';
+import { Product } from '../../../interfaces/product';
+import { lastValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
+import { getUrl } from '../../../shared/constant/function';
+
+import { showAlert} from '../../../shared/constant/function';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -25,18 +27,22 @@ type StatusFilter = 'all' | 'active' | 'inactive';
 export class AdminProductsComponent implements OnInit {
   private api = inject(ProductService);
   private catsApi = inject(CategoryService);
-  private fb = inject(FormBuilder);
   private subsApi = inject(SubcategoryService);
   private brandApi = inject(BrandService);
+  private fb = inject(FormBuilder);
+  private router = inject(Router);
 
   // data
   loading = signal(true);
   raw = signal<Product[]>([]);
   categories = signal<Category[]>([]);
+  brands = signal<Brand[]>([]);
   total = signal(0);
+
   // Sélection courante + options
   selectedCatId = signal<string | ''>('');
   subOptions   = signal<SubCategory[]>([]);
+
   // filters
   q = signal<string>('');
   status = signal<StatusFilter>('all');
@@ -44,12 +50,17 @@ export class AdminProductsComponent implements OnInit {
 
   // modal create/edit
   modalOpen = signal(false);
-  editing = signal<Product | null>(null);
+  editing   = signal<Product | null>(null);
 
   // modal replace
   replaceOpen = signal(false);
 
-  // form (create/edit simple champs)
+  // ---------- loaders ciblés ----------
+  actionId   = signal<string | null>(null);
+  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' | null>(null);
+  get busy() { return this.actionKind() !== null; }
+
+  // form
   f = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]],
@@ -63,27 +74,24 @@ export class AdminProductsComponent implements OnInit {
     sku: [''],
     isActive: [true],
     currency: ['TND'],
-    tags: [''] // CSV dans le form, je convertis au submit
+    tags: ['']
   });
-  brands = signal<Brand[]>([]);
 
-  // files state (create/edit simple)
+  // files (create)
   coverFile = signal<File | null>(null);
   coverPreview = signal<string | null>(null);
-
   galleryFiles = signal<File[]>([]);
   galleryPreviews = signal<string[]>([]);
 
-  // replace flags + files
+  // replace
   coverChanged = signal(false);
   galleryChanged = signal(false);
   coverReplace = signal<File | null>(null);
   coverReplacePreview = signal<string | null>(null);
   galleryReplace = signal<File[]>([]);
   galleryReplacePreviews = signal<string[]>([]);
-  saving = signal(false);
 
-  // filtered list
+  // list filtrée
   list = computed(() => {
     const text = this.q().trim().toLowerCase();
     const st = this.status();
@@ -103,25 +111,22 @@ export class AdminProductsComponent implements OnInit {
   });
 
   async ngOnInit() {
-    await Promise.all([this.fetch(),  this.loadBrands(),this.fetchCategories()]);
-
-    // Si on arrive en édition avec une catégorie déjà présente:
+    await Promise.all([this.fetch(), this.loadBrands(), this.fetchCategories()]);
+    // hydratation subcats si on arrive en édition
     const catId = this.f.get('category')!.value as string;
     if (catId) {
       this.selectedCatId.set(catId);
       await this.loadSubcategories(catId);
-      // si un subCategory est présent en édition, il reste; sinon on réinitialise
       const subId = this.f.get('subCategory')!.value as string;
       if (!subId) this.f.get('subCategory')!.setValue('');
     }
   }
 
+  // -------- fetchers ----------
   async fetch() {
     this.loading.set(true);
     try {
       const res = await this.api.list().toPromise();
-      console.log('res',res)
-
       this.raw.set(res?.items || []);
       this.total.set(res?.total || 0);
     } finally {
@@ -136,53 +141,48 @@ export class AdminProductsComponent implements OnInit {
     this.categories.set(cs || []);
   }
 
-  async hydrateEditSubcategories(product: any) {
+  // -------- subcategories ----------
+  async hydrateEditSubcategories(product: Product) {
     if (product?.category) {
       this.selectedCatId.set(product.category);
       await this.loadSubcategories(product.category);
-      // remet la valeur si elle existe
       if (product.subCategory) {
         this.f.get('subCategory')!.setValue(product.subCategory);
       }
     }
   }
-
-  /** Récupère les sous-catégories actives d’une catégorie */
   private async loadSubcategories(catId: string) {
     try {
       const subs = await lastValueFrom(this.subsApi.listByCategory(catId));
-      // Garde seulement les actives, optionnel:
       this.subOptions.set((subs || []).filter(s => s.isActive));
     } catch {
       this.subOptions.set([]);
     }
   }
-
-  /** Quand l’utilisateur choisit une catégorie */
-  onCategoryChange(event: Event) {
-    const selectEl = event.target as HTMLSelectElement;
-    const catId = selectEl.value;
+  async onCategoryChange(event: Event) {
+    const catId = (event.target as HTMLSelectElement).value;
     this.selectedCatId.set(catId || '');
     this.f.get('subCategory')!.setValue('');
     this.subOptions.set([]);
-
-    if (catId) {
-      this.loadSubcategories(catId);
-    }
+    if (catId) await this.loadSubcategories(catId);
   }
-
-  onBrandChange(e: Event) {
-    const v = (e.target as HTMLSelectElement).value;
+  onBrandChange(_: Event) {
     this.f.patchValue({ category: '', subCategory: '' });
-    this.selectedCatId?.set?.('');
+    this.selectedCatId.set('');
     this.subOptions.set([]);
   }
-  // modal open/close
+
+  // -------- nav ----------
+  goDetail(p: Product) {
+    this.router.navigate(['/admin/produits', p._id]);
+  }
+
+  // -------- modals ----------
   openCreate() {
     this.editing.set(null);
     this.f.reset({
-      name: '', slug: '', category: '', subCategory: '', description: '',
-      price: null, oldPrice: null, stock: 0, sku: '',
+      name: '', slug: '', category: '', subCategory: '', brand: '',
+      description: '', price: null, oldPrice: null, stock: 0, sku: '',
       isActive: true, currency: 'TND', tags: ''
     });
     this.coverFile.set(null);
@@ -192,17 +192,15 @@ export class AdminProductsComponent implements OnInit {
     this.modalOpen.set(true);
     document.body.classList.add('modal-open');
   }
-
   openEdit(p: Product) {
-    console.log('p',p)
+    this.hydrateEditSubcategories(p);
     this.editing.set(p);
     this.f.reset({
       name: p.name,
       slug: p.slug,
       category: p.category,
-      // <- requis
-      subCategory: p.subCategory,   // <- requis
-      brand: p.brand,   // <- requis
+      subCategory: p.subCategory,
+      brand: p.brand,
       description: p.description || '',
       price: p.price,
       oldPrice: p.oldPrice ?? null,
@@ -212,7 +210,6 @@ export class AdminProductsComponent implements OnInit {
       currency: p.currency || 'TND',
       tags: (p.tags || []).join(', ')
     });
-    // new files (none yet)
     this.coverFile.set(null);
     this.coverPreview.set(p.imageUrl ? getUrl(p.imageUrl) : null);
     this.galleryFiles.set([]);
@@ -220,13 +217,11 @@ export class AdminProductsComponent implements OnInit {
     this.modalOpen.set(true);
     document.body.classList.add('modal-open');
   }
-
   closeModal() {
     this.modalOpen.set(false);
     document.body.classList.remove('modal-open');
   }
 
-  // replace modal
   openReplace(p: Product) {
     this.editing.set(p);
     this.coverChanged.set(false);
@@ -238,84 +233,80 @@ export class AdminProductsComponent implements OnInit {
     this.replaceOpen.set(true);
     document.body.classList.add('modal-open');
   }
-
   closeReplace() {
     this.replaceOpen.set(false);
     document.body.classList.remove('modal-open');
   }
 
-  // file handlers (create/edit)
+  // -------- files (create) ----------
   onPickCover(ev: Event) {
     const f = (ev.target as HTMLInputElement).files?.[0] || null;
     this.coverFile.set(f);
     this.coverPreview.set(f ? URL.createObjectURL(f) : null);
   }
-
-  clearCover() {
-    this.coverFile.set(null);
-    this.coverPreview.set(null);
-  }
-
+  clearCover() { this.coverFile.set(null); this.coverPreview.set(null); }
   onPickGallery(ev: Event) {
     const files = Array.from((ev.target as HTMLInputElement).files || []);
     if (!files.length) return;
-    const next = [...this.galleryFiles(), ...files];
-    const prev = [...this.galleryPreviews(), ...files.map(f => URL.createObjectURL(f))];
-    this.galleryFiles.set(next);
-    this.galleryPreviews.set(prev);
+    this.galleryFiles.set([...this.galleryFiles(), ...files]);
+    this.galleryPreviews.set([...this.galleryPreviews(), ...files.map(f => URL.createObjectURL(f))]);
     (ev.target as HTMLInputElement).value = '';
   }
-
   removeGalleryAt(i: number) {
     const nf = [...this.galleryFiles()];
     const np = [...this.galleryPreviews()];
-    nf.splice(i, 1);
-    np.splice(i, 1);
-    this.galleryFiles.set(nf);
-    this.galleryPreviews.set(np);
+    nf.splice(i, 1); np.splice(i, 1);
+    this.galleryFiles.set(nf); this.galleryPreviews.set(np);
   }
 
-  // file handlers (replace)
+  // -------- files (replace) ----------
   onPickCoverReplace(ev: Event) {
     const f = (ev.target as HTMLInputElement).files?.[0] || null;
     this.coverReplace.set(f);
     this.coverReplacePreview.set(f ? URL.createObjectURL(f) : null);
     this.coverChanged.set(!!f);
   }
-
   resetCoverReplace() {
     this.coverReplace.set(null);
     this.coverReplacePreview.set(null);
     this.coverChanged.set(false);
   }
-
   onPickGalleryReplace(ev: Event) {
     const files = Array.from((ev.target as HTMLInputElement).files || []);
     this.galleryReplace.set(files);
     this.galleryReplacePreviews.set(files.map(f => URL.createObjectURL(f)));
     this.galleryChanged.set(files.length > 0);
   }
-
   removeNewGalleryAt(i: number) {
     const nf = [...this.galleryReplace()];
     const np = [...this.galleryReplacePreviews()];
-    nf.splice(i, 1);
-    np.splice(i, 1);
+    nf.splice(i, 1); np.splice(i, 1);
     this.galleryReplace.set(nf);
     this.galleryReplacePreviews.set(np);
     this.galleryChanged.set(nf.length > 0);
   }
 
-  // save (create or update fields)
+  // -------- save (create/update) ----------
   async save() {
     if (this.f.invalid) {
       this.f.markAllAsTouched();
-      this.saving.set(false);
+      await showAlert({ icon: 'warning', title: 'Vérifiez les champs obligatoires.' });
       return;
     }
     const v = this.f.value;
+    const isCreate = !this.editing();
 
-    // build formdata (pour gérer textes + fichiers)
+    const ask = await showAlert({
+      icon: 'question',
+      title: isCreate ? 'Créer ce produit ?' : 'Enregistrer les modifications ?',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     const fd = new FormData();
     fd.append('name', v.name!);
     fd.append('slug', v.slug!);
@@ -329,40 +320,61 @@ export class AdminProductsComponent implements OnInit {
     fd.append('sku', v.sku || '');
     fd.append('isActive', String(!!v.isActive));
     fd.append('currency', v.currency || 'TND');
-    if (v.tags) fd.append('tags', v.tags); // CSV
-    if (!this.editing()) {
+    if (v.tags) fd.append('tags', v.tags);
+    if (isCreate) {
       if (this.coverFile()) fd.append('image', this.coverFile()!);
       this.galleryFiles().forEach(f => fd.append('gallery', f));
     }
 
-
     try {
-      if (this.editing()) {
-        const updated = await this.api.update(this.editing()!._id, fd).toPromise();
-        if (updated) {
-          this.raw.set(this.raw().map(p => p._id === updated._id ? updated : p));
-        }
-      } else {
+      this.actionKind.set(isCreate ? 'create' : 'update');
+      this.actionId.set(this.editing()?._id || null);
+
+      if (isCreate) {
         const created = await this.api.create(fd).toPromise();
         if (created) this.raw.set([created, ...this.raw()]);
+      } else {
+        const updated = await this.api.update(this.editing()!._id, fd).toPromise();
+        if (updated) this.raw.set(this.raw().map(p => p._id === updated._id ? updated : p));
       }
+
       this.closeModal();
-    } catch (e) {
-      console.error(e);
+      await showAlert({ icon: 'success', title: 'Enregistré avec succès', timer: 1300, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Erreur', html: e?.message || 'Action impossible' });
     } finally {
-      this.saving.set(false);
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // -------- save replace ----------
   async saveReplace() {
     const p = this.editing();
     if (!p) return;
 
-    // Avertissement si rien n'a changé
     if (!this.coverChanged() && !this.galleryChanged()) {
       this.closeReplace();
       return;
     }
+
+    const changed: string[] = [];
+    if (this.coverChanged()) changed.push('cover');
+    if (this.galleryChanged()) changed.push('galerie');
+
+    const html = `Les éléments suivants seront <b>remplacés</b> :<br>• ${changed.join('<br>• ')}`;
+    const ask = await showAlert({
+      icon: 'warning',
+      title: 'Confirmer le remplacement',
+      html,
+      showCancelButton: true,
+      confirmButtonText: 'Oui, remplacer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#4f46e5',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
 
     const fd = new FormData();
     if (this.coverChanged() && this.coverReplace()) {
@@ -375,34 +387,83 @@ export class AdminProductsComponent implements OnInit {
     }
 
     try {
+      this.actionKind.set('replace');
+      this.actionId.set(p._id);
+
       const updated = await this.api.replace(p._id, fd).toPromise();
       if (updated) {
         this.raw.set(this.raw().map(x => x._id === updated._id ? updated : x));
       }
+      await showAlert({ icon: 'success', title: 'Fichiers remplacés', timer: 1300, timerProgressBar: true });
       this.closeReplace();
-    } catch (e) {
-      console.error(e);
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Erreur', html: e?.message || 'Impossible d’enregistrer.' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // -------- toggle ----------
   async toggle(p: Product) {
+    const ask = await showAlert({
+      icon: 'question',
+      title: p.isActive ? 'Désactiver ce produit ?' : 'Activer ce produit ?',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     try {
+      this.actionKind.set('toggle');
+      this.actionId.set(p._id);
+
       const updated = await this.api.toggle(p._id).toPromise();
       if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : x));
-    } catch (e) {
-      console.error(e);
+
+      await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // -------- remove ----------
   async remove(p: Product) {
-    if (!confirm(`Supprimer "${p.name}" ?`)) return;
+    const ask = await showAlert({
+      icon: 'warning',
+      title: `Supprimer « ${p.name} » ?`,
+      html: 'Cette action est irréversible.',
+      showCancelButton: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#ef4444',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     try {
+      this.actionKind.set('remove');
+      this.actionId.set(p._id);
+
       await this.api.remove(p._id).toPromise();
       this.raw.set(this.raw().filter(x => x._id !== p._id));
-    } catch (e) {
-      console.error(e);
+
+      await showAlert({ icon: 'success', title: 'Produit supprimé', timer: 1100, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Échec de suppression', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // helpers
   getUrl = getUrl;
 }

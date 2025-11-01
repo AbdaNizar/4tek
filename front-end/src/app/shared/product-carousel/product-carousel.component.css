@@ -53,7 +53,6 @@
 /* Optional: fade overlays shouldn’t block clicks */
 .pc-fade { pointer-events: none; }
 
-
 .pc-btn {
   width: 38px;
   height: 38px;
@@ -201,8 +200,17 @@
   }
 }
 
+/* === DOTS ================================================================ */
 
+.pc-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 6px;
+}
 
+/* style visuel d’un dot */
 .dot {
   width: 8px;
   height: 8px;
@@ -218,6 +226,30 @@
   transform: scale(1.15);
   width: 16px;
   border-radius: 999px;
+}
+
+/* ===== Affichage “par page” uniquement avec CSS ===========================
+   On n’affiche qu’UN point par “page” selon le nombre de cartes visibles. */
+
+/* ≥1025px : 4 cartes visibles -> on garde seulement 1,5,9,... */
+.pc-dots .dot { display: none; }
+.pc-dots .dot:nth-child(4n + 1) { display: inline-block; }
+
+/* 781px–1024px : 3 cartes visibles -> on garde 1,4,7,... */
+@media (max-width: 1024px) {
+  .pc-dots .dot { display: none; }
+  .pc-dots .dot:nth-child(3n + 1) { display: inline-block; }
+}
+
+/* 521px–780px : 2 cartes visibles -> on garde 1,3,5,... */
+@media (max-width: 780px) {
+  .pc-dots .dot { display: none; }
+  .pc-dots .dot:nth-child(2n + 1) { display: inline-block; }
+}
+
+/* ≤520px : 1 carte visible -> on garde tous les dots */
+@media (max-width: 520px) {
+  .pc-dots .dot { display: inline-block; }
 }
 
 /* reduced motion */

@@ -1,28 +1,79 @@
 /* src/app/pages/admin/dashboard/admin-dashboard.component.css */
 .dash h2 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  font-weight: 900;
+  letter-spacing: .2px;
+  background: linear-gradient(135deg, #e6eaf2, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .card {
-  background: rgba(255, 255, 255, .04);
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 14px;
-  padding: 14px;
-  transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease;
+  display: grid;
+  gap: 6px;
+  background: radial-gradient(120% 120% at -10% -10%, rgba(34, 211, 238, .08), transparent 50%),
+  linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .03));
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 16px;
+  padding: 16px 14px;
+  transition: transform .15s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  cursor: pointer;
+  outline: none;
 }
 
 .card:hover {
   transform: translateY(-2px);
   border-color: rgba(34, 211, 238, .35);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .26);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, .28);
+  background: radial-gradient(120% 120% at -10% -10%, rgba(34, 211, 238, .14), transparent 45%),
+  linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .035));
+}
+
+.card:focus-visible {
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, .22),
+  0 14px 32px rgba(0, 0, 0, .28);
+  border-color: rgba(34, 211, 238, .55);
+}
+
+.card h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 34px; /* bigger icon */
+  line-height: 1;
+  display: inline-flex;
+  width: 40px;
+  justify-content: center;
 }
 
 .muted {
-  color: var(--muted);
+  margin: 0;
+  color: var(--muted, #9aa3b2);
+  line-height: 1.5;
+  font-size: .95rem;
+}
+
+/* small screens */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .icon {
+    font-size: 32px;
+    width: 38px;
+  }
 }

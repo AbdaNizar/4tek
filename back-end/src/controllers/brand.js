@@ -90,7 +90,6 @@ exports.replaceIcon = async (req, res) => {
 // ---------- CREATE (Brand) ----------
 exports.create = async (req, res) => {
     try {
-        console.log('here')
         ensureDir(DIRS.brandIcons);
 
         const { name, slug, isActive } = req.body || {};

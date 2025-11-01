@@ -4,9 +4,11 @@ export interface Rating {
     user?: { id: string; name?: string; email?: string };
     stars: number;
     comment?: string;
-    status?: 'pending'|'approved'|'rejected';
+    status?: RatingStatus;
     createdAt?: string;
     updatedAt?: string;
+    product?: { _id: string; name?: string; imageUrl?: string; slug?: string };
+
 }
 
 export interface ProductRatingsResponse {
@@ -14,3 +16,4 @@ export interface ProductRatingsResponse {
     count: number;
     avg: number;
 }
+export type RatingStatus = 'pending'|'approved'|'rejected';

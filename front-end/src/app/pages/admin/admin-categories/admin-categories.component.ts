@@ -1,4 +1,3 @@
-// src/app/pages/admin/admin-categories/admin-categories.component.ts
 import {Component, OnInit, inject, signal, computed} from '@angular/core';
 import {CommonModule, NgFor, NgIf} from '@angular/common';
 import {FormsModule, ReactiveFormsModule, FormBuilder, Validators} from '@angular/forms';
@@ -6,7 +5,8 @@ import {CategoryService} from '../../../services/category/category.service';
 import {Category} from '../../../interfaces/category';
 import {Router} from '@angular/router';
 import {getUrl} from '../../../shared/constant/function';
-import Swal from 'sweetalert2';
+
+import {showAlert} from '../../../shared/constant/function';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -22,12 +22,11 @@ export class AdminCategoriesComponent implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
 
-
   // data
   loading = signal(true);
   raw = signal<Category[]>([]);
-  q = signal<string>('');                       // FIX: use signal, not [(ngModel)] to function call
-  status = signal<StatusFilter>('all');         // FIX: same
+  q = signal<string>('');
+  status = signal<StatusFilter>('all');
 
   // modal + edit
   modalOpen = signal(false);
@@ -53,6 +52,27 @@ export class AdminCategoriesComponent implements OnInit {
 
   // existing banners when editing (URLs already saved)
   existingBanners = signal<string[]>([]);
+
+  // ------- état modal remplacement -------
+  replaceOpen = signal(false);
+
+  // flags groupes modifiés (replace)
+  iconChanged = false;
+  imageChanged = false;
+  bannersChanged = false;
+
+  // buffers fichiers à remplacer
+  private iconFileReplace: File | null = null;
+  private imageFileReplace: File | null = null;
+  private bannerFilesReplace: File[] = [];
+
+  // ---------- loaders ciblés ----------
+  actionId = signal<string | null>(null);
+  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' | null>(null);
+
+  get busy() {
+    return this.actionKind() !== null;
+  }
 
   // filtered view
   list = computed(() => {
@@ -84,7 +104,7 @@ export class AdminCategoriesComponent implements OnInit {
     }
   }
 
-  // ------- modal open/close -------
+  // ------- modal create/edit -------
   openCreate() {
     this.editing.set(null);
     this.f.reset({name: '', slug: '', description: '', isActive: true});
@@ -98,7 +118,7 @@ export class AdminCategoriesComponent implements OnInit {
     this.existingBanners.set([]);
 
     this.modalOpen.set(true);
-    document.body.classList.add('modal-open'); // prevent background scroll
+    document.body.classList.add('modal-open');
   }
 
   openEdit(c: Category) {
@@ -130,7 +150,7 @@ export class AdminCategoriesComponent implements OnInit {
     document.body.classList.remove('modal-open');
   }
 
-  // ------- file handlers -------
+  // ------- file handlers (create) -------
   onPickImage(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0] || null;
     this.imageFile.set(file);
@@ -160,7 +180,6 @@ export class AdminCategoriesComponent implements OnInit {
     const previews = [...this.bannerPreviews(), ...files.map(f => URL.createObjectURL(f))];
     this.bannerFiles.set(next);
     this.bannerPreviews.set(previews);
-    // reset input value so same files can be selected again if needed
     (ev.target as HTMLInputElement).value = '';
   }
 
@@ -179,13 +198,26 @@ export class AdminCategoriesComponent implements OnInit {
     this.existingBanners.set(next);
   }
 
-  // ------- save (multipart) -------
+  // ------- save (create/update) -------
   async save() {
     if (this.f.invalid) {
       this.f.markAllAsTouched();
+      await showAlert({icon: 'warning', title: 'Vérifiez les champs obligatoires.'});
       return;
     }
     const v = this.f.value;
+
+    const isCreate = !this.editing();
+    const confirm = await showAlert({
+      icon: 'question',
+      title: isCreate ? 'Confirmer la création ?' : 'Enregistrer les modifications ?',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!confirm.isConfirmed) return;
 
     // Build FormData
     const fd = new FormData();
@@ -193,77 +225,96 @@ export class AdminCategoriesComponent implements OnInit {
     fd.append('slug', v.slug!);
     fd.append('description', v.description || '');
     fd.append('isActive', String(!!v.isActive));
-    if (!this.editing()) {
+    if (isCreate) {
       if (this.imageFile()) fd.append('image', this.imageFile()!);
       if (this.iconFile()) fd.append('icon', this.iconFile()!);
       this.existingBanners().forEach((url) => fd.append('existingBanners[]', url));
       this.bannerFiles().forEach(file => fd.append('banners', file));
-
     }
 
     try {
-      if (this.editing()) {
-        const updated = await this.api.update(this.editing()!._id, fd).toPromise();
-        if (updated) {
-          this.raw.set(this.raw().map(c => c._id === updated._id ? updated : c));
-        }
-      } else {
-        console.log(fd)
+      this.actionKind.set(isCreate ? 'create' : 'update');
+      this.actionId.set(this.editing()?._id || null);
+
+      if (isCreate) {
         const created = await this.api.create(fd).toPromise();
         if (created) this.raw.set([created, ...this.raw()]);
+      } else {
+        const updated = await this.api.update(this.editing()!._id, fd).toPromise();
+        if (updated) this.raw.set(this.raw().map(c => c._id === updated._id ? updated : c));
       }
+
       this.closeModal();
-    } catch (e) {
-      console.error(e);
-      // TODO: toast error
+      await showAlert({icon: 'success', title: 'Enregistré avec succès', timer: 1300, timerProgressBar: true});
+    } catch (e: any) {
+      await showAlert({icon: 'error', title: 'Erreur', html: e?.message || 'Action impossible'});
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // ------- toggle -------
   async toggle(c: Category) {
+    const ask = await showAlert({
+      icon: 'question',
+      title: c.isActive ? 'Désactiver cette catégorie ?' : 'Activer cette catégorie ?',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     try {
+      this.actionKind.set('toggle');
+      this.actionId.set(c._id);
+
       const updated = await this.api.toggle(c._id, !c.isActive).toPromise();
-      if (updated) {
-        this.raw.set(this.raw().map(x => x._id === c._id ? updated : x));
-      }
-    } catch (e) {
-      console.error(e);
+      if (updated) this.raw.set(this.raw().map(x => x._id === c._id ? updated : x));
+
+      await showAlert({icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true});
+    } catch (e: any) {
+      await showAlert({icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible'});
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // ------- remove -------
   async remove(c: Category) {
-    if (!confirm(`Supprimer "${c.name}" ?`)) return;
+    const ask = await showAlert({
+      icon: 'warning',
+      title: `Supprimer « ${c.name} » ?`,
+      html: 'Cette action est irréversible.',
+      showCancelButton: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#ef4444',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     try {
+      this.actionKind.set('remove');
+      this.actionId.set(c._id);
+
       await this.api.remove(c._id).toPromise();
       this.raw.set(this.raw().filter(x => x._id !== c._id));
-    } catch (e) {
-      console.error(e);
+
+      await showAlert({icon: 'success', title: 'Catégorie supprimée', timer: 1100, timerProgressBar: true});
+    } catch (e: any) {
+      await showAlert({icon: 'error', title: 'Échec de suppression', html: e?.message || 'Action impossible'});
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
-  goDetail(c: Category) {
-    this.router.navigate(['/admin/categories', c._id]);
-  }
-
-  protected readonly getUrl = getUrl;
-
-
-  // src/app/pages/admin/admin-categories/admin-categories.component.ts (extraits à AJOUTER)
-
-
-// --- état modal remplacement ---
-  replaceOpen = signal(false);
-
-// flags groupes modifiés
-  iconChanged = false;
-  imageChanged = false;
-  bannersChanged = false;
-
-// buffers fichiers à remplacer
-  private iconFileReplace: File | null = null;
-  private imageFileReplace: File | null = null;
-  private bannerFilesReplace: File[] = [];
-
-// ouvre le modal remplacement
+  // ------- replace modal -------
   openReplace(c: Category) {
     this.editing.set(c);
 
@@ -287,7 +338,7 @@ export class AdminCategoriesComponent implements OnInit {
     document.body.classList.remove('modal-open');
   }
 
-// handlers PICK (replace)
+  // handlers PICK (replace)
   onPickIconReplace(ev: Event) {
     const f = (ev.target as HTMLInputElement).files?.[0] || null;
     this.iconFileReplace = f;
@@ -335,7 +386,7 @@ export class AdminCategoriesComponent implements OnInit {
     this.bannersChanged = arr.length > 0;
   }
 
-// sauvegarde remplacement
+  // sauvegarde remplacement
   async saveReplace() {
     const changed: string[] = [];
     if (this.iconChanged) changed.push('icône');
@@ -348,15 +399,18 @@ export class AdminCategoriesComponent implements OnInit {
     }
 
     const html = `Les éléments suivants seront <b>écrasés</b> :<br>• ${changed.join('<br>• ')}`;
-    const confirm = await Swal.fire({
+    const ask = await showAlert({
+      icon: 'warning',
       title: 'Confirmer le remplacement',
-      html, icon: 'warning',
+      html,
       showCancelButton: true,
       confirmButtonText: 'Oui, remplacer',
       cancelButtonText: 'Annuler',
-      confirmButtonColor: '#4f46e5'
+      confirmButtonColor: '#4f46e5',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
     });
-    if (!confirm.isConfirmed) return;
+    if (!ask.isConfirmed) return;
 
     const fd = new FormData();
     // n’envoyer QUE ce qui change
@@ -374,18 +428,27 @@ export class AdminCategoriesComponent implements OnInit {
     }
 
     try {
-      console.log(fd)
+      this.actionKind.set('replace');
+      this.actionId.set(this.editing()?._id || null);
+
       const updated = await this.api.replace(this.editing()!._id, fd).toPromise();
       if (updated) {
         this.raw.set(this.raw().map(c => c._id === updated._id ? updated : c));
-        await Swal.fire({icon: 'success', title: 'Modifications enregistrées', timer: 1400, showConfirmButton: false});
-        this.closeReplace();
       }
-    } catch (e) {
-      console.error(e);
-      Swal.fire({icon: 'error', title: 'Erreur', text: 'Impossible d’enregistrer.'});
+      await showAlert({icon: 'success', title: 'Modifications enregistrées', timer: 1400, timerProgressBar: true});
+      this.closeReplace();
+    } catch (e: any) {
+      await showAlert({icon: 'error', title: 'Erreur', html: e?.message || 'Impossible d’enregistrer.'});
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // helpers
+  goDetail(c: Category) {
+    this.router.navigate(['/admin/categories', c._id]);
+  }
 
+  protected readonly getUrl = getUrl;
 }

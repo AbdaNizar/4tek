@@ -21,36 +21,67 @@
 
   <div *ngIf="loading()" class="loading">Chargement…</div>
 
+  <!-- … header identique … -->
+
   <div class="grid" *ngIf="!loading() && list().length; else empty">
-    <article class="card" *ngFor="let s of list()">
+    <article class="card"
+             *ngFor="let s of list()"
+             (click)="goDetail(s)"
+             role="button"
+             tabindex="0">
       <div class="media">
-        <img [src]="getUrl(s.imageUrl) || getUrl(s.banners?.[0]) || getUrl(s.iconUrl) || '/assets/placeholder.jpg'"
-             alt="{{s.name}}" />
+        <img
+          [src]="getUrl(s.imageUrl) || getUrl(s.banners?.[0]) || getUrl(s.iconUrl) || '/assets/placeholder.jpg'"
+          alt="{{ s.name }}" />
       </div>
 
       <div class="info">
         <div class="top">
           <h3>{{ s.name }}</h3>
           <span class="badge" [class.on]="s.isActive" [class.off]="!s.isActive">
-            {{ s.isActive ? 'Actif' : 'Inactif' }}
-          </span>
+          {{ s.isActive ? 'Actif' : 'Inactif' }}
+        </span>
         </div>
 
         <p class="muted line-2">{{ s.description || '—' }}</p>
+
         <div class="meta">
           <span class="slug">/{{ s.slug }}</span>
           <span class="parent" *ngIf="s.parent?.name">→ {{ s.parent.name }}</span>
         </div>
 
-        <div class="row">
-          <button class="btn" (click)="openEdit(s)">Modifier</button>
-          <button class="btn ghost" (click)="openReplace(s)">Remplacer fichiers</button>
-          <button class="btn warn" (click)="toggle(s)">{{ s.isActive ? 'Désactiver' : 'Activer' }}</button>
-          <button class="btn danger" (click)="remove(s)">Supprimer</button>
+        <div class="row" (click)="$event.stopPropagation()">
+          <button class="btn"
+                  (click)="openEdit(s)"
+                  [disabled]="busy && actionId()===s._id && actionKind()==='update'">
+            <span class="spinner" *ngIf="busy && actionId()===s._id && actionKind()==='update'"></span>
+            Modifier
+          </button>
+
+          <button class="btn ghost"
+                  (click)="openReplace(s)"
+                  [disabled]="busy && actionId()===s._id && actionKind()==='replace'">
+            Remplacer fichiers
+          </button>
+
+          <button class="btn warn"
+                  (click)="toggle(s)"
+                  [disabled]="busy && actionId()===s._id && actionKind()==='toggle'">
+            <span class="spinner" *ngIf="busy && actionId()===s._id && actionKind()==='toggle'"></span>
+            {{ s.isActive ? 'Désactiver' : 'Activer' }}
+          </button>
+
+          <button class="btn danger"
+                  (click)="remove(s)"
+                  [disabled]="busy && actionId()===s._id && actionKind()==='remove'">
+            <span class="spinner" *ngIf="busy && actionId()===s._id && actionKind()==='remove'"></span>
+            Supprimer
+          </button>
         </div>
       </div>
     </article>
   </div>
+
 
   <ng-template #empty>
     <p class="empty muted">Aucune sous-catégorie.</p>
@@ -68,18 +99,15 @@
 
     <div class="panel-body">
       <form class="form" [formGroup]="f" (ngSubmit)="save()">
-
         <div class="row-3">
           <div class="field">
             <label>Nom *</label>
             <input formControlName="name" placeholder="Ex: Casques filaires"/>
           </div>
-
           <div class="field">
             <label>Slug *</label>
             <input formControlName="slug" placeholder="ex: casques-filaires"/>
           </div>
-
           <div class="field">
             <label>Catégorie parente *</label>
             <select formControlName="parentId">
@@ -157,14 +185,18 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeModal()">Annuler</button>
-          <button class="btn primary" type="submit">Enregistrer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="f.invalid || (busy && (actionKind()==='create' || actionKind()==='update'))">
+            <span class="spinner" *ngIf="busy && (actionKind()==='create' || actionKind()==='update')"></span>
+            Enregistrer
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- MODAL “REMPLACER FICHIERS” (optionnel, même logique que catégories) -->
+<!-- MODAL “REMPLACER FICHIERS” -->
 <div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
 <div class="modal" *ngIf="replaceOpen()" role="dialog" aria-modal="true" (click)="closeReplace()">
   <div class="panel" role="document" (click)="$event.stopPropagation()">
@@ -246,7 +278,11 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
-          <button class="btn primary" type="submit">Remplacer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="busy && actionKind()==='replace'">
+            <span class="spinner" *ngIf="busy && actionKind()==='replace'"></span>
+            Remplacer
+          </button>
         </div>
       </form>
     </div>

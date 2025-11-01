@@ -274,6 +274,14 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
     this.setupValidatorsForMode();
     this.closeUserMenu()
   }
+  goToOrder() {
+    this.router.navigateByUrl('/mes-commandes', {replaceUrl: true});
+    this.closeUserMenu()
+  }
+  goToDashboard() {
+    this.router.navigateByUrl('/admin', {replaceUrl: true});
+    this.closeUserMenu()
+  }
 
   // --------- validators par mode
   private setupValidatorsForMode() {

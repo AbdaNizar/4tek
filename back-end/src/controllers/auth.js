@@ -92,7 +92,6 @@ exports.verifyEmail = async (req, res) => {
         const record = await EmailToken.findOne({
             userId: uid, tokenHash, type: 'verify', usedAt: null
         });
-        console.log('record',record)
         // email valid
             // try to prefill email
             const user = await User.findById(uid).lean().catch(() => null);
@@ -153,7 +152,6 @@ exports.verifyEmail = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        console.log('req.body',req.body)
             const { phone, name, address, avatar } = req.body || {};
             const updates = {};
             if (typeof phone === 'string')  updates.phone  = phone.trim();
@@ -289,17 +287,144 @@ async function sendWelcome( to, name) {
     return sendMail({ to, subject: 'Bienvenue chez 4tek 🎉', html });
 }
 
-// --- Reset
-async function sendReset({ to, name, resetUrl }) {
-    const content = fill(load('reset-password.content.html'), {
-        NAME: name || 'client',
-        RESET_URL: resetUrl,
-        ACCENT: '#22d3ee'
-    });
-    const html = renderBase(content, {
-        subject: 'Réinitialisation du mot de passe',
-        preheader: 'Lien valable 60 minutes'
-    });
-    return sendMail({ to, subject: 'Réinitialisation du mot de passe', html });
+// --- Admin Users
+const mongoose = require('mongoose');
+
+const Order = require('../models/Order');
+
+function toBool(v) {
+    if (v === undefined) return undefined;
+    if (v === null) return undefined;
+    if (typeof v === 'boolean') return v;
+    const s = String(v).toLowerCase();
+    if (['1','true','yes','y'].includes(s)) return true;
+    if (['0','false','no','n'].includes(s)) return false;
+    return undefined;
 }
+
+/**
+ * GET /v1/admin/users
+ * Query:
+ *  - q: text search (name/email/phone)
+ *  - active: true/false
+ *  - verified: true/false
+ *  - provider: 'google'|'facebook'|'local'
+ *  - page, limit, sort (default: -createdAt)
+ */
+exports.getAdminUsers = async (req, res) => {
+    try {
+        const {
+            q,
+            active,
+            verified,
+            provider,
+            page = 1,
+            limit = 20,
+            sort = '-createdAt',
+        } = req.query;
+        const pageNum  = Math.max(1, parseInt(page, 10) || 1);
+        const perPage  = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+        const skip     = (pageNum - 1) * perPage;
+
+        const match = {};
+        if (q) {
+            const rx = new RegExp(q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            match.$or = [
+                { name:   rx },
+                { email:  rx },
+                { phone:  rx },
+                { address: rx },
+            ];
+        }
+
+        const act = toBool(active);
+        if (act !== undefined) match.active = act;
+
+        const ver = toBool(verified);
+        if (ver !== undefined) match.isVerified = ver;
+
+        if (provider === 'google')  match['providers.google'] = { $exists: true, $ne: null };
+        if (provider === 'facebook') match['providers.facebook'] = { $exists: true, $ne: null };
+        if (provider === 'local')    match['providers.google'] = { $exists: false };
+
+        // Build sort
+        let sortObj = { createdAt: -1 };
+        if (sort) {
+            sortObj = {};
+            const parts = String(sort).split(',');
+            for (const part of parts) {
+                const s = part.trim();
+                if (!s) continue;
+                if (s.startsWith('-')) sortObj[s.slice(1)] = -1;
+                else sortObj[s] = 1;
+            }
+        }
+
+        // Aggregate to get ordersCount
+        const pipeline = [
+            { $match: match },
+            {
+                $lookup: {
+                    from: 'orders',
+                    let: { uid: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ['$user.id', '$$uid'] } } },
+                        { $count: 'cnt' }
+                    ],
+                    as: 'ordersAgg'
+                }
+            },
+            {
+                $addFields: {
+                    ordersCount: { $ifNull: [{ $arrayElemAt: ['$ordersAgg.cnt', 0] }, 0] }
+                }
+            },
+            { $project: {
+                    password: 0,
+                    resetPasswordTokenHash: 0,
+                    resetPasswordExpires: 0,
+                    ordersAgg: 0
+                }
+            },
+            { $sort: sortObj },
+            { $skip: skip },
+            { $limit: perPage }
+        ];
+
+        const [items, totalArr] = await Promise.all([
+            User.aggregate(pipeline),
+            User.aggregate([{ $match: match }, { $count: 'total' }])
+        ]);
+
+        const total = totalArr[0]?.total || 0;
+        const pages = Math.max(1, Math.ceil(total / perPage));
+
+        res.json({ items, total, page: pageNum, pages, limit: perPage });
+    } catch (err) {
+        console.error('getAdminUsers error:', err);
+        res.status(500).json({ error: err?.message || 'Unable to fetch users' });
+    }
+};
+
+exports.getAdminUserDetail = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid id' });
+        }
+
+        const user = await User.findById(id).select('-password -resetPasswordTokenHash -resetPasswordExpires');
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const orders = await Order
+            .find({ 'user.id': user._id })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({ user, orders });
+    } catch (err) {
+        console.error('getAdminUserDetail error:', err);
+        res.status(500).json({ error: err?.message || 'Unable to fetch user detail' });
+    }
+};
 

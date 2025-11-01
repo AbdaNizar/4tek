@@ -3,7 +3,6 @@ const Cart = require('../models/cart');
 // GET /v1/cart
 exports.getMyCart = async (req, res, next) => {
     try {
-        console.log(req.user)
         const userId = req.user.id;
         let cart = await Cart.findOne({ user: userId });
         if (!cart) cart = await Cart.create({ user: userId, items: [] });

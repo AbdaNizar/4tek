@@ -2,9 +2,9 @@ const bcrypt = require('bcryptjs');
 const User   = require('../models/user');
 
 async function ensureDefaultAdmin() {
-    const email = process.env.ADMIN_EMAIL || 'admin@4tek.tn';
-    const pass  = process.env.ADMIN_PASS  || '24232780';
-    const name  = process.env.ADMIN_NAME  || 'Super Admin';
+    const email = process.env.ADMIN_EMAIL
+    const pass  = process.env.ADMIN_PASS
+    const name  = process.env.ADMIN_NAME
 
     // Existe-t-il déjà un admin ?
     const hasAdmin = await User.exists({ role: 'admin' });
@@ -26,7 +26,6 @@ async function ensureDefaultAdmin() {
     }
 
     // Créer un nouvel admin
-    console.log('pass',pass)
 
     await User.create({
         name, email, password: pass, role: 'admin', isVerified: true, active : true

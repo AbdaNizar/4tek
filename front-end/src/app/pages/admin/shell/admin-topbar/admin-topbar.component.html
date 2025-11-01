@@ -6,24 +6,39 @@
   </div>
 
   <div class="right">
-    <div class="user">
-<!--         (click)="menuOpen.update(v=>!v)"-->
-
+    <!-- Toggle button -->
+    <div
+      class="user"
+      role="button"
+      tabindex="0"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="toggleMenu($event)"
+      (keydown.enter)="toggleMenu($event)"
+      (keydown.space)="toggleMenu($event)"
+    >
       <div class="avatar" *ngIf="avatarUrl(); else letter">
         <img [src]="avatarUrl()!" alt="avatar"/>
       </div>
       <ng-template #letter>
         <div class="avatar letter">
-<!--          {{ (shortName()|slice:0:1)|uppercase }}-->
+          {{ (shortName()|slice:0:1)|uppercase }}
         </div>
       </ng-template>
       <span>{{ shortName() }}</span>
-      <svg width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+      </svg>
     </div>
 
-    <div class="menu" *ngIf="menuOpen()">
-      <a href="/">Aller au site</a>
-      <button type="button" (click)="logout()">Se déconnecter</button>
-    </div>
+    <!-- Menu -->
+    <div
+      class="menu"
+      *ngIf="menuOpen()"
+      role="menu"
+      (click)="$event.stopPropagation()"   >
+    <a (click)="goToApp()" role="menuitem">Aller au site</a>
+    <button type="button" role="menuitem" (click)="logout()">Se déconnecter</button>
+  </div>
   </div>
 </header>

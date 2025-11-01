@@ -22,21 +22,37 @@ const transporter = nodemailer.createTransport(
 );
 
 
-async function sendMail({to, subject, html, text}) {
+
+async function sendMail({ to, subject, html, text ,attachments = [] }) {
+    // Process HTML to swap placeholders with inline CIDs
+    const htmlProcessed = String(html)
+        .replace(/%%LOGO_URL%%/g, 'cid:brandLogo')
+        .replace(/%%FACEBOOK_LOGO_URL%%/g, 'cid:logoFacebook')
+        .replace(/%%INSTAGRAM_LOGO_URL%%/g, 'cid:logoInstagram')
+        .replace(/%%TIKTOK_LOGO_URL%%/g, 'cid:logoTikTok');
+
     const info = await transporter.sendMail({
-        from: `"${"4tek"}" <${MAIL_FROM || SMTP_USER}>`,
+        from: `"${'4tek'}" <${MAIL_FROM || SMTP_USER}>`,
         to,
         subject,
-        text: text || "",
-        html: html.replace('%%LOGO_URL%%', 'cid:brandLogo'),
+        text: text || '',
+        html: htmlProcessed,
         attachments: [
-            {filename: 'logo.png', path: path.join(__dirname, '../assets/logo.png'), cid: 'brandLogo'}
-        ]
+            // Brand logo
+            { filename: 'logo.png', path: path.join(__dirname, '../assets/logo.png'), cid: 'brandLogo' },
+            { filename: 'facebook.png', path: path.join(__dirname, '../assets/facebook-logo.png'), cid: 'logoFacebook' },
+            { filename: 'instagram.png', path: path.join(__dirname, '../assets/instagram-logo.png'), cid: 'logoInstagram' },
+            { filename: 'tiktok.png', path: path.join(__dirname, '../assets/tiktok-logo.png'), cid: 'logoTikTok' },
+            ...attachments
+        ],
+        // 👈 merge des pièces jointes externes
+
     });
 
-    console.log("✅ Mail envoyé:", info.messageId);
+    console.log('✅ Mail envoyé:', info.messageId);
     return info;
 }
+
 
 
 function load(file) {
@@ -59,11 +75,13 @@ function renderBase(contentHtml, vars = {}) {
         PREHEADER: vars.preheader || '',
         BRAND_NAME: vars.brandName || '4tek',
         ACCENT: vars.accent || '#22d3ee',
-        // SUPPORT_EMAIL: vars.supportEmail || 'support@4tek.tn',
-        // FACEBOOK_URL: vars.facebookUrl || 'https://facebook.com/',
-        // INSTAGRAM_URL: vars.instagramUrl || 'https://instagram.com/',
+        SUPPORT_EMAIL: vars.supportEmail || 'support@4tek.tn',
+        FACEBOOK_URL: vars.facebookUrl || 'https://facebook.com/',
+        INSTAGRAM_URL: vars.instagramUrl || 'https://instagram.com/',
+        TIKTOK_URL: vars.tikTokUrl || 'https://instagram.com/',
         YEAR: String(new Date().getFullYear()),
-        CONTENT: contentHtml || ''
+        CONTENT: contentHtml || '',
+
     };
     return fill(base, map);
 }

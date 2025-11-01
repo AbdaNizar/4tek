@@ -1,11 +1,11 @@
 // src/app/pages/oauth-complete/oauth-complete.component.ts
 import { Component, OnInit, inject, NgZone } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService } from '../../services/auth/auth.service';
+import {AuthService, LoginResp} from '../../services/auth/auth.service';
 
 type User = { id: string; email?: string; name?: string; isVerified?: boolean; active?: boolean; avatar?: string; role?: 'user'|'admin' };
 type OauthPayload = { type: 'OAUTH_RESULT'; token: string; user: User; state?: string };
-type LoginResp   = { token: string; user: User };
+
 
 @Component({
   standalone: true,
@@ -53,7 +53,6 @@ export class OauthCompleteComponent implements OnInit {
         setTimeout(() => {
           try { window.close(); } catch {}
           try { window.opener && window.open('', '_self')?.close(); } catch {}
-          // If still not closed and it’s not a popup, navigate home
           if (!window.opener) this.router.navigateByUrl('/');
         }, 60);
 

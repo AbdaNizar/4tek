@@ -1,46 +1,34 @@
-/* ===== General styles (assuming a dark theme context from colors) ===== */
 * {
   box-sizing: border-box;
-}
-
-body {
-  /* Assuming some base dark background for the admin panel */
-  background: #0d121e;
-  color: #e5e7eb;
-  font-family: sans-serif; /* Use a common font family */
-  margin: 0;
 }
 
 button {
   cursor: pointer;
 }
 
-/* Base button reset for custom styles */
-button, input, select, textarea {
-  font-family: inherit;
-  font-size: 100%;
-  margin: 0;
-  line-height: inherit;
-  background: none;
-  border: none;
-  color: inherit;
+/* ===== Spinner minimal ===== */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, .4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  vertical-align: -2px;
 }
 
-button:focus, a:focus, input:focus, select:focus, textarea:focus {
-  outline: 2px solid rgba(59, 130, 246, 0.7); /* Blue focus ring */
-  outline-offset: 2px;
-}
-
-/* Remove default focus ring on elements that get a custom one */
-[tabindex]:focus:not(:focus-visible) {
-  outline: none;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== Layout & header ===== */
 .admin-orders {
   display: grid;
   gap: 14px;
-  /* Add max width for better content presentation */
   max-width: 1400px;
   margin: 20px auto;
   padding: 0 16px;
@@ -88,7 +76,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
 .list {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px; /* Base minimum width for desktop/tablet */
+  min-width: 760px;
 }
 
 .list thead th {
@@ -259,7 +247,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   overflow: auto;
 }
 
-/* key-values */
+/* KV */
 .kv {
   display: grid;
   gap: 10px;
@@ -277,11 +265,11 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   color: #e6eaf2;
 }
 
-/* timeline */
+/* Timeline */
 .timeline {
   display: grid;
   gap: 8px;
-  margin: 0 0 14px 0;
+  margin: 0 0 14px;
   padding: 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, .03);
@@ -306,7 +294,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   font-variant-numeric: tabular-nums;
 }
 
-/* articles */
+/* Articles */
 .message {
   background: rgba(255, 255, 255, .03);
   border: 1.5px solid rgba(255, 255, 255, .08);
@@ -323,11 +311,10 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
 }
 
 .lines li {
-  /* Default desktop/tablet grid: Image | Name | Quantity | Price */
-  grid-template-columns: 52px 1fr auto auto;
   display: grid;
   gap: 10px;
   align-items: center;
+  grid-template-columns: 52px 1fr auto auto; /* image | name | qty | price */
 }
 
 .lines img {
@@ -349,10 +336,10 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
 
 .lines .p {
   font-weight: 800;
-  text-align: right; /* Ensure price aligns to the right */
+  text-align: right;
 }
 
-/* note */
+/* Note */
 .note-edit {
   display: grid;
   gap: 8px;
@@ -368,7 +355,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   padding: 10px;
 }
 
-/* modal actions */
+/* Actions */
 .modal-actions {
   display: flex;
   flex-wrap: wrap;
@@ -388,6 +375,10 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   background: rgba(255, 255, 255, .06);
   color: #e6eaf2;
   transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .modal-actions .btn:hover {
@@ -407,7 +398,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   border-color: rgba(255, 255, 255, .18);
 }
 
-.modal-actions .btn.primary { /* Added support for generic primary button */
+.modal-actions .btn.primary {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
   border-color: rgba(59, 130, 246, .35);
   color: #fff;
@@ -437,9 +428,7 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   color: #fff;
 }
 
-/* ===== Mobile tweaks ===== */
-
-/* 780px and down: Main table layout */
+/* Responsive */
 @media (max-width: 780px) {
   .head {
     flex-direction: column;
@@ -461,26 +450,13 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   }
 
   .list {
-    min-width: 680px; /* Reduced min-width slightly */
+    min-width: 680px;
   }
 }
 
-/* 640px and down: Articles list in modal */
 @media (max-width: 640px) {
   .lines li {
-    /* New grid for smaller screens: Image | Name | Price, Quantity on a separate line or merged */
-    /* To fix: Grid template was previously: 48px | 1fr | auto. This makes Quantity (q) and Price (p) share the last column.
-       Let's adjust it to make it more mobile-friendly. A common pattern is to put Qty/Price in the last two columns.
-       The initial template was: 52px | 1fr | auto | auto.
-       With 'q' and 'p' as the last two, the grid should be: 48px | Name (1fr) | Qty (auto) | Price (auto).
-       The original CSS had: grid-template-columns: 48px 1fr auto; - This removes a column!
-
-       We'll keep the 4 columns for readability: Image | Name | Quantity | Price, but reduce image size.
-       Let's revert to the 4-column structure but with smaller sizes if needed, or adjust the layout significantly.
-
-       To make it better, let's keep the image and name on the left, and Qty/Price on the right.
-    */
-    grid-template-columns: 48px 1fr auto auto; /* Image | Name | Qty | Price */
+    grid-template-columns: 48px 1fr auto auto;
     gap: 8px;
   }
 
@@ -490,7 +466,6 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   }
 }
 
-/* 560px and down: Further table reduction */
 @media (max-width: 560px) {
   .list {
     min-width: 560px;
@@ -501,17 +476,14 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   }
 
   .kv {
-    /* Stack key-value pairs vertically if screen is small */
     grid-template-columns: 1fr;
   }
 }
 
-/* 520px and down: Modal size and actions */
 @media (max-width: 520px) {
   .modal {
     width: calc(100vw - 16px);
     max-height: calc(100vh - 16px);
-    transform: translate(-50%, -50%);
     border-radius: 14px;
   }
 
@@ -523,10 +495,6 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
     flex-direction: column;
     align-items: flex-start;
     padding: 10px 14px;
-  }
-
-  .modal-head .who {
-    width: 100%;
   }
 
   .modal-head .badge.big {
@@ -541,15 +509,13 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
   }
 
   .modal-actions .btn {
-    flex: 1 1 44%; /* Allows two buttons per row */
+    flex: 1 1 44%;
     min-width: 44%;
   }
 }
 
-/* 480px and down: Smallest screen articles list and timeline */
 @media (max-width: 480px) {
   .lines li {
-    /* Image | Name (1fr) | Qty (auto) | Price (auto) */
     grid-template-columns: 44px 1fr auto auto;
   }
 
@@ -558,26 +524,17 @@ button:focus, a:focus, input:focus, select:focus, textarea:focus {
     height: 44px;
   }
 
-  .lines .q {
-    font-size: 0.8rem;
-  }
-
   .timeline {
     padding: 8px;
   }
 
   .timeline .trow {
     font-size: .875rem;
-  }
-
-  .timeline .trow {
-    /* Stack timeline rows vertically on very small screens if necessary, though side-by-side might be fine */
     flex-direction: column;
     align-items: flex-start;
   }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .01ms !important;

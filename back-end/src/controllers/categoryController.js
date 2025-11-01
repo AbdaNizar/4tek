@@ -119,7 +119,6 @@ function uniqueName(originalName = 'file') {
 // ---------- REPLACE ACTION ----------
 exports.replace = async (req, res) => {
     try {
-        console.log(req.body)
         const id = req.params.id;
         const cat = await Category.findById(id);
         if (!cat) return res.status(404).json({ error: 'Catégorie introuvable' });

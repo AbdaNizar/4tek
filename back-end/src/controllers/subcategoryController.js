@@ -7,14 +7,16 @@ const Category = require('../models/category');
 const mongoose = require('mongoose');
 const Product = require('../models/productSchema');
 // util
-const ensureDir = p => { if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true }); };
+const ensureDir = p => {
+    if (!fs.existsSync(p)) fs.mkdirSync(p, {recursive: true});
+};
 
-const pub = p => p.replace(/\\/g,'/'); // windows friendly
+const pub = p => p.replace(/\\/g, '/'); // windows friendly
 
 const ROOT = path.join(__dirname, '..');
 const DIRS = {
-    icons:   path.join(ROOT, 'uploads/subcategories/icons'),
-    images:  path.join(ROOT, 'uploads/subcategories/images'),
+    icons: path.join(ROOT, 'uploads/subcategories/icons'),
+    images: path.join(ROOT, 'uploads/subcategories/images'),
     banners: path.join(ROOT, 'uploads/subcategories/banners'),
 };
 Object.values(DIRS).forEach(ensureDir);
@@ -26,121 +28,47 @@ exports.list = async (req, res) => {
 };
 
 exports.getOne = async (req, res) => {
-    const d = await SubCategory.findById(req.params.id).populate('parent','name _id').lean();
-    if (!d) return res.status(404).json({ error: 'Introuvable' });
+    const d = await SubCategory.findById(req.params.id).populate('parent', 'name _id').lean();
+    if (!d) return res.status(404).json({error: 'Introuvable'});
     res.json(d);
 };
 
 
-
 exports.update = async (req, res) => {
     try {
-        const { name, slug, description, isActive, parentId } = req.body;
+        const {name, slug, description, isActive, parentId} = req.body;
         const updates = {
-            ...(name ? { name } : {}),
-            ...(slug ? { slug: slugify(slug) } : {}),
-            ...(description !== undefined ? { description } : {}),
-            ...(isActive !== undefined ? { isActive: (isActive === 'true' || isActive === true) } : {}),
-            ...(parentId ? { parent: parentId } : {})
+            ...(name ? {name} : {}),
+            ...(slug ? {slug: slugify(slug)} : {}),
+            ...(description !== undefined ? {description} : {}),
+            ...(isActive !== undefined ? {isActive: (isActive === 'true' || isActive === true)} : {}),
+            ...(parentId ? {parent: parentId} : {})
         };
 
 
-        const doc = await SubCategory.findByIdAndUpdate(req.params.id, updates, { new: true })
-            .populate('parent','name _id')
+        const doc = await SubCategory.findByIdAndUpdate(req.params.id, updates, {new: true})
+            .populate('parent', 'name _id')
             .lean();
-        if (!doc) return res.status(404).json({ error: 'Sous-catégorie introuvable' });
+        if (!doc) return res.status(404).json({error: 'Sous-catégorie introuvable'});
         res.json(doc);
     } catch (e) {
         console.error('update subcategory error', e);
-        res.status(500).json({ error: 'Erreur serveur' });
+        res.status(500).json({error: 'Erreur serveur'});
     }
 };
 
-// exports.replaceFiles = async (req, res) => {
-//     // remplace totalement icon/image/banners selon flags
-//     try {
-//         const sc = await SubCategory.findById(req.params.id);
-//         if (!sc) return res.status(404).json({ error: 'Sous-catégorie introuvable' });
-//
-//         const toBool = v => v === true || v === 'true';
-//         const repIcon    = toBool(req.body.replaceIcon);
-//         const repImage   = toBool(req.body.replaceImage);
-//         const repBanners = toBool(req.body.replaceBanners);
-//
-//         const updates = {};
-//
-//         if (repIcon) {
-//             if (sc.iconUrl && sc.iconUrl.startsWith('/uploads/subcategories')) {
-//                 const abs = path.join(ROOT, sc.iconUrl);
-//                 fs.existsSync(abs) && fs.unlinkSync(abs);
-//             }
-//             console.log('req.files?.icon?.[0]',req.files?.icon)
-//             if (req.files?.icon) {
-//                 const f = req.files.icon;
-//                 const nameU = uniqueName(f.originalname);
-//                 fs.writeFileSync(path.join(DIRS.icons, nameU), f.buffer);
-//                 updates.iconUrl = `/uploads/subcategories/icons/${nameU}`;
-//             } else {
-//                 updates.iconUrl = '';
-//             }
-//         }
-//
-//         if (repImage) {
-//             if (sc.imageUrl && sc.imageUrl.startsWith('/uploads/subcategories')) {
-//                 const abs = path.join(ROOT, sc.imageUrl);
-//                 fs.existsSync(abs) && fs.unlinkSync(abs);
-//             }
-//             if (req.files?.image) {
-//                 const f = req.files.image;
-//                 const nameU = uniqueName(f.originalname);
-//                 fs.writeFileSync(path.join(DIRS.images, nameU), f.buffer);
-//                 updates.imageUrl = `/uploads/subcategories/images/${nameU}`;
-//             } else {
-//                 updates.imageUrl = '';
-//             }
-//         }
-//
-//         if (repBanners) {
-//             if (Array.isArray(sc.banners)) {
-//                 for (const url of sc.banners) {
-//                     if (url?.startsWith('/uploads/subcategories')) {
-//                         const abs = path.join(ROOT, url);
-//                         fs.existsSync(abs) && fs.unlinkSync(abs);
-//                     }
-//                 }
-//             }
-//             const newUrls = [];
-//             if (req.files?.banners?.length) {
-//                 for (const f of req.files.banners) {
-//                     const nameU = uniqueName(f.originalname);
-//                     fs.writeFileSync(path.join(DIRS.banners, nameU), f.buffer);
-//                     newUrls.push(`/uploads/subcategories/banners/${nameU}`);
-//                 }
-//             }
-//             updates.banners = newUrls;
-//         }
-//
-//         const out = await SubCategory.findByIdAndUpdate(req.params.id, updates, { new: true })
-//             .populate('parent','name _id')
-//             .lean();
-//         res.json(out);
-//     } catch (e) {
-//         console.error('replace subcategory error', e);
-//         res.status(500).json({ error: 'Erreur serveur' });
-//     }
-// };
 
 exports.toggle = async (req, res) => {
     const d = await SubCategory.findByIdAndUpdate(req.params.id,
-        { $set: { isActive: !!req.body.isActive } },
-        { new: true }).populate('parent','name _id').lean();
-    if (!d) return res.status(404).json({ error: 'Introuvable' });
+        {$set: {isActive: !!req.body.isActive}},
+        {new: true}).populate('parent', 'name _id').lean();
+    if (!d) return res.status(404).json({error: 'Introuvable'});
     res.json(d);
 };
 
 exports.remove = async (req, res) => {
     const sc = await SubCategory.findById(req.params.id);
-    if (!sc) return res.status(404).json({ error: 'Introuvable' });
+    if (!sc) return res.status(404).json({error: 'Introuvable'});
 
     // supprime fichiers locaux
     const delLocal = (u) => {
@@ -154,47 +82,47 @@ exports.remove = async (req, res) => {
     (sc.banners || []).forEach(delLocal);
 
     await sc.deleteOne();
-    res.json({ ok: true });
+    res.json({ok: true});
 };
 
 
 exports.listByCategory = async (req, res) => {
     try {
-        const { categoryId } = req.params;
-        if (!categoryId) return res.status(400).json({ error: 'categoryId requis' });
+        const {categoryId} = req.params;
+        if (!categoryId) return res.status(400).json({error: 'categoryId requis'});
         if (!mongoose.isValidObjectId(categoryId)) {
-            return res.status(400).json({ error: 'categoryId invalide' });
+            return res.status(400).json({error: 'categoryId invalide'});
         }
 
         const catId = new mongoose.Types.ObjectId(categoryId);
 
         // One aggregation: fetch active subs of the category, then count products per sub
         const subs = await SubCategory.aggregate([
-            { $match: { parent: catId, isActive: true } },
-            { $sort: { name: 1 } },
+            {$match: {parent: catId, isActive: true}},
+            {$sort: {name: 1}},
             {
                 $lookup: {
                     from: Product.collection.name, // resolves to the real collection name (e.g., 'products')
-                    let: { subId: '$_id' },
+                    let: {subId: '$_id'},
                     pipeline: [
-                        { $match: { $expr: { $eq: ['$subCategory', '$$subId'] }, isActive: true } },
-                        { $count: 'count' }
+                        {$match: {$expr: {$eq: ['$subCategory', '$$subId']}, isActive: true}},
+                        {$count: 'count'}
                     ],
                     as: 'pc'
                 }
             },
             {
                 $addFields: {
-                    productsCount: { $ifNull: [{ $arrayElemAt: ['$pc.count', 0] }, 0] }
+                    productsCount: {$ifNull: [{$arrayElemAt: ['$pc.count', 0]}, 0]}
                 }
             },
-            { $project: { pc: 0 } }
+            {$project: {pc: 0}}
         ]);
 
         res.json(subs);
     } catch (e) {
         console.error('listByCategory error', e);
-        res.status(500).json({ error: 'Erreur serveur' });
+        res.status(500).json({error: 'Erreur serveur'});
     }
 };
 
@@ -208,7 +136,10 @@ const absFromPublic = (publicUrl) =>
     path.join(__dirname, '..', publicUrl.replace(/^\//, ''));
 
 async function safeUnlink(absPath) {
-    try { await fsp.unlink(absPath); } catch (_) { /* ignore */ }
+    try {
+        await fsp.unlink(absPath);
+    } catch (_) { /* ignore */
+    }
 }
 
 function normalizeFiles(fileOrArray) {
@@ -224,13 +155,12 @@ function uniqueName(originalName = 'file') {
 // ---------- REPLACE ACTION ----------
 exports.replace = async (req, res) => {
     try {
-        console.log(req.body)
         const id = req.params.id;
         const suCat = await SubCategory.findById(id);
-        if (!suCat) return res.status(404).json({ error: 'SubCatégorie introuvable' });
+        if (!suCat) return res.status(404).json({error: 'SubCatégorie introuvable'});
 
-        const repIcon    = toBool(req.body.replaceIcon);
-        const repImage   = toBool(req.body.replaceImage);
+        const repIcon = toBool(req.body.replaceIcon);
+        const repImage = toBool(req.body.replaceImage);
         const repBanners = toBool(req.body.replaceBanners);
 
         const updates = {};
@@ -291,35 +221,33 @@ exports.replace = async (req, res) => {
             updates.banners = newUrls;
         }
 
-        const updated = await SubCategory.findByIdAndUpdate(id, updates, { new: true }).lean();
+        const updated = await SubCategory.findByIdAndUpdate(id, updates, {new: true}).lean();
         return res.json(updated);
     } catch (e) {
         console.error('replace category error:', e);
-        return res.status(500).json({ error: 'Erreur serveur' });
+        return res.status(500).json({error: 'Erreur serveur'});
     }
 };
-
-
 
 
 // ---------- CREATE ACTION (express-fileupload style, same as replace) ----------
 exports.create = async (req, res) => {
     try {
-        const { name, slug, description, isActive, parentId } = req.body;
-        if (!name)     return res.status(400).json({ error: 'name requis' });
-        if (!parentId) return res.status(400).json({ error: 'catégorie parente requise' });
+        const {name, slug, description, isActive, parentId} = req.body;
+        if (!name) return res.status(400).json({error: 'name requis'});
+        if (!parentId) return res.status(400).json({error: 'catégorie parente requise'});
 
         const parent = await Category.findById(parentId).lean();
-        if (!parent) return res.status(404).json({ error: 'Catégorie parente introuvable' });
+        if (!parent) return res.status(404).json({error: 'Catégorie parente introuvable'});
 
         const s = slug ? slugify(slug) : slugify(name);
-        const exists = await SubCategory.findOne({ slug: s }).lean();
-        if (exists) return res.status(409).json({ error: 'slug déjà utilisé' });
+        const exists = await SubCategory.findOne({slug: s}).lean();
+        if (exists) return res.status(409).json({error: 'slug déjà utilisé'});
 
         // default values
         let iconUrl = '';
         let imageUrl = '';
-        let banners  = [];
+        let banners = [];
 
         // ===== ICON (single) =====
         const iconFile = normalizeFiles(req.files?.icon)[0];
@@ -360,12 +288,12 @@ exports.create = async (req, res) => {
         };
 
         const doc = await SubCategory.create(payload);
-        const out = await SubCategory.findById(doc._id).populate('parent','name _id').lean();
+        const out = await SubCategory.findById(doc._id).populate('parent', 'name _id').lean();
         res.status(201).json(out);
     } catch (e) {
         console.error('create subcategory error', e);
         // fix: 40 -> 500
-        res.status(500).json({ error: 'Erreur serveur' });
+        res.status(500).json({error: 'Erreur serveur'});
     }
 };
 

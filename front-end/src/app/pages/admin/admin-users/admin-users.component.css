@@ -1,0 +1,362 @@
+
+.admin-users {
+  display: grid;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.head h2 {
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tools input[type=search], .tools select {
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(18, 24, 38, .75);
+  color: #e5e7eb;
+  padding: 0 12px;
+  min-width: 180px;
+}
+
+/* Table */
+.table-wrap {
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0f1524, #0b111f);
+  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.list {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.list thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-weight: 700;
+  color: #9aa3b2;
+  background: rgba(10, 15, 27, .85);
+  backdrop-filter: blur(6px);
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.list tbody td {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .05);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.list tbody tr:first-child td {
+  border-top: none;
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.person img {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, .15);
+  background: #0e1525;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  background: rgba(255, 255, 255, .02);
+}
+
+/* badges & pills */
+.badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 84px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, .12);
+  color: #e5e7eb;
+  text-transform: capitalize;
+}
+
+.badge.ok {
+  border-color: rgba(34, 211, 238, .35);
+  color: #baf3ff;
+  background: rgba(34, 211, 238, .16);
+}
+
+.badge.ko {
+  border-color: rgba(239, 68, 68, .35);
+  color: #fecaca;
+  background: rgba(239, 68, 68, .16);
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-right: 6px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  color: #e5e7eb;
+  background: rgba(255, 255, 255, .06);
+}
+
+.pill.google {
+  border-color: #4285f4aa;
+  background: #4285f41a;
+  color: #b5d0ff;
+}
+
+.pill.facebook {
+  border-color: #1877f2aa;
+  background: #1877f21a;
+  color: #c6d9ff;
+}
+
+.pill.local {
+  border-color: #22c55eaa;
+  background: #22c55e1a;
+  color: #c8facc;
+}
+
+.orders {
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+/* modal (reuse from contacts, trimmed) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .60);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(820px, 96vw);
+  max-height: min(90vh, 860px);
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-rows:auto 1fr;
+  border-radius: 18px;
+  overflow: hidden;
+  background: radial-gradient(120% 120% at -10% -10%, rgba(34, 211, 238, .10), transparent 50%),
+  linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .03));
+  border: 1.5px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .45);
+  z-index: 1001;
+}
+
+.modal-x {
+  position: absolute;
+  inset-inline-end: 10px;
+  inset-block-start: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: #e5e7eb;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 60px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, rgba(16, 22, 36, .98), rgba(16, 22, 36, .92));
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  z-index: 1;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.who img {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, .14);
+  background: #0e1525;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .2) transparent;
+}
+
+.kv {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 0 0 14px;
+}
+
+.kv dt {
+  color: #9aa3b2;
+  font-weight: 700;
+}
+
+.kv dd {
+  margin: 0;
+  color: #e6eaf2;
+}
+
+.message {
+  background: rgba(255, 255, 255, .03);
+  border: 1.5px solid rgba(255, 255, 255, .08);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.message h4 {
+  margin: 0 0 8px;
+  font-weight: 800;
+}
+
+.muted {
+  color: #9aa3b2;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+.orders-table th, .orders-table td {
+  padding: 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, .06);
+}
+
+.orders-table thead th {
+  text-align: left;
+  color: #9aa3b2;
+  background: rgba(10, 15, 27, .5);
+  position: sticky;
+  top: 0;
+}
+
+/* status colors */
+.badge.status-pending {
+  background: #334155;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+.badge.status-confirmed {
+  background: #0f766e55;
+  color: #a7f3d0;
+  border-color: #0f766eaa;
+}
+
+.badge.status-shipped {
+  background: #1d4ed855;
+  color: #c7d2fe;
+  border-color: #1d4ed8aa;
+}
+
+.badge.status-delivered {
+  background: #16653455;
+  color: #bbf7d0;
+  border-color: #16a34a99;
+}
+
+.badge.status-cancelled {
+  background: #7f1d1d55;
+  color: #fecaca;
+  border-color: #b91c1caa;
+}
+
+/* pager */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pager button {
+  height: 34px;
+  width: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: #e5e7eb;
+}
+
+/* responsive tweaks (reuse) */
+@media (max-width: 780px) {
+  .tools {
+    width: 100%;
+  }
+
+  .tools input[type=search] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .modal {
+    width: 96vw;
+    max-height: 92vh;
+    border-radius: 16px;
+  }
+
+  .who img {
+    width: 36px;
+    height: 36px;
+  }
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{invoice.title}}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      height: 80vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    }
+    .invoice{width:210mm;height:297mm;margin:0 auto;background:#fff;box-shadow:0 0 20px rgba(0,0,0,.1);display:flex;flex-direction:column;}
+
+    /* Header */
+    .header{background:linear-gradient(135deg,#333 0%,#444 100%);color:#fff;padding:30px 40px;display:flex;justify-content:space-between;align-items:flex-start;position:relative}
+    .header::after{content:'';position:absolute;top:0;right:0;width:300px;height:100%;background:linear-gradient(135deg,transparent 0%,#0ea5e9 100%);clip-path:polygon(30% 0,100% 0,100% 100%,0% 100%)}
+    .company-info{z-index:1}
+    .company-name{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+    .logo{width:120px;height:80px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    .company-name h1{font-size:20px;font-weight:700}
+    .slogan{font-size:20px;opacity:.9;margin-left:20px}
+    .invoice-badge{background:#0ea5e9;padding:15px 25px;border-radius:8px;z-index:1;text-align:right}
+    .invoice-badge h2{font-size:28px;font-weight:900;margin-bottom:8px;letter-spacing:1px}
+    .invoice-meta{font-size:12px;display:flex;flex-direction:column;gap:3px}
+    .invoice-meta div{display:flex;justify-content:space-between;gap:15px}
+
+    /* Info Section */
+    .info-section{display:grid;grid-template-columns:1fr 1fr;gap:30px;padding:30px 40px}
+    .info-box h3{color:#0ea5e9;border-radius:8px;font-size:12px;font-weight:700;margin-bottom:12px;letter-spacing:.5px}
+    .info-box p{font-size:14px;line-height:1.6;color:#333}
+    .info-box .company{font-weight:700;color:#000;margin-bottom:5px}
+    .info-box .detail{color:#666;font-size:13px}
+
+    /* Table */
+    .table-section{padding:0 40px 30px}
+    table{width:100%;border-collapse:collapse}
+    thead{background:#0ea5e9;color:#fff;border-radius:8px}
+    thead th{padding:12px;text-align:left;font-size:12px;font-weight:700;letter-spacing:.5px}
+    thead th:nth-child(2), thead th:nth-child(3), thead th:nth-child(4){text-align:right}
+    tbody tr{border-bottom:1px solid #e0e0e0}
+    tbody tr:hover{background:#f9f9f9}
+    tbody td{padding:15px 12px;font-size:13px;vertical-align:top}
+    .item-name{font-weight:600;color:#000}
+    .item-desc{font-size:11px;color:#666;margin-top:3px}
+    tbody td:nth-child(2), tbody td:nth-child(3), tbody td:nth-child(4){text-align:right}
+
+    /* Bottom */
+    .bottom-section{display:grid;grid-template-columns:1fr 300px;gap:30px;padding:0 40px 30px}
+    .terms{background:#f0f9ff;padding:20px;border-radius:8px}
+    .terms h3{color:#0ea5e9;font-size:12px;font-weight:700;margin-bottom:12px;letter-spacing:.5px}
+    .terms p{font-size:11px;line-height:1.8;color:#666;margin-bottom:8px}
+    .signature{margin-top:20px;font-size:13px;font-weight:600;color:#000}
+    .totals{display:flex;flex-direction:column}
+    .total-row{display:flex;justify-content:space-between;padding:10px 15px;font-size:13px;border-bottom:1px solid #e0e0e0}
+    .total-row.subtotal,.total-row.tax,.total-row.discount{color:#666}
+    .total-row.grand-total{background:#0ea5e9;color:#fff;font-weight:700;font-size:15px;border:none;margin-top:5px}
+
+    /* Footer */
+    .footer{background:#0ea5e9 ;color:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
+    .footer .thanks{font-weight:700;font-size:14px}
+    .footer .contact{font-size:11px;opacity:.9}
+
+    @media print{ body{background:#fff;padding:0} .invoice{box-shadow:none} }
+  </style>
+</head>
+<body>
+<div class="invoice">
+  <!-- Header -->
+  <div class="header">
+    <div class="company-info">
+      <div class="company-name">
+        <div class="logo">
+          {{#if brand.logo}}<img src="{{brand.logo}}" alt="logo">{{else}}◆{{/if}}
+        </div>
+      </div>
+      <div class="slogan">{{brand.slogan}}</div>
+
+    </div>
+    <div class="invoice-badge">
+      <h2>INVOICE</h2>
+      <div class="invoice-meta">
+        <div><span>Date</span><strong>{{invoice.date}}</strong></div>
+        <div><span>N° facture</span><strong>{{invoice.number}}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Section -->
+  <div class="info-section">
+    <div class="info-box">
+      <h3>INVOICE A</h3>
+      <p class="company">{{customer.name}}</p>
+      <p class="detail">
+        {{customer.address}}<br>
+        {{#if customer.email}}{{customer.email}}<br>{{/if}}
+        {{#if customer.phone}}{{customer.phone}}{{/if}}
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <table>
+      <thead>
+      <tr>
+        <th>DESCRIPTION</th>
+        <th>PRIX UNIT.</th>
+        <th>QTÉ</th>
+        <th>TOTAL</th>
+      </tr>
+      </thead>
+      <tbody>
+      {{#each items}}
+      <tr>
+        <td>
+          <div class="item-name">{{name}}</div>
+          {{#if description}}<div class="item-desc">{{description}}</div>{{/if}}
+        </td>
+        <td>{{money unitPrice ../currency}}</td>
+        <td>{{qty}}</td>
+        <td>{{money total ../currency}}</td>
+      </tr>
+      {{/each}}
+      {{#unless items.length}}
+      <tr><td colspan="4" style="text-align:center;color:#666;padding:16px">Aucun article.</td></tr>
+      {{/unless}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="bottom-section">
+    <div class="terms">
+      <h3>CONDITIONS</h3>
+      {{#each terms}}
+      <p>{{add @index 1}}. {{this}}</p>
+      {{/each}}
+      {{#if sign}}<div class="signature">{{sign}}</div>{{/if}}
+    </div>
+    <div class="totals">
+      <div class="total-row subtotal">
+        <span>SOUS-TOTAL</span>
+        <span>{{money totals.subtotal currency}}</span>
+      </div>
+      <div class="total-row tax">
+        <span>{{totals.taxLabel}}</span>
+        <span>{{money totals.taxAmount currency}}</span>
+      </div>
+      {{#if totals.discountAmount}}
+      <div class="total-row discount">
+        <span>{{totals.discountLabel}}</span>
+        <span>- {{money totals.discountAmount currency}}</span>
+      </div>
+      {{/if}}
+      <div class="total-row grand-total">
+        <span>TOTAL</span>
+        <span>{{money totals.grandTotal currency}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="thanks">Merci pour votre confiance !</div>
+    <div class="contact">{{footer.address}} • {{footer.email}} • {{footer.phone}}</div>
+  </div>
+</div>
+</body>
+</html>

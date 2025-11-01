@@ -4,7 +4,7 @@ const Product = require('../models/productSchema');
 const Category = require('../models/category');
 const SubCategory = require('../models/subCategory');
 const Brand = require('../models/brand');
-const Rating  = require('../models/rating');
+const Rating = require('../models/rating');
 
 const {checkAndCreateFolder, uniqueName, normalizeFiles} = require('../middlewares/upload');
 const fs = require('fs');
@@ -33,22 +33,22 @@ exports.list = async (req, res) => {
         } = req.query;
 
         const where = {};
-        if (active === 'true')  where.isActive = true;
+        if (active === 'true') where.isActive = true;
         if (active === 'false') where.isActive = false;
-        if (cat)     where.category    = cat;
-        if (subCat)  where.subCategory = subCat;
-        if (bran)    where.brand       = bran;
+        if (cat) where.category = cat;
+        if (subCat) where.subCategory = subCat;
+        if (bran) where.brand = bran;
         if (min || max) {
             where.price = {
-                ...(min ? { $gte: Number(min) } : {}),
-                ...(max ? { $lte: Number(max) } : {})
+                ...(min ? {$gte: Number(min)} : {}),
+                ...(max ? {$lte: Number(max)} : {})
             };
         }
-        if (q) where.$text = { $search: q };
+        if (q) where.$text = {$search: q};
 
-        const pageNum  = Math.max(1, Number(page)  || 1);
+        const pageNum = Math.max(1, Number(page) || 1);
         const limitNum = Math.max(1, Number(limit) || 20);
-        const skipNum  = (pageNum - 1) * limitNum;
+        const skipNum = (pageNum - 1) * limitNum;
 
         const docs = await Product.find(where)
             .sort(sort)
@@ -58,49 +58,49 @@ exports.list = async (req, res) => {
 
         const total = await Product.countDocuments(where);
         if (!docs.length) {
-            return res.json({ items: [], total, page: pageNum, limit: limitNum });
+            return res.json({items: [], total, page: pageNum, limit: limitNum});
         }
 
         const ids = docs.map(d => d._id);
 
         // ⚠️ Ici on utilise productId + status: 'approved'
         const ratingsAgg = await Rating.aggregate([
-            { $match: { productId: { $in: ids }, status: 'approved' } },
+            {$match: {productId: {$in: ids}, status: 'approved'}},
             {
                 $group: {
                     _id: '$productId',
-                    ratingCount: { $sum: 1 },
-                    ratingAvg:   { $avg: '$stars' }
+                    ratingCount: {$sum: 1},
+                    ratingAvg: {$avg: '$stars'}
                 }
             },
             { // arrondi à 1 décimale (optionnel)
                 $project: {
                     ratingCount: 1,
-                    ratingAvg: { $round: ['$ratingAvg', 1] }
+                    ratingAvg: {$round: ['$ratingAvg', 1]}
                 }
             }
         ]);
 
         const byProd = new Map(
-            ratingsAgg.map(r => [String(r._id), { ratingAvg: r.ratingAvg || 0, ratingCount: r.ratingCount || 0 }])
+            ratingsAgg.map(r => [String(r._id), {ratingAvg: r.ratingAvg || 0, ratingCount: r.ratingCount || 0}])
         );
 
         const items = docs.map(p => {
-            const r = byProd.get(String(p._id)) || { ratingAvg: 0, ratingCount: 0 };
-            return { ...p, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount };
+            const r = byProd.get(String(p._id)) || {ratingAvg: 0, ratingCount: 0};
+            return {...p, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount};
         });
 
-        res.json({ items, total, page: pageNum, limit: limitNum });
+        res.json({items, total, page: pageNum, limit: limitNum});
     } catch (e) {
         console.error('product list error:', e);
-        res.status(500).json({ error: 'Erreur serveur' });
+        res.status(500).json({error: 'Erreur serveur'});
     }
 };
 
 /** GET one (public) */
 exports.getOne = async (req, res) => {
     try {
-        const doc = await Product.findById(req.params.id).populate('brand', 'name slug iconUrl')
+        const doc = await Product.findById(req.params.id).populate('category', 'name slug iconUrl').populate('subCategory', 'name slug iconUrl').populate('brand', 'name slug iconUrl')
             .lean();
         if (!doc) return res.status(404).json({error: 'Produit introuvable'});
         res.json(doc);
@@ -112,7 +112,21 @@ exports.getOne = async (req, res) => {
 /** PATCH (admin) – mise à jour simple des champs (pas de remplacement fichiers ici) */
 exports.update = async (req, res) => {
     try {
-        const {name, slug, description,brand, subCategory,price, oldPrice, stock, sku, isActive, category, currency, tags} = req.body;
+        const {
+            name,
+            slug,
+            description,
+            brand,
+            subCategory,
+            price,
+            oldPrice,
+            stock,
+            sku,
+            isActive,
+            category,
+            currency,
+            tags
+        } = req.body;
         const updates = {
             ...(name ? {name} : {}),
             ...(slug ? {slug: slugify(slug)} : {}),
@@ -281,32 +295,32 @@ exports.create = async (req, res) => {
             brand,
         } = req.body;
 
-        if (!name)     return res.status(400).json({ error: 'name requis' });
-        if (!price)    return res.status(400).json({ error: 'price requis' });
-        if (!category) return res.status(400).json({ error: 'category requis' });
-        if (!brand)    return res.status(400).json({ error: 'Brand requis' });
+        if (!name) return res.status(400).json({error: 'name requis'});
+        if (!price) return res.status(400).json({error: 'price requis'});
+        if (!category) return res.status(400).json({error: 'category requis'});
+        if (!brand) return res.status(400).json({error: 'Brand requis'});
 
         const cat = await Category.findById(category).lean();
-        if (!cat) return res.status(404).json({ error: 'Catégorie introuvable' });
+        if (!cat) return res.status(404).json({error: 'Catégorie introuvable'});
 
         const bra = await Brand.findById(brand).lean();
-        if (!bra) return res.status(404).json({ error: 'Brand introuvable' });
+        if (!bra) return res.status(404).json({error: 'Brand introuvable'});
 
         const subCat = await SubCategory.findById(subCategory).lean();
-        if (!subCat) return res.status(404).json({ error: 'subCategory introuvable' });
+        if (!subCat) return res.status(404).json({error: 'subCategory introuvable'});
 
         const s = slug ? slugify(slug) : slugify(name);
-        const exists = await Product.findOne({ slug: s }).lean();
-        if (exists) return res.status(409).json({ error: 'slug déjà utilisé' });
+        const exists = await Product.findOne({slug: s}).lean();
+        if (exists) return res.status(409).json({error: 'slug déjà utilisé'});
 
         // ----- files (express-fileupload) -----
-        const coverFile    = normalizeFiles(req.files?.image)[0] || null;
+        const coverFile = normalizeFiles(req.files?.image)[0] || null;
         const galleryFiles = normalizeFiles(req.files?.gallery);
 
         let imageUrl = '';
         if (coverFile) {
             const nameU = uniqueName(coverFile.name);
-            const dest  = path.join(DIRS.images, nameU);
+            const dest = path.join(DIRS.images, nameU);
             await coverFile.mv(dest);
             imageUrl = `/uploads/products/cover/${nameU}`;
         }
@@ -314,7 +328,7 @@ exports.create = async (req, res) => {
         const gallery = [];
         for (const f of galleryFiles) {
             const nameU = uniqueName(f.name);
-            const dest  = path.join(DIRS.gallery, nameU);
+            const dest = path.join(DIRS.gallery, nameU);
             await f.mv(dest);
             gallery.push(`/uploads/products/gallery/${nameU}`);
         }
@@ -343,7 +357,7 @@ exports.create = async (req, res) => {
         return res.status(201).json(doc);
     } catch (e) {
         console.error('product create error:', e);
-        return res.status(500).json({ error: 'Erreur serveur' });
+        return res.status(500).json({error: 'Erreur serveur'});
     }
 };
 
@@ -352,20 +366,19 @@ exports.create = async (req, res) => {
 exports.getBySlug = async (req, res) => {
     try {
         const slug = String(req.params.slug || '').trim().toLowerCase();
-        console.log('slug',slug)
         if (!slug) {
-            return res.status(400).json({ error: 'Slug requis' });
+            return res.status(400).json({error: 'Slug requis'});
         }
 
         // If you only want active products, keep isActive:true in the filter
-        const doc = await Product.findOne({ slug /*, isActive: true */ })
+        const doc = await Product.findOne({slug /*, isActive: true */})
             .populate('brand', 'name iconUrl _id')
             .populate('category', 'name slug _id isActive')
             .populate('subCategory', 'name slug _id isActive')
             .lean();
 
         if (!doc) {
-            return res.status(404).json({ error: 'Produit introuvable' });
+            return res.status(404).json({error: 'Produit introuvable'});
         }
 
         // Optionally, you can ensure arrays and fallback fields are sane
@@ -377,6 +390,6 @@ exports.getBySlug = async (req, res) => {
         return res.json(doc);
     } catch (e) {
         console.error('getBySlug error:', e);
-        return res.status(500).json({ error: 'Erreur serveur' });
+        return res.status(500).json({error: 'Erreur serveur'});
     }
 };

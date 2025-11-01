@@ -1,0 +1,92 @@
+<div class="prod-detail" *ngIf="!loading(); else loadingTpl">
+  <ng-container *ngIf="p() as pr; else emptyTpl">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="cover">
+        <img [src]="getUrl(pr.imageUrl || pr.imageUrl?.[0])" [alt]="pr.name" />
+      </div>
+
+      <div class="hero-content">
+        <div class="title-line">
+          <span class="icon" *ngIf="pr.brands?.iconUrl">
+            <img [src]="getUrl(pr.brands?.iconUrl)" [alt]="(pr.brands?.name || 'brand') + ' icon'"/>
+          </span>
+          <h1>{{ pr.name }}</h1>
+          <span class="dot"></span>
+          <span class="badge" [class.on]="pr.isActive" [class.off]="!pr.isActive">
+            {{ pr.isActive ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <div class="slug">/{{ pr.slug }}</div>
+
+        <!-- Rating line -->
+        <div class="rating-line" *ngIf="(pr.ratingCount ?? 0) > 0"
+             [attr.aria-label]="'Note ' + (pr.ratingAvg || 0 | number:'1.1-1') + ' sur 5'">
+          <div class="stars-meter" [style.--fill]="ratingFill()">
+            <span class="bg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+            <span class="fg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
+          </div>
+          <b class="rating-avg">{{ pr.ratingAvg | number:'1.1-1' }}</b>
+          <span class="rating-cnt">({{ pr.ratingCount }})</span>
+        </div>
+
+        <div class="desc" [class.expanded]="descExpanded()">
+          <p>{{ pr.description || '—' }}</p>
+          <button *ngIf="(pr.description || '').length > 140" type="button" class="read-more" (click)="toggleDesc()">
+            {{ descExpanded() ? 'Lire moins' : 'Lire la suite' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY images -->
+    <section class="gallery" *ngIf="pr.imageUrl?.length">
+      <h3>Images</h3>
+      <div class="thumbs">
+        <figure class="thumb" *ngFor="let b of pr.imageUrl">
+          <img [src]="getUrl(b)" [alt]="pr.name + ' image'"/>
+        </figure>
+      </div>
+    </section>
+
+    <!-- META -->
+    <section class="meta">
+      <div class="card">
+        <h4>Informations</h4>
+        <ul>
+          <li><span>Nom</span><code>{{ pr.name }}</code></li>
+          <li><span>Slug</span><code>{{ pr.slug }}</code></li>
+          <li><span>Statut</span>
+            <b [class.on]="pr.isActive" [class.off]="!pr.isActive">{{ pr.isActive ? 'Actif' : 'Inactif' }}</b>
+          </li>
+          <li><span>Marque</span><code>{{ pr.brands?.name || '—' }}</code></li>
+          <li><span>Catégorie</span><code>{{  pr.category|| '—' }}</code></li>
+          <li><span>Sous-catégorie</span><code>{{  pr.subCategory || '—' }}</code></li>
+          <li><span>Stock</span><code>{{ pr.stock ?? 0 }}</code></li>
+          <li><span>Prix</span><code>{{ pr.price | currency:(pr.currency || 'TND') }}</code></li>
+          <li *ngIf="pr.oldPrice"><span>Ancien prix</span><code>{{ pr.oldPrice | currency:(pr.currency || 'TND') }}</code></li>
+          <li *ngIf="pr.createdAt"><span>Créé</span><code>{{ pr.createdAt | date:'medium' }}</code></li>
+          <li *ngIf="pr.updatedAt"><span>Modifié</span><code>{{ pr.updatedAt | date:'medium' }}</code></li>
+        </ul>
+      </div>
+
+      <div class="card res">
+        <h4>Tags & Specs</h4>
+        <div class="chips" *ngIf="pr.tags?.length">
+          <span class="chip" *ngFor="let t of pr.tags">{{ t }}</span>
+        </div>
+        <div class="specs" *ngIf="pr.specs">
+          <div class="kv" *ngFor="let s of (pr.specs | keyvalue)">
+            <dt>{{ s.key }}</dt><dd>{{ s.value }}</dd>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </ng-container>
+</div>
+
+<ng-template #loadingTpl><div class="muted">Chargement…</div></ng-template>
+<ng-template #emptyTpl><div class="muted">Produit introuvable.</div></ng-template>

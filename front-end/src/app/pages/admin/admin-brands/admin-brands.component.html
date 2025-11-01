@@ -9,7 +9,11 @@
         <option value="active">Actives</option>
         <option value="inactive">Inactives</option>
       </select>
-      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+      <button class="btn primary" (click)="openCreate()"
+              [disabled]="busy && actionKind()==='create'">
+        <span class="spinner" *ngIf="busy && actionKind()==='create'"></span>
+        + Ajouter
+      </button>
     </div>
   </header>
 
@@ -29,17 +33,38 @@
           </span>
         </div>
 
-
         <div class="meta">
           <span class="slug">/{{ b.slug }}</span>
           <span *ngIf="b.iconUrl" class="slug">icône ✓</span>
         </div>
 
         <div class="row">
-          <button class="btn" (click)="openEdit(b)">Modifier</button>
-          <button class="btn ghost" (click)="openReplace(b)">Remplacer fichiers</button>
-          <button class="btn warn" (click)="toggle(b)">{{ b.isActive ? 'Désactiver' : 'Activer' }}</button>
-          <button class="btn danger" (click)="remove(b)">Supprimer</button>
+          <button class="btn"
+                  (click)="openEdit(b)"
+                  [disabled]="busy && actionId()===b._id && actionKind()==='update'">
+            <span class="spinner" *ngIf="busy && actionId()===b._id && actionKind()==='update'"></span>
+            Modifier
+          </button>
+
+          <button class="btn ghost"
+                  (click)="openReplace(b)"
+                  [disabled]="busy && actionId()===b._id && actionKind()==='replace'">
+            Remplacer fichiers
+          </button>
+
+          <button class="btn warn"
+                  (click)="toggle(b)"
+                  [disabled]="busy && actionId()===b._id && actionKind()==='toggle'">
+            <span class="spinner" *ngIf="busy && actionId()===b._id && actionKind()==='toggle'"></span>
+            {{ b.isActive ? 'Désactiver' : 'Activer' }}
+          </button>
+
+          <button class="btn danger"
+                  (click)="remove(b)"
+                  [disabled]="busy && actionId()===b._id && actionKind()==='remove'">
+            <span class="spinner" *ngIf="busy && actionId()===b._id && actionKind()==='remove'"></span>
+            Supprimer
+          </button>
         </div>
       </div>
     </article>
@@ -70,14 +95,16 @@
           </div>
         </div>
 
-
         <!-- uploads uniquement en création -->
         <div class="uploads" *ngIf="!editing()">
           <div class="u-block">
             <div class="u-head">
               <label>Icône (logo)</label>
               <div class="u-actions" *ngIf="iconPreview()">
-                <button type="button" class="btn ghost sm" (click)="iconPreview.set(null); iconFile=null">Retirer</button>
+                <button type="button" class="btn ghost sm"
+                        (click)="iconPreview.set(null); iconFile=null">
+                  Retirer
+                </button>
               </div>
             </div>
             <div class="u-body">
@@ -90,10 +117,6 @@
               </div>
             </div>
           </div>
-
-
-
-
         </div>
 
         <div class="field switch">
@@ -103,14 +126,17 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeModal()">Annuler</button>
-          <button class="btn primary" type="submit">Enregistrer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="busy && (actionKind()==='create' || actionKind()==='update')">
+            <span class="spinner" *ngIf="busy && (actionKind()==='create' || actionKind()==='update')"></span>
+            Enregistrer
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Modal replace files -->
 <!-- Modal replace files -->
 <div class="backdrop" *ngIf="replaceOpen()" (click)="closeReplace()"></div>
 <div class="modal" *ngIf="replaceOpen()" (click)="closeReplace()" role="dialog" aria-modal="true">
@@ -153,7 +179,11 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
-          <button class="btn primary" type="submit" [disabled]="!iconFile">Remplacer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="!iconFile || (busy && actionKind()==='replace' && actionId()===editing()?._id)">
+            <span class="spinner" *ngIf="busy && actionKind()==='replace' && actionId()===editing()?._id"></span>
+            Remplacer
+          </button>
         </div>
       </form>
     </div>

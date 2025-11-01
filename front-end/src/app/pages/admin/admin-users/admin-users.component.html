@@ -1,0 +1,162 @@
+<!-- src/app/pages/admin/users/admin-users.component.html -->
+<section class="admin-users">
+  <header class="head">
+    <h2>Utilisateurs</h2>
+
+    <div class="tools">
+      <!-- src/app/pages/admin/users/admin-users.component.html -->
+
+      <!-- Filters -->
+      <input type="search"
+             [ngModel]="q()"
+             (ngModelChange)="q.set($event)"
+             placeholder="Rechercher nom / email / téléphone…" />
+
+      <select [ngModel]="active()" (ngModelChange)="active.set($event)">
+        <option value="">Tous (actifs/inactifs)</option>
+        <option value="true">Actifs</option>
+        <option value="false">Bloqués</option>
+      </select>
+
+      <select [ngModel]="verified()" (ngModelChange)="verified.set($event)">
+        <option value="">Tous (vérifiés/non vérifiés)</option>
+        <option value="true">Email vérifié</option>
+        <option value="false">Non vérifié</option>
+      </select>
+
+      <select [ngModel]="provider()" (ngModelChange)="provider.set($event)">
+        <option value="">Tous providers</option>
+        <option value="local">Compte (email/mot de passe)</option>
+        <option value="google">Google</option>
+        <option value="facebook">Facebook</option>
+      </select>
+
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Utilisateur</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Providers</th>
+        <th>Vérifié</th>
+        <th>Actif</th>
+        <th>Cmd</th>
+      </tr>
+      </thead>
+
+      <tbody>
+      <tr *ngFor="let u of items(); trackBy: trackById"
+          class="clickable"
+          (click)="open(u)"
+          tabindex="0"
+          (keyup.enter)="open(u)">
+        <td>{{ u.createdAt | date:'short' }}</td>
+        <td class="person">
+          <img [src]="u.avatar" alt="">
+          <span>{{ u.name || '—' }}</span>
+        </td>
+        <td>{{ u.email || '—' }}</td>
+        <td>{{ u.phone || '—' }}</td>
+        <td class="providers">
+          <span class="pill local" *ngIf="!u.providers?.google && !u.providers?.facebook">local</span>
+          <span class="pill google" *ngIf="u.providers?.google">google</span>
+          <span class="pill facebook" *ngIf="u.providers?.facebook">facebook</span>
+        </td>
+        <td>
+          <span class="badge" [class.ok]="u.isVerified" [class.ko]="!u.isVerified">
+            {{ u.isVerified ? 'vérifié' : 'non vérifié' }}
+          </span>
+        </td>
+        <td>
+          <span class="badge" [class.ok]="u.active" [class.ko]="!u.active">
+            {{ u.active ? 'actif' : 'bloqué' }}
+          </span>
+        </td>
+        <td class="orders">{{ u.ordersCount ?? 0 }}</td>
+      </tr>
+
+      <tr *ngIf="items().length===0">
+        <td colspan="8" class="empty">Aucun utilisateur.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pager" *ngIf="pages() > 1">
+    <button type="button" [disabled]="page()===1" (click)="setPage(page()-1)">‹</button>
+    <span>Page {{ page() }} / {{ pages() }}</span>
+    <button type="button" [disabled]="page()===pages()" (click)="setPage(page()+1)">›</button>
+  </div>
+</section>
+
+<!-- ============== MODAL DETAIL ============== -->
+<div class="modal-backdrop" *ngIf="modalOpen()" (click)="close()" aria-hidden="true"></div>
+
+<div class="modal" *ngIf="modalOpen()" role="dialog" aria-modal="true">
+  <button class="modal-x" (click)="close()" aria-label="Fermer">✕</button>
+
+  <header class="modal-head">
+    <div class="who">
+      <img [src]="selected().avatar" alt="">
+      <div>
+        <h3>{{ selected()?.name || '—' }}</h3>
+        <p class="small">
+          {{ selected()?.email || '—' }} · {{ selected()?.phone || '—' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="head-badges">
+      <span class="pill google" *ngIf="selected()?.providers?.google">google</span>
+      <span class="pill local" *ngIf="!selected()?.providers?.google">local</span>
+      <span class="badge" [class.ok]="selected()?.isVerified" [class.ko]="!selected()?.isVerified">
+        {{ selected()?.isVerified ? 'vérifié' : 'non vérifié' }}
+      </span>
+      <span class="badge" [class.ok]="selected()?.active" [class.ko]="!selected()?.active">
+        {{ selected()?.active ? 'actif' : 'bloqué' }}
+      </span>
+    </div>
+  </header>
+
+  <section class="modal-body">
+    <dl class="kv">
+      <div><dt>Création</dt><dd>{{ selected()?.createdAt | date:'full' }}</dd></div>
+      <div><dt>Adresse</dt><dd>{{ selected()?.address || '—' }}</dd></div>
+      <div><dt>Rôle</dt><dd>{{ selected()?.role }}</dd></div>
+      <div><dt>ID</dt><dd>{{ selected()?._id }}</dd></div>
+    </dl>
+
+    <div class="message">
+      <h4>Commandes</h4>
+      <div *ngIf="detailLoading()" class="muted">Chargement des commandes…</div>
+      <table class="orders-table" *ngIf="!detailLoading()">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>#</th>
+          <th>Status</th>
+          <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let o of orders()">
+          <td>{{ o.createdAt | date:'short' }}</td>
+          <td>{{ o._id }}</td>
+          <td><span class="badge status-{{o.status}}">{{ o.status }}</span></td>
+          <td>{{ o.total | number:'1.2-2' }} {{ o.currency }}</td>
+        </tr>
+        <tr *ngIf="orders().length===0">
+          <td colspan="4" class="muted">Aucune commande.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

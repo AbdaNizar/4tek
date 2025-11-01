@@ -23,7 +23,6 @@
         <th>Nom</th>
         <th>Email</th>
         <th>Téléphone</th>
-
         <th>Statut</th>
         <th></th>
       </tr>
@@ -36,24 +35,44 @@
           tabindex="0"
           (keyup.enter)="open(c)">
         <td>{{ c.createdAt | date:'short' }}</td>
+
         <td class="person">
           <img *ngIf="c.userId?.avatar" [src]="avatarUrlSafe(c.userId)" alt="avatar">
           <span>{{ c.fullName }}</span>
         </td>
+
         <td>{{ c.email }}</td>
         <td>{{ c.phone }}</td>
 
         <td>
-            <span class="badge"
-                  [class.new]="c.status==='new'"
-                  [class.ip]="c.status==='in_progress'"
-                  [class.done]="c.status==='done'">
-              {{ c.status }}
-            </span>
+          <span class="badge"
+                [class.new]="c.status==='new'"
+                [class.ip]="c.status==='in_progress'"
+                [class.done]="c.status==='done'">
+            {{ c.status }}
+          </span>
         </td>
+
         <td class="actions" (click)="$event.stopPropagation()">
-          <button type="button" class="btn ghost" (click)="mark(c._id!, 'in_progress')" [disabled]="c.status==='done'">En cours</button>
-          <button type="button" class="btn primary" (click)="mark(c._id!, 'done')" [disabled]="c.status==='done'">Terminer</button>
+          <!-- En cours -->
+          <button type="button"
+                  class="btn ghost"
+                  (click)="mark(c._id!, 'in_progress')"
+                  [disabled]="c.status==='done' || actionBusy"
+          >
+            <span class="spinner" *ngIf="actionForId()===c._id && actionType()==='in_progress'"></span>
+            En cours
+          </button>
+
+          <!-- Terminer -->
+          <button type="button"
+                  class="btn primary"
+                  (click)="mark(c._id!, 'done')"
+                  [disabled]="c.status==='done' || actionBusy"
+          >
+            <span class="spinner" *ngIf="actionForId()===c._id && actionType()==='done'"></span>
+            Terminer
+          </button>
         </td>
       </tr>
 
@@ -79,7 +98,7 @@
 
   <header class="modal-head">
     <div class="who">
-      <img *ngIf="selected()?.userId?.avatar" [src]="avatarUrlSafe(selected().userId)" alt="avatar">
+      <img *ngIf="selected()?.userId?.avatar" [src]="avatarUrlSafe(selected()?.userId)" alt="avatar">
       <div>
         <h3 id="contactTitle">{{ selected()?.fullName || '—' }}</h3>
         <p class="small">
@@ -113,8 +132,7 @@
       <div *ngIf="selected()?.userId">
         <dt>Utilisateur</dt>
         <dd>
-          <img *ngIf="selected().userId?.avatar" [src]="avatarUrlSafe(selected().userId)!" alt="avatar">
-
+          <img *ngIf="selected()?.userId?.avatar" [src]="avatarUrlSafe(selected()?.userId)!" alt="avatar">
           {{ selected()?.userId?.name || selected()?.fullName }}
           <span class="muted">({{ selected()?.userId?.email || selected()?.email }})</span>
         </dd>
@@ -128,7 +146,18 @@
   </section>
 
   <footer class="modal-actions" *ngIf="selected()?.status !== 'done'">
-    <button class="btn ghost" (click)="markFromModal('in_progress')">Marquer « en cours »</button>
-    <button class="btn primary" (click)="markFromModal('done')">Terminer</button>
+    <button class="btn ghost"
+            (click)="markFromModal('in_progress')"
+            [disabled]="actionBusy">
+      <span class="spinner" *ngIf="actionType()==='in_progress' && actionForId()===selected()?._id"></span>
+      Marquer « en cours »
+    </button>
+
+    <button class="btn primary"
+            (click)="markFromModal('done')"
+            [disabled]="actionBusy">
+      <span class="spinner" *ngIf="actionType()==='done' && actionForId()===selected()?._id"></span>
+      Terminer
+    </button>
   </footer>
 </div>

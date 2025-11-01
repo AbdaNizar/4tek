@@ -6,6 +6,7 @@ import {filter} from 'rxjs';
 import {NgIf} from '@angular/common';
 import {ToastsComponent} from './shared/toasts/toasts.component';
 import {SubnavMegaComponent} from './pages/layout/header/subnav-mega/subnav-mega.component';
+import {IdleTimeoutService} from './services/idle-timeout/idle-timeout.service';
 
 @Component({
   selector: 'app-root',
@@ -19,11 +20,10 @@ export class AppComponent {
   hideShell = signal(false);
 
 
-  constructor(private router: Router) {
+  constructor(private router: Router,private idle: IdleTimeoutService) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
         const route = this.router.routerState.root;
-        console.log(route)
         let r = route.firstChild;
         let hide = false;
 
@@ -32,8 +32,8 @@ export class AppComponent {
           r = r.firstChild;
         }
         this.hideShell.set(hide);
-        console.log(this.hideShell())
       });
+    this.idle.init();
 
 
   }

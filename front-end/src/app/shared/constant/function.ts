@@ -2,37 +2,48 @@
 import Swal, {SweetAlertResult} from "sweetalert2";
 import {environment} from '../../../environments/environment';
 
+
 export function showAlert(data: any): Promise<SweetAlertResult> {
-  const classIcon = data.classIcon || ''
+  const classIcon = (data as any).classIcon || '';
   return Swal.fire({
-    icon: data?.icon || '',
+    icon: data.icon || undefined,
     title: data.title || '',
-    html: `<div style="text-align: justify; color: #ffff !important; font-family: Fredoka, sans-serif !important; font-size: 18px;">${data.html}</div>`,
+    html:
+      data.html ??
+      `<div style="text-align: justify; color: #ffff !important; font-family: Fredoka, sans-serif !important; font-size: 18px;"></div>`,
     confirmButtonText: data.confirmButtonText || 'Confirmer',
     cancelButtonText: data.cancelButtonText || 'Annuler',
     cancelButtonColor: data.cancelButtonColor || 'red',
     background: data.background || 'linear-gradient(180deg, rgba(18, 24, 38, .96), rgba(15, 20, 32, .96))',
-    width: data.width || '500',
-    showCancelButton: data.showCancelButton || false,
-    showConfirmButton: data.showConfirmButton || true,
+    width: data.width ?? 500,
+    showCancelButton: data.showCancelButton ?? false,
+    showConfirmButton: data.showConfirmButton ?? true,
     confirmButtonColor: data.confirmButtonColor || '#2b76a3',
-    showLoaderOnConfirm: data?.showLoaderOnConfirm,
-    showLoaderOnDeny: data?.showLoaderOnDeny,
-    preConfirm: data?.preConfirm,
-    customClass: {
-      container: "custom-swal-container-class",
-      icon: classIcon
+    showLoaderOnConfirm: data.showLoaderOnConfirm,
+    showLoaderOnDeny: data.showLoaderOnDeny,
+    preConfirm: data.preConfirm,
+    customClass: { container: 'custom-swal-container-class', icon: classIcon, ...(data.customClass || {}) },
+    showDenyButton: data.showDenyButton ?? false,
+    denyButtonText: data.denyButtonText,
+    denyButtonColor: data.denyButtonColor,
+    allowOutsideClick: data.allowOutsideClick ?? false,
+    input: data.input,
+    inputOptions: data.inputOptions,
+    inputPlaceholder: data.inputPlaceholder,
+    toast: data.toast ?? false,
+
+    // pass-through utiles
+    timer: data.timer,
+    timerProgressBar: data.timerProgressBar,
+    allowEscapeKey: data.allowEscapeKey ?? false,
+    didOpen: () => {
+      const el = Swal.getHtmlContainer() as HTMLElement;
+      data.didOpen?.(el);
     },
-    showDenyButton: data?.showDenyButton || false,
-    denyButtonText: data?.denyButtonText || '',
-    denyButtonColor: data?.denyButtonColor || '',
-    allowOutsideClick: data?.allowOutsideClick || false,
-    input: data?.input,
-    inputOptions: data?.inputOptions,
-    inputPlaceholder: data?.inputPlaceholder,
-    toast: data?.toast || false,
+    willClose: () => data.willClose?.(),
   });
 }
+
 
 const API_BASE = (environment.api_Url || 'https://4tek.tn/v1').replace(/\/+$/, '');
 

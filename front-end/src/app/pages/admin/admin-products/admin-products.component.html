@@ -16,7 +16,12 @@
         <option *ngFor="let c of categories()" [value]="c._id">{{ c.name }}</option>
       </select>
 
-      <button class="btn primary" (click)="openCreate()">+ Ajouter</button>
+      <button class="btn primary"
+              (click)="openCreate()"
+              [disabled]="busy && actionKind()==='create'">
+        <span class="spinner" *ngIf="busy && actionKind()==='create'"></span>
+        + Ajouter
+      </button>
     </div>
   </header>
 
@@ -47,10 +52,32 @@
         </div>
 
         <div class="row">
-          <button class="btn" (click)="openEdit(p)">Modifier</button>
-          <button class="btn ghost" (click)="openReplace(p)">Remplacer fichiers…</button>
-          <button class="btn warn" (click)="toggle(p)">{{ p.isActive ? 'Désactiver' : 'Activer' }}</button>
-          <button class="btn danger" (click)="remove(p)">Supprimer</button>
+          <button class="btn"
+                  (click)="openEdit(p)"
+                  [disabled]="busy && actionId()===p._id && actionKind()==='update'">
+            <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='update'"></span>
+            Modifier
+          </button>
+
+          <button class="btn ghost"
+                  (click)="openReplace(p)"
+                  [disabled]="busy && actionId()===p._id && actionKind()==='replace'">
+            Remplacer fichiers…
+          </button>
+
+          <button class="btn warn"
+                  (click)="toggle(p)"
+                  [disabled]="busy && actionId()===p._id && actionKind()==='toggle'">
+            <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='toggle'"></span>
+            {{ p.isActive ? 'Désactiver' : 'Activer' }}
+          </button>
+
+          <button class="btn danger"
+                  (click)="remove(p)"
+                  [disabled]="busy && actionId()===p._id && actionKind()==='remove'">
+            <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='remove'"></span>
+            Supprimer
+          </button>
         </div>
       </div>
     </article>
@@ -84,7 +111,6 @@
         </div>
 
         <div class="row-2">
-          <!-- MARQUE -->
           <div class="field">
             <label>Marque *</label>
             <select formControlName="brand" (change)="onBrandChange($event)">
@@ -93,19 +119,15 @@
             </select>
           </div>
 
-          <!-- CATEGORIE (désactivée tant que brand non choisi) -->
           <div class="field">
             <label>Catégorie *</label>
-            <select formControlName="category"
-                    [disabled]="!f.value.brand"
-                    (change)="onCategoryChange($event)">
+            <select formControlName="category" [disabled]="!f.value.brand" (change)="onCategoryChange($event)">
               <option value="" disabled selected>Choisir…</option>
               <option *ngFor="let c of categories()" [value]="c._id">{{ c.name }}</option>
             </select>
           </div>
         </div>
 
-        <!-- Sous-catégorie (dépend de category) -->
         <div class="field">
           <label>Sous-catégorie *</label>
           <select formControlName="subCategory" [disabled]="!subOptions().length">
@@ -118,7 +140,6 @@
             Aucune sous-catégorie active pour cette catégorie.
           </small>
         </div>
-
 
         <div class="row-2">
           <div class="field">
@@ -152,7 +173,7 @@
           <textarea formControlName="description" rows="3" placeholder="Description courte…"></textarea>
         </div>
 
-        <!-- Uploads -->
+        <!-- Uploads (création uniquement) -->
         <div class="uploads" *ngIf="!editing()">
           <div class="u-block">
             <div class="u-head">
@@ -198,7 +219,11 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeModal()">Annuler</button>
-          <button class="btn primary" type="submit" [disabled]="f.invalid || saving()">Enregistrer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="f.invalid || (busy && (actionKind()==='create' || actionKind()==='update'))">
+            <span class="spinner" *ngIf="busy && (actionKind()==='create' || actionKind()==='update')"></span>
+            Enregistrer
+          </button>
         </div>
       </form>
     </div>
@@ -246,7 +271,10 @@
                 Choisir fichiers
                 <input type="file" accept="image/*" multiple (change)="onPickGalleryReplace($event)" hidden>
               </label>
-              <button *ngIf="galleryChanged()" class="btn warn sm" type="button" (click)="galleryReplace.set([]); galleryReplacePreviews.set([]); galleryChanged.set(false)">Annuler</button>
+              <button *ngIf="galleryChanged()" class="btn warn sm" type="button"
+                      (click)="galleryReplace.set([]); galleryReplacePreviews.set([]); galleryChanged.set(false)">
+                Annuler
+              </button>
             </div>
           </div>
 
@@ -268,7 +296,11 @@
 
         <div class="actions">
           <button class="btn" type="button" (click)="closeReplace()">Annuler</button>
-          <button class="btn primary" type="submit">Remplacer</button>
+          <button class="btn primary" type="submit"
+                  [disabled]="busy && actionKind()==='replace'">
+            <span class="spinner" *ngIf="busy && actionKind()==='replace'"></span>
+            Remplacer
+          </button>
         </div>
       </form>
     </div>

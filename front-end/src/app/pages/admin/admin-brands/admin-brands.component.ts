@@ -1,13 +1,15 @@
-import {Component, OnInit, computed, inject, signal} from '@angular/core';
-import {FormBuilder, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-import {NgIf, NgFor} from '@angular/common';
-import {finalize} from 'rxjs/operators';
-import {HttpClient} from '@angular/common/http';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgIf, NgFor } from '@angular/common';
+import { finalize } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
-import {BrandService} from '../../../services/brand/brand.service';
-import {getUrl} from '../../../shared/constant/function';
-import {Brand} from '../../../interfaces/brand';
-import {Category} from '../../../interfaces/category';
+import { BrandService } from '../../../services/brand/brand.service';
+import { getUrl } from '../../../shared/constant/function';
+import { Brand } from '../../../interfaces/brand';
+
+// ⚠️ Adapte le chemin si besoin
+import { showAlert} from '../../../shared/constant/function';
 
 @Component({
   standalone: true,
@@ -18,9 +20,10 @@ import {Category} from '../../../interfaces/category';
 })
 export class AdminBrandsComponent implements OnInit {
   private api = inject(BrandService);
-  private fb = inject(FormBuilder);
+  private fb  = inject(FormBuilder);
   private http = inject(HttpClient);
 
+  // data
   loading = signal(true);
   q = signal('');
   status = signal<'all' | 'active' | 'inactive'>('all');
@@ -35,17 +38,17 @@ export class AdminBrandsComponent implements OnInit {
     const query = this.q().trim().toLowerCase();
     if (query) {
       arr = arr.filter(b =>
-        b.name.toLowerCase().includes(query) ||
-        b.slug.toLowerCase().includes(query)
+        (b.name || '').toLowerCase().includes(query) ||
+        (b.slug || '').toLowerCase().includes(query)
       );
     }
     return arr;
   });
 
   // modal states
-  modalOpen = signal(false);
+  modalOpen   = signal(false);
   replaceOpen = signal(false);
-  editing = signal<Brand | null>(null);
+  editing     = signal<Brand | null>(null);
 
   // form
   f = this.fb.group({
@@ -59,9 +62,14 @@ export class AdminBrandsComponent implements OnInit {
   iconPreview = signal<string | null>(null);
   iconChanged = computed(() => !!this.iconFile);
 
-  ngOnInit() {
-    this.fetch();
-  }
+  // loaders / actions ciblées
+  // - actionId: id de la marque en cours (toggle/remove/replace)
+  // - actionKind: 'toggle' | 'remove' | 'replace' | 'create' | 'update'
+  actionId   = signal<string | null>(null);
+  actionKind = signal<'toggle' | 'remove' | 'replace' | 'create' | 'update' | null>(null);
+  get busy() { return this.actionKind() !== null; }
+
+  ngOnInit() { this.fetch(); }
 
   fetch() {
     this.loading.set(true);
@@ -70,25 +78,24 @@ export class AdminBrandsComponent implements OnInit {
       .subscribe(rows => this.raw.set(rows || []));
   }
 
+  // ---------- create / edit ----------
   openCreate() {
     this.editing.set(null);
-    this.f.reset({name: '', slug: '', isActive: true});
+    this.f.reset({ name: '', slug: '', isActive: true });
     this.clearIconSelection();
     this.modalOpen.set(true);
   }
 
   openEdit(b: Brand) {
     this.editing.set(b);
-    this.f.reset({name: b.name, slug: b.slug, isActive: b.isActive});
+    this.f.reset({ name: b.name, slug: b.slug, isActive: !!b.isActive });
     this.clearIconSelection();
     this.modalOpen.set(true);
   }
 
-  closeModal() {
-    this.modalOpen.set(false);
-  }
+  closeModal() { this.modalOpen.set(false); }
 
-  // pick icon (create)
+  // file picking (create)
   onPickIcon(e: Event) {
     const input = e.target as HTMLInputElement;
     const f = input.files?.[0];
@@ -105,47 +112,69 @@ export class AdminBrandsComponent implements OnInit {
     this.iconFile = null;
   }
 
-  save() {
+  async save() {
     const val = this.f.value;
-    if (!val.name || !val.slug) return;
+    if (!val.name || !val.slug) {
+      await showAlert({ icon: 'warning', title: 'Veuillez remplir Nom et Slug.' });
+      return;
+    }
 
-    if (!this.editing()) {
-      // CREATE
-      const fd = new FormData();
-      fd.append('name', val.name!);
-      fd.append('slug', val.slug!);
-      fd.append('isActive', String(!!val.isActive));
-      if (this.iconFile) fd.append('icon', this.iconFile);
+    const isCreate = !this.editing();
+    const title = isCreate ? 'Confirmer l’ajout ?' : 'Enregistrer les modifications ?';
 
-      this.api.create(fd).subscribe(() => {
-        this.closeModal();
-        this.clearIconSelection();
-        this.fetch();
-      });
-    } else {
-      // UPDATE (text only)
-      this.api.update(this.editing()!._id, {
-        name: val.name!, slug: val.slug!, isActive: !!val.isActive
-      }).subscribe(() => {
-        this.closeModal();
-        this.clearIconSelection();
-        this.fetch();
-      });
+    const confirm = await showAlert({
+      icon: 'question',
+      title,
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!confirm.isConfirmed) return;
+
+    try {
+      this.actionKind.set(isCreate ? 'create' : 'update');
+      this.actionId.set(this.editing()?._id || null);
+
+      if (isCreate) {
+        // CREATE
+        const fd = new FormData();
+        fd.append('name', val.name!);
+        fd.append('slug', val.slug!);
+        fd.append('isActive', String(!!val.isActive));
+        if (this.iconFile) fd.append('icon', this.iconFile);
+
+        await this.api.create(fd).toPromise();
+      } else {
+        // UPDATE (text only)
+        await this.api.update(this.editing()!._id, {
+          name: val.name!, slug: val.slug!, isActive: !!val.isActive
+        }).toPromise();
+      }
+
+      this.closeModal();
+      this.clearIconSelection();
+      this.fetch();
+
+      await showAlert({ icon: 'success', title: 'Enregistré avec succès', timer: 1200, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Erreur', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
-  // replace dialog
+  // ---------- replace icon ----------
   openReplace(b: Brand) {
     this.editing.set(b);
     this.clearIconSelection();
     this.replaceOpen.set(true);
   }
 
-  closeReplace() {
-    this.replaceOpen.set(false);
-  }
+  closeReplace() { this.replaceOpen.set(false); }
 
-  // pick icon (replace)
   onPickIconReplace(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const file = input.files && input.files[0];
@@ -160,38 +189,105 @@ export class AdminBrandsComponent implements OnInit {
     if (close) this.closeReplace();
   }
 
-  // submit replace
   async saveReplace() {
-    if (!this.iconFile || !this.editing()) return;
+    if (!this.iconFile || !this.editing()) {
+      await showAlert({ icon: 'warning', title: 'Sélectionnez une icône d’abord.' });
+      return;
+    }
+
+    const ask = await showAlert({
+      icon: 'question',
+      title: 'Remplacer l’icône ?',
+      showCancelButton: true,
+      confirmButtonText: 'Remplacer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
 
     const id = this.editing()!._id;
     const fd = new FormData();
     fd.append('icon', this.iconFile);
 
     try {
+      this.actionKind.set('replace');
+      this.actionId.set(id);
+
       const updated = await this.api.replace(id, fd).toPromise();
-      if (updated) {
-        this.raw.set(this.raw().map(b => b._id === id ? updated : b));
-      }
+      if (updated) this.raw.set(this.raw().map(b => b._id === id ? updated : b));
+
       this.resetIconSelection(true);
-    } catch (e) {
-      console.error(e);
+      await showAlert({ icon: 'success', title: 'Icône remplacée', timer: 1100, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Erreur de remplacement', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
+  // ---------- toggle active ----------
   async toggle(b: Brand) {
+    const next = !b.isActive;
+    const title = next ? 'Activer cette marque ?' : 'Désactiver cette marque ?';
+
+    const ask = await showAlert({
+      icon: 'question',
+      title,
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
     try {
-      const updated = await this.api.toggle(b._id, !b.isActive).toPromise();
-      if (updated) {
-        this.raw.set(this.raw().map(x => x._id === b._id ? updated : x));
-      }
-    } catch (e) {
-      console.error(e);
+      this.actionKind.set('toggle');
+      this.actionId.set(b._id);
+
+      const updated = await this.api.toggle(b._id, next).toPromise();
+      if (updated) this.raw.set(this.raw().map(x => x._id === b._id ? updated : x));
+
+      await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1000, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
     }
   }
 
-  remove(b: Brand) {
-    if (confirm('Supprimer cette marque ?')) this.api.remove(b._id).subscribe(() => this.fetch());
+  // ---------- delete ----------
+  async remove(b: Brand) {
+    const ask = await showAlert({
+      icon: 'warning',
+      title: `Supprimer « ${b.name} » ?`,
+      html: 'Cette action est irréversible.',
+      showCancelButton: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#ef4444',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
+    try {
+      this.actionKind.set('remove');
+      this.actionId.set(b._id);
+
+      await this.api.remove(b._id).toPromise();
+      this.fetch();
+
+      await showAlert({ icon: 'success', title: 'Marque supprimée', timer: 1100, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Échec de suppression', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
+    }
   }
 
   protected readonly getUrl = getUrl;

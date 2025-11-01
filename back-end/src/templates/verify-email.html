@@ -1,16 +1,30 @@
-<h1 style="margin:0 0 10px;font-size:24px;">Vérifiez votre adresse email</h1>
+
+<h1 style="margin:0 0 20px;font-size:28px;font-weight:700;color:#1a202c;
+           background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+           -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+           background-clip:text;">
+  Vérifiez votre adresse email
+</h1>
+
+<p style="margin:0 0 30px;color:#4a5568;font-size:16px;line-height:1.6;">
 <p style="margin:0 0 14px;color:#9aa3b2;">Bonjour %%NAME%%, merci d’avoir créé un compte.</p>
 
-<!-- Button (works everywhere) -->
 
-<a href="%%VERIFY_URL%%" class="btn-a"
-   style="background:%%ACCENT%%;color:#0b0f1a;font-weight:800;padding:12px 18px;border-radius:12px;display:inline-block;">
-  Vérifier mon email
-</a>
-<!--<![endif]-->
+<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 30px;">
+  <tr>
+    <td align="center" style="border-radius:50px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+                                 box-shadow:0 8px 20px rgba(102,126,234,0.35);">
+      <a href="%%VERIFY_URL%%"
+         style="display:inline-block;padding:16px 48px;color:#ffffff;
+                      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+                      font-size:16px;font-weight:700;text-decoration:none;
+                      border-radius:50px;letter-spacing:0.5px;">
+        Vérifier mon email
+      </a>
+    </td>
+  </tr>
+</table>
 
-<!-- Fallback link -->
-<p style="margin:14px 0 6px;color:#9aa3b2;font-size:14px;">
-  Ce lien expirera dans 60 minutes. Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.
+<p style="margin:0;color:#718096;font-size:14px;line-height:1.6;text-align:center;">
+  Ce lien expirera dans <strong style="color:#667eea;">60 minutes</strong>.<br> Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.
 </p>
-

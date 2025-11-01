@@ -1,6 +1,5 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { AppConfigService } from './app-config.service';
+
 
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
 

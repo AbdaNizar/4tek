@@ -1,6 +1,7 @@
 <section class="admin-orders">
   <header class="head">
     <h2>Commandes</h2>
+
     <div class="tools">
       <input type="search" #q (input)="search(q.value)" placeholder="Rechercher…" />
       <select #s (change)="filterStatus(s.value)">
@@ -60,7 +61,9 @@
     <div class="who">
       <div>
         <h3>Commande #{{ selected()?._id }}</h3>
-        <p class="small">{{ selected()?.user?.name }} · {{ selected()?.user?.email }} · {{ selected()?.user?.phone }}</p>
+        <p class="small">
+          {{ selected()?.user?.name }} · {{ selected()?.user?.email }} · {{ selected()?.user?.phone }}
+        </p>
       </div>
     </div>
     <span class="badge big" [class]="selected()?.status">{{ selected()?.status }}</span>
@@ -82,7 +85,7 @@
       </div>
     </dl>
 
-    <!-- ✅ Status timeline -->
+    <!-- Timeline -->
     <div class="timeline">
       <div class="trow" *ngIf="selected()?.confirmedAt">
         <span class="tlabel">Confirmée</span>
@@ -106,7 +109,7 @@
       <h4>Articles</h4>
       <ul class="lines">
         <li *ngFor="let it of selected()?.items">
-          <img *ngIf="it.imageUrl" [src]="it.imageUrl" alt="">
+          <img *ngIf="it.imageUrl" [src]="it.imageUrl" alt="" />
           <span class="n">{{ it.name }}</span>
           <span class="q">x{{ it.qty }}</span>
           <span class="p">{{ it.price | number:'1.0-3' }} {{ selected()?.currency }}</span>
@@ -120,21 +123,62 @@
         [ngModel]="noteDraft()"
         (ngModelChange)="noteDraft.set($event)"
         rows="3"
-        placeholder="Ajouter une note…">
-    </textarea>
-      <button class="btn primary sm" (click)="saveNote()">Enregistrer</button>
+        placeholder="Ajouter une note…"
+      ></textarea>
+      <button
+        class="btn primary sm"
+        (click)="saveNote()"
+        [disabled]="actionBusy()"
+      >
+        <span class="spinner" *ngIf="actionLoading()==='note'"></span>
+        <span>Enregistrer</span>
+      </button>
     </div>
   </section>
 
   <footer class="modal-actions">
     <ng-container [ngSwitch]="selected()?.status">
       <button class="btn ghost" (click)="close()">Fermer</button>
-      <button class="btn confirm" *ngSwitchCase="'pending'"    (click)="setStatus('confirmed')">Confirmer</button>
-      <button class="btn ship" *ngSwitchCase="'confirmed'"  (click)="setStatus('shipped')">Marquer expédiée</button>
-      <button class="btn deliver" *ngSwitchCase="'shipped'"    (click)="setStatus('delivered')">Marquer livrée</button>
-    </ng-container>
-    <button class="btn cancel" *ngIf="selected()?.status!=='cancelled' && selected()?.status!=='delivered'"
-            (click)="setStatus('cancelled')">Annuler</button>
-  </footer>
 
+      <button
+        class="btn confirm"
+        *ngSwitchCase="'pending'"
+        (click)="setStatus('confirmed')"
+        [disabled]="actionBusy()"
+      >
+        <span class="spinner" *ngIf="actionLoading()==='confirmed'"></span>
+        <span>Confirmer</span>
+      </button>
+
+      <button
+        class="btn ship"
+        *ngSwitchCase="'confirmed'"
+        (click)="setStatus('shipped')"
+        [disabled]="actionBusy()"
+      >
+        <span class="spinner" *ngIf="actionLoading()==='shipped'"></span>
+        <span>Marquer expédiée</span>
+      </button>
+
+      <button
+        class="btn deliver"
+        *ngSwitchCase="'shipped'"
+        (click)="setStatus('delivered')"
+        [disabled]="actionBusy()"
+      >
+        <span class="spinner" *ngIf="actionLoading()==='delivered'"></span>
+        <span>Marquer livrée</span>
+      </button>
+    </ng-container>
+
+    <button
+      class="btn cancel"
+      *ngIf="selected()?.status!=='cancelled' && selected()?.status!=='shipped' && selected()?.status!=='delivered'&& selected()?.status!=='confirmed'"
+      (click)="setStatus('cancelled')"
+      [disabled]="actionBusy()"
+    >
+      <span class="spinner" *ngIf="actionLoading()==='cancelled'"></span>
+      <span>Annuler</span>
+    </button>
+  </footer>
 </div>

@@ -4,7 +4,6 @@ exports.create = async (req, res) => {
     try {
         const { fullName, email, phone, message, website } = req.body; // website = honeypot
         if (website) return res.status(200).json({ ok: true }); // bot: on "réussit" silencieusement
-        console.log(req.user)
         if (!fullName || fullName.length < 2 || fullName.length > 100)
             return res.status(400).json({ error: 'Nom invalide' });
         if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))

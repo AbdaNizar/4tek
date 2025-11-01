@@ -1,23 +1,61 @@
-<h1 style="margin:0 0 6px; font-size:24px;">Commande confirmée</h1>
-<p style="margin:0 0 12px; color:#9aa3b2;">Bonjour %%NAME%%, merci pour ta commande.</p>
+<h1 style="margin:0 0 20px;font-size:28px;font-weight:700;color:#1a202c;
+           background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+           -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+           background-clip:text;">
+  Commande confirmée ✓
+</h1>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 12px 16px 0;">
+<p style="margin:0 0 30px;color:#4a5568;font-size:16px;line-height:1.6;">
+  Bonjour <strong style="color:#2d3748;">%%NAME%%</strong>, merci pour ta commande.
+</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+       style="background:linear-gradient(135deg,rgba(102,126,234,0.05) 0%,rgba(118,75,162,0.05) 100%);
+              border:1px solid rgba(102,126,234,0.2);border-radius:16px;margin:0 0 24px;padding:24px;">
   <tr>
-    <td style="padding:8px 0;">N° commande :</td>
-    <td align="right" style="font-weight:700;">%%ORDER_NUMBER%%</td>
+    <td style="padding:12px 0;color:#4a5568;font-size:15px;border-bottom:1px solid rgba(102,126,234,0.1);">
+      N° commande :
+    </td>
+    <td align="right" style="padding:12px 0;font-weight:700;color:#1a202c;font-size:15px;
+                                  border-bottom:1px solid rgba(102,126,234,0.1);">
+      %%ORDER_NUMBER%%
+    </td>
   </tr>
   <tr>
-    <td style="padding:8px 0;">Date :</td>
-    <td align="right">%%ORDER_DATE%%</td>
+    <td style="padding:12px 0;color:#4a5568;font-size:15px;border-bottom:1px solid rgba(102,126,234,0.1);">
+      Date :
+    </td>
+    <td align="right" style="padding:12px 0;color:#1a202c;font-size:15px;
+                                  border-bottom:1px solid rgba(102,126,234,0.1);">
+      %%ORDER_DATE%%
+    </td>
   </tr>
   <tr>
-    <td style="padding:8px 0;">Total :</td>
-    <td align="right" style="font-weight:800;">%%TOTAL%%</td>
+    <td style="padding:12px 0 0;color:#4a5568;font-size:15px;">
+      Total :
+    </td>
+    <td align="right" style="padding:12px 0 0;font-weight:800;font-size:20px;
+                                  background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+                                  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                                  background-clip:text;">
+      %%TOTAL%%
+    </td>
   </tr>
 </table>
 
 %%ITEMS_HTML%%
 
-<p style="margin:16px 0 0;">
-  <a href="%%ORDER_URL%%" style="color:%%ACCENT%%;">Voir ma commande</a>
-</p>
+<table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px auto 0;">
+  <tr>
+    <td style="border-radius:50px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+                   box-shadow:0 4px 12px rgba(102,126,234,0.3);">
+      <a href="%%ORDER_URL%%"
+         style="display:inline-block;padding:14px 40px;color:#ffffff;
+                      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+                      font-size:15px;font-weight:600;text-decoration:none;
+                      border-radius:50px;">
+        Voir ma commande
+      </a>
+    </td>
+  </tr>
+</table>

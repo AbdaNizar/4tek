@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { CanMatchFn, Router, UrlSegment, Route } from '@angular/router';
 import { AuthService } from '../services/auth/auth.service';
 
-export const adminCanMatch: CanMatchFn = (route: Route, segments: UrlSegment[]) => {
+export const adminCanMatch: CanMatchFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
 

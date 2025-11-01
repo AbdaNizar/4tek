@@ -1,12 +1,10 @@
 import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {ContactService} from '../../../services/contact/contact.service';
-import {ContactRequest} from '../../../interfaces/contact-request';
-import {ContactStatus} from '../../../interfaces/ContactStatus';
-import {getUrl} from '../../../shared/constant/function';
-
-
-
+import { ContactService } from '../../../services/contact/contact.service';
+import { ContactRequest } from '../../../interfaces/contact-request';
+import { ContactStatus } from '../../../interfaces/ContactStatus';
+import { getUrl } from '../../../shared/constant/function';
+import { showAlert} from '../../../shared/constant/function';
 
 @Component({
   standalone: true,
@@ -19,45 +17,49 @@ export class AdminContactsComponent {
   private api = inject(ContactService);
 
   // état
-  items = signal<ContactRequest[]>([]);
-  loading = signal<boolean>(false);
+  items      = signal<ContactRequest[]>([]);
+  loading    = signal<boolean>(false);
 
-  // filtre/pagination simples
-  q = signal<string>('');
-  st = signal<string>('');
-  page = signal<number>(1);
-  pages = signal<number>(1);
+  // filtre/pagination
+  q          = signal<string>('');
+  st         = signal<string>('');   // '', 'new', 'in_progress', 'done'
+  page       = signal<number>(1);
+  pages      = signal<number>(1);
 
   // modal
-  modalOpen = signal<boolean>(false);
-  selected = signal<ContactRequest | null>(null);
+  modalOpen  = signal<boolean>(false);
+  selected   = signal<ContactRequest | null>(null);
+
+  // action (spinner/disable)
+  actionForId   = signal<string|null>(null);                  // id en cours
+  actionType    = signal<'in_progress'|'done'|null>(null);    // type en cours
+  get actionBusy() { return this.actionForId() !== null; }
 
   constructor() {
     this.load();
-    // recharger quand filtres changent
+
+    // recharge quand filtres changent
     effect(() => {
+      // lire les signaux -> déclenche load
       this.q(); this.st(); this.page();
       this.load();
     });
+
     // ESC pour fermer la modale
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.modalOpen()) this.close();
     });
   }
-  avatarUrlSafe(user :any ): string | null {
-    const raw = user.avatar ?? null;
+
+  avatarUrlSafe(user: any): string | null {
+    const raw = user?.avatar ?? null;
     if (!raw || typeof raw !== 'string') return null;
-
-    // strip accidental quotes/whitespace
     let clean = raw.trim().replace(/^"+|"+$/g, '');
-
-    // (Optional) normalize Google size to 64px circle
     clean = clean.replace(/=s\d+(-c)?$/, '=s64-c');
-
     return clean || null;
   }
-  trackById = (_: number, c: ContactRequest) => c._id;
 
+  trackById = (_: number, c: ContactRequest) => c._id;
 
   async load() {
     this.loading.set(true);
@@ -74,50 +76,78 @@ export class AdminContactsComponent {
     }
   }
 
-  search(val: string) {
-    this.q.set(val);
-    this.page.set(1);
-  }
-
-  filterStatus(val: string) {
-    this.st.set(val);
-    this.page.set(1);
-  }
-
-  setPage(p: number) {
-    if (p < 1 || p > this.pages()) return;
-    this.page.set(p);
-  }
-
-  async mark(id: string, status: ContactStatus) {
-    await this.api.update(id, { status }).toPromise();
-    await this.load();
-    // si c'était l’élément sélectionné dans la modale, gardons-la cohérente
-    console.log('this.selected()',this.selected())
-
-    if (this.selected()?. _id === id) {
-      this.selected.set({ ...this.selected()!, status });
-      if (status === 'done') this.close(); // on ferme si terminé
-    }
-  }
+  search(val: string) { this.q.set(val); this.page.set(1); }
+  filterStatus(val: string) { this.st.set(val); this.page.set(1); }
+  setPage(p: number) { if (p < 1 || p > this.pages()) return; this.page.set(p); }
 
   open(c: ContactRequest) {
-
     this.selected.set(c);
-
     this.modalOpen.set(true);
     document.body.style.overflow = 'hidden';
   }
-
   close() {
     this.modalOpen.set(false);
     this.selected.set(null);
     document.body.style.overflow = '';
   }
 
+  // ========== Actions avec SweetAlert + loader ==========
+  async mark(rowId: string, status: ContactStatus) {
+    // confirmer l’action
+    const title =
+      status === 'in_progress' ? 'Passer « en cours » ?'
+        : status === 'done' ? 'Marquer « terminé » ?'
+          : 'Mettre à jour ?';
+
+    const res = await showAlert({
+      icon: 'question',
+      title,
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false,
+      preConfirm: async () => {
+        this.actionForId.set(rowId);
+        this.actionType.set(status === 'in_progress' ? 'in_progress' : 'done');
+        try {
+          await this.api.update(rowId, { status }).toPromise();
+          // maj liste
+          this.items.update(list =>
+            list.map(it => it._id === rowId ? { ...it, status } : it)
+          );
+          // si c'est l'élément dans la modale, le mettre à jour
+          const cur = this.selected();
+          if (cur && cur._id === rowId) {
+            const updated = { ...cur, status } as ContactRequest;
+            this.selected.set(updated);
+            if (status === 'done') this.close();
+          }
+          return true;
+        } catch (e: any) {
+          throw new Error(e?.error?.error || e?.message || 'Échec de la mise à jour');
+        } finally {
+          this.actionForId.set(null);
+          this.actionType.set(null);
+        }
+      }
+    });
+
+    if (res.isConfirmed) {
+      await showAlert({
+        icon: 'success',
+        title: 'Mise à jour effectuée',
+        confirmButtonText: 'OK',
+        timer: 1200,
+        timerProgressBar: true,
+        showCancelButton: false
+      });
+    }
+  }
+
   async markFromModal(status: ContactStatus) {
     const c = this.selected();
-    if (!c || !c._id) return;
+    if (!c?._id) return;
     await this.mark(c._id, status);
   }
 

@@ -1,71 +1,27 @@
 const express = require("express");
 const ctrl = require("../controllers/auth");
-const {requireAuth,requireAdmin} = require("../middlewares/auth");
-const passport = require('../config/passport');
-const jwt = require("jsonwebtoken");
-
-const {CLIENT_URL} = process.env;
+const {requireAuth, requireAdmin} = require("../middlewares/auth");
+const authGoogleRoutes = require('../routes/auth.google');
+const authfacebookRoutes = require('../routes/auth.facebook');
 
 
 const r = express.Router();
+
+r.post('/login', ctrl.login);
+r.post('/logout', ctrl.logout);
+r.get('/me', requireAuth, ctrl.me);
+r.post('/refresh', ctrl.refresh);
+// garde tes autres endpoints: register, forgot/reset, verify, google/facebook...
+r.post('/register', ctrl.register);
 r.post('/forgot/password', ctrl.forgot);
 r.post('/reset', ctrl.reset);
-r.post('/login', ctrl.login);
-r.get('/me', requireAuth, ctrl.me);
-r.post('/register', ctrl.register);
 r.post('/resend-verification', ctrl.resendVerify);
 r.get('/verify/email', ctrl.verifyEmail);
-r.patch('/me', requireAuth,ctrl.updateUser);
-r.get('/admin/users', requireAuth,requireAdmin,ctrl.getAdminUsers);
-r.get('/admin/users/:id',requireAuth, requireAdmin, ctrl.getAdminUserDetail);
+r.patch('/me', requireAuth, ctrl.updateUser);
+r.get('/admin/users', requireAuth, requireAdmin, ctrl.getAdminUsers);
+r.get('/admin/users/:id', requireAuth, requireAdmin, ctrl.getAdminUserDetail);
 /** GOOGLE */
-r.get('/google',
-    passport.authenticate('google', {session: false}));
-
-r.get('/google/callback',
-    passport.authenticate('google', {failureRedirect: CLIENT_URL + '/login?oauth=failed', session: false}),
-    (req, res) => sendTokenPage(res, req.user)
-);
-
-
-
-/** crée un JWT et renvoie la page de succès (popup) */
-
-function sendTokenPage(res, user) {
-    const { CLIENT_URL, JWT_SECRET, JWT_EXPIRES } = process.env;
-
-    // be sure to use Mongo _id as string
-    const uid = (user._id || user.id).toString();
-
-    const safeUser = {
-        id: uid,
-        email: user.email,
-        role: user.role,
-        name: user.name,
-        avatar: user.avatar
-    };
-
-    // include sub in the JWT so your middleware can read it
-    const token = jwt.sign(
-        {
-            sub: uid,           // <-- important
-            role: user.role,    // optional extra claims
-            email: user.email
-        },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES || '7d' }
-    );
-
-    const state = res.req.query.state || '';
-    const payload = Buffer.from(
-        JSON.stringify({ type: 'OAUTH_RESULT', token, user: safeUser, state })
-    ).toString('base64url');
-
-    res.redirect(`${CLIENT_URL}/oauth-complete?data=${payload}`);
-}
-
-
-
-
+r.use('/google', authGoogleRoutes);
+r.use('/facebook', authfacebookRoutes);
 
 module.exports = r;

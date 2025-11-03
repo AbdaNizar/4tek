@@ -7,6 +7,8 @@ import {NgIf} from '@angular/common';
 import {ToastsComponent} from './shared/toasts/toasts.component';
 import {SubnavMegaComponent} from './pages/layout/header/subnav-mega/subnav-mega.component';
 import {IdleTimeoutService} from './services/idle-timeout/idle-timeout.service';
+import { AuthService} from './services/auth/auth.service';
+
 
 @Component({
   selector: 'app-root',
@@ -18,9 +20,12 @@ import {IdleTimeoutService} from './services/idle-timeout/idle-timeout.service';
 export class AppComponent {
   title = '4tek';
   hideShell = signal(false);
+  auth = inject(AuthService);
 
 
   constructor(private router: Router,private idle: IdleTimeoutService) {
+    this.auth.hydrateFromServer(); // ← déclenche GET /auth/me (envoie cookies)
+
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
         const route = this.router.routerState.root;

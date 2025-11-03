@@ -10,8 +10,11 @@ module.exports = function redirectTopLevelNav(frontUrl, extraAllowedNavPaths = [
     // Chemins autorisés pour une navigation top-level (pas de redirect)
     const DEFAULT_ALLOWED = [
         '/v1/auth/google',               // lance l’OAuth Google
+        '/v1/auth/facebook',               // lance l’OAuth Google
         '/v1/auth/google/callback',      // callback Google
+        '/v1/auth/facebook/callback',      // callback Google
         '/v1/auth/google/redirect',      // selon votre implémentation
+        '/v1/auth/facebook/redirect',      // selon votre implémentation
         '/v1/auth/verify',               // vérif email si vous avez une route GET
         '/v1/health',                    // healthcheck éventuel
     ];

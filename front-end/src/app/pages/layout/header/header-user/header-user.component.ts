@@ -155,7 +155,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       document.body.style.overflow = 'hidden';
       return;
     }
-
+    this.auth.handleAuthHash();
   }
 
   ngOnDestroy() {
@@ -503,16 +503,16 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   }
 
   // Google
-  async loginWithGoogle() {
-    this.open.set(false);
-    this.unlockBody();
-    try {
-      this.auth.openOAuthPopup(`${environment.api_Url}/auth/google`);
-
-    } catch (e) {
-      this.toast.show('Connexion Google annulée/échouée ❌', 'error');
-    }
-  }
+  // async loginWithGoogle() {
+  //   this.open.set(false);
+  //   this.unlockBody();
+  //   try {
+  //     this.auth.openOAuthPopup(`${environment.api_Url}/auth/google`);
+  //
+  //   } catch (e) {
+  //     this.toast.show('Connexion Google annulée/échouée ❌', 'error');
+  //   }
+  // }
 
 
 

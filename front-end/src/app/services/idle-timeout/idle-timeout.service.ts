@@ -115,6 +115,7 @@ export class IdleTimeoutService implements OnDestroy {
     this.clearTimers();
     this.clearCountdown();
     Swal.close();
+    console.log('hereee')
     this.auth.logout();
   }
 }

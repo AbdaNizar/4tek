@@ -16,6 +16,7 @@ import {credentialsInterceptor} from './app/core/credentials.interceptor';
 import {refreshInterceptor} from './app/core/refresh.interceptor';
 import {apiInterceptor} from './app/core/api.interceptor';
 import {AuthService} from './app/services/auth/auth.service';
+import {SearchResultsComponent} from './app/pages/search-result/search-result.component';
 
 const routes: Routes = [
   {
@@ -31,6 +32,8 @@ const routes: Routes = [
       { path: 'panier', component: CartComponent },
       { path: 'reset-password/:token', loadComponent: () => import('./app/pages/home/home.component').then(m => m.HomeComponent) },
       { path: 'mes-commandes', component: MyOrdersComponent },
+      { path: 'recherche', component: SearchResultsComponent },
+
     ]
   },
   {

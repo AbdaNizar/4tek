@@ -272,7 +272,7 @@ app-header-search input {
 @media (min-width: 769px) {
   .user-menu {
     top: calc(100% + 8px);
-    right: 280px;
+    right: 160px;
     left: auto;
     transform: none;
     margin-top: 0;
@@ -324,7 +324,7 @@ app-header-search input {
 }
 
 .user-menu a:hover, .user-menu button:hover {
-  background: rgba(255, 255, 255, .06);
+  background: rgb(0 171 255 / 19%);
   color: var(--accent);
 }
 

@@ -526,7 +526,7 @@
 }
 
 /* High contrast */
-@media (prefers-contrast: high) {
+@media (prefers-contrast: more) {
   .card {
     border-width: 2px;
   }
@@ -671,5 +671,135 @@
 
   .card:hover {
     transform: none;
+  }
+}
+/* ====== Wrapper pour superposer les icônes sur l'image ====== */
+.thumb-wrap {
+  position: relative;
+}
+
+/* Actions flottantes (cachées par défaut, visibles au hover/touche) */
+.quick-actions {
+  position: absolute;
+  inset: auto 0 12px 0;              /* centré horizontalement, 12px du bas */
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  pointer-events: none;              /* évite de capter le hover tant qu'on ne vise pas les boutons */
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+
+.thumb-wrap:hover .quick-actions,
+.thumb-wrap:focus-within .quick-actions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Boutons ronds */
+.qa-btn {
+  --size: 44px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;              /* réactive les clics */
+  color: #fff;
+  background: radial-gradient(60% 80% at 50% 20%, #29292b 0%, var(--bg) 60%);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow:
+    0 10px 24px rgba(0,0,0,.35),
+    0 0 0 3px rgba(34, 211, 238, .0); /* anneau focus animé */
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+
+.qa-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+.qa-btn:active { transform: translateY(0); }
+.qa-btn:focus-visible { box-shadow: 0 10px 24px rgba(0,0,0,.35), 0 0 0 3px rgba(34, 211, 238, .35); }
+
+/* Variantes */
+.qa-btn.view { /* même style que .qa-btn par défaut */ }
+
+.qa-btn.add {
+  background: radial-gradient(60% 80% at 50% 20%, #29292b 20%, var(--bg) 60%);
+}
+
+.qa-btn.ban {
+  background: rgba(148,163,184,.25);
+  border-color: rgba(148,163,184,.35);
+  color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* Liste (vue "list") : place les icônes sur la thumb à gauche */
+.card.list .quick-actions {
+  right: 12px;
+  left: auto;
+  justify-content: flex-end;
+}
+
+/* Petits écrans : on garde le comportement au toucher */
+@media (hover: none) {
+  .quick-actions { opacity: 1; transform: none; }
+}
+/* Le conteneur doit être positionné pour le ruban */
+.thumb-wrap { position: relative; }
+
+/* Boîte du ruban (coin haut-droit) */
+.corner-ribbon{
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 132px;                 /* zone de découpe */
+  height: 132px;
+  overflow: hidden;             /* masque les débords */
+  z-index: 20;
+  pointer-events: none;         /* ne bloque pas les clics sur l'image */
+}
+
+/* Bande diagonale */
+.corner-ribbon > span{
+  position: absolute;
+  top: 26px;
+  right: -46px;
+  width: 200px;
+  padding: 8px 0;
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: .06em;
+  font-size: 12px;
+  color: #fff;
+  background: linear-gradient(rgba(239, 68, 68, 0.57), rgba(220, 38, 38, 0.75)); /* rouge */
+  transform: rotate(45deg);
+  box-shadow: 0 6px 14px rgba(0,0,0,.35);
+}
+
+/* Petites “pointes” en bas pour l’effet étiquette */
+.corner-ribbon > span::before,
+.corner-ribbon > span::after{
+  content: "";
+  position: absolute;
+  top: 100%;
+  border-top: 8px solid #b91c1c; /* ombre/pli */
+}
+
+.corner-ribbon > span::before{
+  left: 0;
+  border-left: 8px solid transparent;
+}
+
+.corner-ribbon > span::after{
+  right: 0;
+  border-right: 8px solid transparent;
+}
+
+/* Mobile : ruban un peu plus compact */
+@media (max-width: 480px){
+  .corner-ribbon{ width:112px; height:112px; }
+  .corner-ribbon > span{
+    top: 22px; right: -44px; width: 180px; padding: 6px 0; font-size: 11px;
   }
 }

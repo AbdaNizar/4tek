@@ -3,17 +3,18 @@ const ctrl = require("../controllers/auth");
 const {requireAuth, requireAdmin} = require("../middlewares/auth");
 const authGoogleRoutes = require('../routes/auth.google');
 const authfacebookRoutes = require('../routes/auth.facebook');
+const { verifyRecaptcha } = require('../middlewares/recaptcha');
 
 
 const r = express.Router();
 
-r.post('/login', ctrl.login);
+r.post('/login',verifyRecaptcha('login'), ctrl.login);
 r.post('/logout', ctrl.logout);
 r.get('/me', requireAuth, ctrl.me);
 r.post('/refresh', ctrl.refresh);
 // garde tes autres endpoints: register, forgot/reset, verify, google/facebook...
-r.post('/register', ctrl.register);
-r.post('/forgot/password', ctrl.forgot);
+r.post('/register', verifyRecaptcha('register'),ctrl.register);
+r.post('/forgot/password', verifyRecaptcha('forgot'),ctrl.forgot);
 r.post('/reset', ctrl.reset);
 r.post('/resend-verification', ctrl.resendVerify);
 r.get('/verify/email', ctrl.verifyEmail);

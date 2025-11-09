@@ -16,6 +16,7 @@ import {AuthService} from '../../../../services/auth/auth.service';
 import {ToastService} from '../../../../services/toast/toast.service';
 import {environment} from '../../../../../environments/environment';
 import {AuthModalService, Mode} from '../../../../services/authModal/auth-modal.service';
+import {RecaptchaV3Service} from '../../../../services/recaptcha-v3/recaptcha-v3.service';
 
 
 function matchOther(otherKey: string): ValidatorFn {
@@ -44,6 +45,7 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private authModal = inject(AuthModalService);
   private modalSub?: Subscription;
+  private recaptcha = inject(RecaptchaV3Service);
 
   hasAvatar = signal(true);
   open = signal(false);
@@ -347,7 +349,9 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       if (this.mode() === 'forgot') {
         const email = this.form.value.email!.trim();
         this.loading.set(true);
-        await this.auth.forgotPassword(email);
+        const token = await this.recaptcha.getToken('forgot');
+
+        await this.auth.forgotPassword(email,token);
         this.okMsg.set('Si un compte existe, un email de réinitialisation a été envoyé.');
         this.toast.show('Email envoyé', 'info');
         this.loading.set(false);
@@ -357,7 +361,9 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
       if (this.mode() === 'login') {
         const {email, password} = this.form.getRawValue();
         this.loading.set(true);
-        const ok = await this.auth.login(email!, password!);
+        const token = await this.recaptcha.getToken('login');
+
+        const ok = await this.auth.login(email!, password!,token);
         this.loading.set(false);
         if (ok) {
           this.open.set(false);
@@ -374,10 +380,12 @@ export class HeaderUserComponent implements OnInit, OnDestroy {
           return;
         }
         this.loading.set(true);
+        const token = await this.recaptcha.getToken('register');
+
         await this.auth.register({
           email: v.email!, password: v.password!,
           name: v.name || '', phone: v.phone || '', address: v.address || ''
-        });
+        },token);
         this.loading.set(false);
         this.okMsg.set('Compte créé. Vérifie ta boîte mail si la vérification est requise.');
         this.toast.show('Compte créé', 'success');

@@ -200,6 +200,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
+  z-index: 3;
 }
 
 .modal-head {

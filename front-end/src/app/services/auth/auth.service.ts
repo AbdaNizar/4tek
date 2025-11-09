@@ -43,9 +43,9 @@ export class AuthService {
     window.location.href = `${environment.api_Url || ''}/auth/facebook/start?r=${encodeURIComponent(r)}`;
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string,captchaToken: string) {
     const res = await this.http.post<{ token: string; user: User }>(
-      `/auth/login`, { email, password }, { withCredentials: true }
+      `/auth/login`, { email, password ,captchaToken}, { withCredentials: true }
     ).toPromise();
     if (!res) throw new Error('Réponse vide');
     if (!res.user.isVerified) throw new Error('Email non vérifié.');
@@ -54,9 +54,9 @@ export class AuthService {
     return true;
   }
 
-  async register(payload: { name: string; email: string; password: string; phone?: string; address?: string }) {
+  async register(payload: { name: string; email: string; password: string; phone?: string; address?: string },captchaToken: string) {
     const res = await this.http.post<{ token: string; user: User }>(
-      `/auth/register`, payload, { withCredentials: true }
+      `/auth/register`, { ...payload, captchaToken },{ withCredentials: true }
     ).toPromise();
     if (res?.user) this.user.set(res.user);
     return !!res?.user;
@@ -129,8 +129,8 @@ export class AuthService {
     try { return JSON.parse(atob(payload.replace(/-/g,'+').replace(/_/g,'/'))) as User; }
     catch { return null; }
   }
-  async forgotPassword(email: string) {
-    await this.http.post(`/auth/forgot/password`, { email }).toPromise();
+  async forgotPassword(email: string,captchaToken: string) {
+    await this.http.post(`/auth/forgot/password`, { email ,captchaToken}).toPromise();
   }
 
   async resetPassword(token: string, password: string): Promise<void> {

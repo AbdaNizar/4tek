@@ -27,7 +27,7 @@ export class LoginComponent {
   async submit(){
     this.loading.set(true); this.error.set(null);
     try{
-      const ok = await this.auth.login(this.f.value.email!, this.f.value.password!);
+      const ok = await this.auth.login(this.f.value.email!, this.f.value.password!,'');
       if (ok) this.router.navigateByUrl('/admin');
       else this.error.set('Identifiants invalides');
     } catch(e:any){

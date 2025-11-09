@@ -12,7 +12,8 @@ import { Product } from '../../../interfaces/product';
 import { lastValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { getUrl } from '../../../shared/constant/function';
-
+import { toSignal } from '@angular/core/rxjs-interop';
+import { startWith, map } from 'rxjs';
 import { showAlert} from '../../../shared/constant/function';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
@@ -57,7 +58,7 @@ export class AdminProductsComponent implements OnInit {
 
   // ---------- loaders ciblés ----------
   actionId   = signal<string | null>(null);
-  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' | null>(null);
+  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' |'toggleToNew'| null>(null);
   get busy() { return this.actionKind() !== null; }
 
   // form
@@ -71,6 +72,7 @@ export class AdminProductsComponent implements OnInit {
     price: [null as any, [Validators.required, Validators.min(0)]],
     oldPrice: [null as any],
     stock: [0, [Validators.min(0)]],
+    cost: [null as any, [Validators.required, Validators.min(0)]],
     sku: [''],
     isActive: [true],
     currency: ['TND'],
@@ -121,6 +123,7 @@ export class AdminProductsComponent implements OnInit {
       if (!subId) this.f.get('subCategory')!.setValue('');
     }
   }
+
 
   // -------- fetchers ----------
   async fetch() {
@@ -183,7 +186,7 @@ export class AdminProductsComponent implements OnInit {
     this.f.reset({
       name: '', slug: '', category: '', subCategory: '', brand: '',
       description: '', price: null, oldPrice: null, stock: 0, sku: '',
-      isActive: true, currency: 'TND', tags: ''
+      isActive: true, currency: 'TND', tags: '',cost: null,
     });
     this.coverFile.set(null);
     this.coverPreview.set(null);
@@ -207,6 +210,7 @@ export class AdminProductsComponent implements OnInit {
       stock: p.stock ?? 0,
       sku: p.sku || '',
       isActive: p.isActive,
+      cost: p.cost ?? null,
       currency: p.currency || 'TND',
       tags: (p.tags || []).join(', ')
     });
@@ -222,6 +226,24 @@ export class AdminProductsComponent implements OnInit {
     document.body.classList.remove('modal-open');
   }
 
+  readonly formValueSig = toSignal(
+    this.f.valueChanges.pipe(startWith(this.f.getRawValue())),
+    { initialValue: this.f.getRawValue() }
+  );
+
+  readonly marginAmountSig = computed(() => {
+    const v = this.formValueSig();
+    const price = Number(v?.price ?? 0);
+    const cost  = Number(v?.cost  ?? 0);
+    return Math.max(0, price - cost);
+  });
+  readonly marginRateSig = computed(() => {
+    const v = this.formValueSig();
+    const price = Number(v?.price ?? 0);
+    if (!price) return 0;
+    return Math.max(0, (this.marginAmountSig() / price) * 100);
+  });
+  readonly currencySig = computed(() => this.formValueSig()?.currency || 'TND');
   openReplace(p: Product) {
     this.editing.set(p);
     this.coverChanged.set(false);
@@ -316,6 +338,7 @@ export class AdminProductsComponent implements OnInit {
     fd.append('description', v.description || '');
     if (v.price !== null && v.price !== undefined) fd.append('price', String(v.price));
     if (v.oldPrice !== null && v.oldPrice !== undefined) fd.append('oldPrice', String(v.oldPrice));
+    if (v.cost !== null && v.cost !== undefined)     fd.append('cost', String(v.cost));
     fd.append('stock', String(v.stock ?? 0));
     fd.append('sku', v.sku || '');
     fd.append('isActive', String(!!v.isActive));
@@ -422,6 +445,34 @@ export class AdminProductsComponent implements OnInit {
       this.actionId.set(p._id);
 
       const updated = await this.api.toggle(p._id).toPromise();
+      if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : x));
+
+      await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true });
+    } catch (e: any) {
+      await showAlert({ icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible' });
+    } finally {
+      this.actionKind.set(null);
+      this.actionId.set(null);
+    }
+  }
+
+  async toggleToNew(p: Product) {
+    const ask = await showAlert({
+      icon: 'question',
+      title: p.isNew ? 'Changé a ancien ?' : 'Changé a Nouveau?',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmer',
+      cancelButtonText: 'Annuler',
+      showLoaderOnConfirm: true,
+      allowOutsideClick: () => false
+    });
+    if (!ask.isConfirmed) return;
+
+    try {
+      this.actionKind.set('toggleToNew');
+      this.actionId.set(p._id);
+
+      const updated = await this.api.toggleToNew(p._id).toPromise();
       if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : x));
 
       await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true });

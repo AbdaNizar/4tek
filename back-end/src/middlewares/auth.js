@@ -15,8 +15,8 @@ function extractToken(req) {
 async function requireAuth(req, res, next) {
     try {
         const token = extractToken(req);
-        if (!token) return res.status(401).json({ error: 'Non authentifié' });
 
+        if (!token) return res.status(401).json({ error: 'Non authentifié' });
         let payload;
         try {
             payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -30,7 +30,6 @@ async function requireAuth(req, res, next) {
 
         if (!user) return res.status(401).json({ error: 'Utilisateur introuvable' });
         if (user.active === false) return res.status(401).json({ error: 'Unauthorized' });
-
         req.user = toSafeUser(user);
         next();
     } catch {

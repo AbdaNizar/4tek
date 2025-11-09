@@ -11,6 +11,7 @@
   <div class="layout">
     <app-product-filters
       [form]="f"
+      [brands]="brandFacets()"
       [minValue]="minValue()"
       [maxValue]="maxValue()"
       [options]="sliderOptions"

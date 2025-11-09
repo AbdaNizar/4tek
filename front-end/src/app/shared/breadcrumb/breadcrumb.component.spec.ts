@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SubnavMegaComponent } from './subnav-mega.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
 
-describe('SubnavMegaComponent', () => {
-  let component: SubnavMegaComponent;
-  let fixture: ComponentFixture<SubnavMegaComponent>;
+describe('BreadcrumbComponent', () => {
+  let component: BreadcrumbComponent;
+  let fixture: ComponentFixture<BreadcrumbComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SubnavMegaComponent]
+      imports: [BreadcrumbComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(SubnavMegaComponent);
+    fixture = TestBed.createComponent(BreadcrumbComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -59,7 +59,7 @@
           (keyup.enter)="open(u)">
         <td>{{ u.createdAt | date:'short' }}</td>
         <td class="person">
-          <img [src]="u.avatar" alt="">
+          <img [src]="u.avatar != null ? u.avatar : '/assets/png/avatar.png'" alt="">
           <span>{{ u.name || '—' }}</span>
         </td>
         <td>{{ u.email || '—' }}</td>
@@ -104,7 +104,7 @@
 
   <header class="modal-head">
     <div class="who">
-      <img [src]="selected().avatar" alt="">
+      <img [src]="selected().avatar != null ? selected().avatar : '/assets/png/avatar.png'"alt="">
       <div>
         <h3>{{ selected()?.name || '—' }}</h3>
         <p class="small">

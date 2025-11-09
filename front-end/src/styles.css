@@ -88,7 +88,7 @@ h1, h2, h3, .brand {
   box-shadow: 0 8px 30px rgba(79,70,229,.35);
 }
 a.link{ color:var(--accent); text-decoration:none; }
-a.link:hover{ text-decoration:underline; }
+a.link:hover{ text-decoration:none; }
 
 /* =========================
    5) BUTTONS  (UNIFIED)

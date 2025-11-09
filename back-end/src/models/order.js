@@ -5,7 +5,8 @@ const OrderItemSchema = new mongoose.Schema({
     name: {type: String, required: true},
     price: {type: Number, required: true, min: 0},
     qty: {type: Number, required: true, min: 1},
-    imageUrl: {type: String}
+    imageUrl: {type: String},
+    unitCost:  { type: Number, default: 0, min: 0 }
 }, {_id: false});
 
 const OrderSchema = new mongoose.Schema({
@@ -32,5 +33,10 @@ const OrderSchema = new mongoose.Schema({
 }, {timestamps: true});
 
 OrderSchema.index({'user.id': 1, createdAt: -1});
+// Order
+OrderSchema.index({ createdAt: -1, status: 1 });
+OrderSchema.index({ 'user.id': 1, createdAt: -1 });
+
+
 
 module.exports = mongoose.models.Order || mongoose.model('Order', OrderSchema);

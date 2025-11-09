@@ -70,9 +70,8 @@ export class HeaderSearchComponent {
     const q = this.query?.trim();
     if (!q) return;
     this.submitSearch.emit(q);
-    // Option: naviguer vers page de recherche globale
     this.closeMobile();
-    // this.router.navigate(['/recherche'], { queryParams: { q } });
+    this.router.navigate(['/recherche'], { queryParams: { q } });
   }
 
   // mobile sheet

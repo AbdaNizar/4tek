@@ -105,34 +105,23 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-    const { email, password, name, phone, address } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: "email & password requis" });
+    try {
+        const { email, password, name, phone, address } = req.body;
+        const exists = await User.findOne({ email });
+        if (exists) return res.status(409).json({ error: 'Email déjà utilisé' });
 
-    const exists = await User.findOne({ email: email.toLowerCase() });
-    if (exists) return res.status(409).json({ error: "Email déjà utilisé" });
+        const user = await User.create({ email, password, name, phone, address, isVerified: false });
 
-    const user = await User.create({
-        email: email.toLowerCase(),
-        password,
-        name,
-        phone,
-        address,
-        isVerified: false,
-        active: true,
-    });
+        await sendVerifyEmail(user, req);
 
-    // Auto-login (même UX que login)
-    const access = signAccess(user);
-    const familyId = crypto.randomUUID();
-    const { raw: refreshRaw } = await issueRefresh(user._id, familyId);
-
-    setAccessCookie(res, access);
-    setRefreshCookie(res, refreshRaw);
-    setUserCookie(res, user);
-    setCsrfCookie(res, randomToken(16));
-
-    return res.status(201).json({ token: "[cookie]", user: toSafeUser(user) });
+        return res.status(201).json({ ok: true, message: 'Compte créé. Vérifie ta boîte mail pour activer ton compte.' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
 };
+
+
 
 // Source of truth pour le front : renvoie DIRECTEMENT l’objet user (ou null)
 exports.me = async (req, res) => {

@@ -1,4 +1,5 @@
 import {ParentCategoryRef} from './ParentCategoryRef';
+import {Category} from './category';
 
 export interface SubCategory {
   _id: string;
@@ -14,4 +15,5 @@ export interface SubCategory {
   createdAt?: string;
   updatedAt?: string;
   productsCount?:Number;
+  category: Category;
 }

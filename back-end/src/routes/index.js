@@ -10,9 +10,9 @@ const cart = require("./cart");
 const contact = require("./contact");
 const orders = require("./orders");
 const ratings = require("./ratings");
+const reports = require("./admin.reports");
 
 const api = express.Router();
-
 api.get("/healthz", (_req, res) => res.json({ ok: true }));
 api.use("/auth", auth);
 api.use("/products", products);
@@ -25,6 +25,7 @@ api.use("/cart",cart);
 api.use('/contact',contact );
 api.use('/orders',orders );
 api.use('/ratings',ratings );
+api.use('/admin/reports',reports );
 
 
 module.exports = api;

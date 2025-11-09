@@ -1,6 +1,6 @@
 /* src/app/pages/admin/shell/admin-shell.component.css */
 :root{
-  --bg:#0b0f1a; --surface:#121826; --card:#1a2234;
+  --bg: rgba(148, 148, 151, 0.85); --surface:#121826; --card:#1a2234;
   --text:#e6eaf2; --muted:#9aa3b2; --primary:#4f46e5; --accent:#22d3ee;
   --ok:#10b981; --danger:#ef4444;
   --r1:12px; --r2:16px; --shadow:0 12px 30px rgba(0,0,0,.35);

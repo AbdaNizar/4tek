@@ -20,8 +20,8 @@ const { sha256 } = require('../functions/crypto');
 
 const router = express.Router();
 
-const PUBLIC_API_BASE = process.env.API_BASE_URL || 'http://localhost:3000';
-const GOOGLE_REDIRECT_URI = `${PUBLIC_API_BASE.replace(/\/$/, '')}/v1/auth/google/callback`;
+const PUBLIC_API_BASE = process.env.API_URL || 'http://localhost:3000/v1';
+const GOOGLE_REDIRECT_URI = `${PUBLIC_API_BASE.replace(/\/$/, '')}/auth/google/callback`;
 
 const {
     GOOGLE_CLIENT_ID,

@@ -9,8 +9,10 @@ export interface Product {
   oldPrice?: number;
   currency: string;
   stock: number;
+  cost: number;
   sku?: string;
   isActive: boolean;
+  isNew?: boolean;
   category: string;
   subCategory: string;
   imageUrl?: string;

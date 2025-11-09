@@ -1,0 +1,116 @@
+<section class="admin-reports">
+  <header class="head">
+    <h2>Statistiques</h2>
+    <div class="tools">
+      <input type="search"
+             [(ngModel)]="userId"
+             placeholder="UserId (optionnel)" />
+      <input type="date" [(ngModel)]="from" />
+      <input type="date" [(ngModel)]="to" />
+      <button type="button" (click)="load()">Actualiser</button>
+      <button type="button" (click)="exportCsv()">Export CSV</button>
+    </div>
+  </header>
+
+  <div *ngIf="loading()" class="loading">Chargement…</div>
+
+  <!-- KPIs -->
+  <div class="kpis" *ngIf="!loading() && summary()">
+    <div class="kpi">
+      <div class="kpi-label">Commandes</div>
+      <div class="kpi-value">{{ summary()!.ordersCount | number }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">CA</div>
+      <div class="kpi-value">{{ summary()!.revenue | currency:'TND' }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Coût</div>
+      <div class="kpi-value">{{ summary()!.cost | currency:'TND' }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Marge</div>
+      <div class="kpi-value">{{ summary()!.margin | currency:'TND' }}</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="cards-grid" [hidden]="loading()">
+    <article class="card chart">
+      <header>Top produits (CA / Marge)</header>
+      <div class="chart-box">
+        <canvas #barTopProducts></canvas>
+      </div>
+    </article>
+
+    <article class="card chart">
+      <header>Marge par date</header>
+      <div class="chart-box">
+        <canvas #lineMargin></canvas>
+      </div>
+    </article>
+  </div>
+
+  <!-- Consommation produits -->
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Produit</th>
+        <th>Qté</th>
+        <th>CA</th>
+        <th>Coût</th>
+        <th>Marge</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let r of items()">
+        <td>{{ r.productName || r.productId }}</td>
+        <td>{{ r.qty }}</td>
+        <td>{{ r.revenue | currency:'TND' }}</td>
+        <td>{{ r.cost | currency:'TND' }}</td>
+        <td>
+          <span class="badge" [class.ok]="r.margin>=0" [class.ko]="r.margin<0">
+            {{ r.margin | currency:'TND' }}
+          </span>
+        </td>
+      </tr>
+      <tr *ngIf="items().length===0">
+        <td colspan="5" class="empty">Aucune donnée.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Marge par commande -->
+  <div class="table-wrap" *ngIf="!loading()">
+    <table class="list">
+      <thead>
+      <tr>
+        <th>Date</th>
+        <th>Client</th>
+        <th>CA items</th>
+        <th>Coût</th>
+        <th>Marge</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let r of byOrder()">
+        <td>{{ r.date | date:'short' }}</td>
+        <td>{{ r.userEmail }}</td>
+        <td>{{ r.itemsRevenue | currency:'TND' }}</td>
+        <td>{{ r.itemsCost | currency:'TND' }}</td>
+        <td>
+          <span class="badge" [class.ok]="r.margin>=0" [class.ko]="r.margin<0">
+            {{ r.margin | currency:'TND' }}
+          </span>
+        </td>
+      </tr>
+      <tr *ngIf="byOrder().length===0">
+        <td colspan="5" class="empty">Aucune commande dans cette période.</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+

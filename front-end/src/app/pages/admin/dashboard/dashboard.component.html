@@ -9,6 +9,12 @@
       <h3><span class="icon">🛒</span> Commandes</h3>
       <p class="muted">Suivi, statuts, détails et gestion des commandes.</p>
     </article>
+    <article class="card" role="button" tabindex="0"
+             (click)="goTo('/admin/statistiques')"
+             (keydown.enter)="goTo('/admin/statistiques')">
+      <h3><span class="icon">📊</span> Statistiques </h3>
+      <p class="muted">Suivi benefits, Détails statistiques.</p>
+    </article>
 
     <article class="card" role="button" tabindex="0"
              (click)="goTo('/admin/utilisateurs')"

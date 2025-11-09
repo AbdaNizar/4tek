@@ -5,14 +5,14 @@ import {AppHeaderComponent} from './pages/layout/header/header.component';
 import {filter} from 'rxjs';
 import {NgIf} from '@angular/common';
 import {ToastsComponent} from './shared/toasts/toasts.component';
-import {SubnavMegaComponent} from './pages/layout/header/subnav-mega/subnav-mega.component';
 import {IdleTimeoutService} from './services/idle-timeout/idle-timeout.service';
 import { AuthService} from './services/auth/auth.service';
+import {BreadcrumbComponent} from './shared/breadcrumb/breadcrumb.component';
 
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, FooterComponent, AppHeaderComponent, NgIf, ToastsComponent, SubnavMegaComponent],
+  imports: [RouterOutlet, FooterComponent, AppHeaderComponent, NgIf, ToastsComponent, BreadcrumbComponent],
   templateUrl: './app.component.html',
   standalone: true,
   styleUrl: './app.component.css'
@@ -23,7 +23,7 @@ export class AppComponent {
   auth = inject(AuthService);
 
 
-  constructor(private router: Router,private idle: IdleTimeoutService) {
+  constructor(protected router: Router, private idle: IdleTimeoutService) {
     this.auth.hydrateFromServer(); // ← déclenche GET /auth/me (envoie cookies)
 
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
@@ -37,6 +37,9 @@ export class AppComponent {
           r = r.firstChild;
         }
         this.hideShell.set(hide);
+
+
+
       });
     this.idle.init();
 

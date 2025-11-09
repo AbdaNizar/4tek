@@ -1,11 +1,12 @@
 <section class="home">
-  <app-banner [slides]="slides()" [intervalMs]="3000" [autoPlay]="true"></app-banner>
+  <!-- home.component.html (ajoute après le banner) -->
+
+
+  <app-banner [slides]="slides()" [intervalMs]="4000" [autoPlay]="true"></app-banner>
 </section>
 <app-section-separator label="Catégories Populaires"></app-section-separator>
 
 <app-popular-cats-carousel [title]="'Catégories Populaires'" [cats]="popularCats()"></app-popular-cats-carousel>
-
-
 <!-- === Meilleures offres (par réduction) === -->
 <app-section-separator label="Meilleures offres"></app-section-separator>
 <app-product-carousel
@@ -14,10 +15,24 @@
   [intervalMs]="4000"
   [autoplay]="true">
 </app-product-carousel>
+<app-section-separator label="Nouveautés"></app-section-separator>
+<app-product-carousel
+  title="Nouveautés"
+  [products]="newArrivals()"
+  [intervalMs]="3800"
+  [autoplay]="true">
+</app-product-carousel>
 
+<app-section-separator *ngIf="brands()" label="Nos marques"></app-section-separator>
+<app-brand-strip *ngIf="brands()" [brands]="brands()"></app-brand-strip>
 
 <app-section-separator label="Contactez nous"></app-section-separator>
 <app-contact-us></app-contact-us>
 
+<!--<app-section-separator label="Restez informés"></app-section-separator>-->
+<!--<app-newsletter></app-newsletter>-->
+
 <app-section-separator label="Pourquoi choisir 4tek ?"></app-section-separator>
 <app-home-advantages></app-home-advantages>
+
+

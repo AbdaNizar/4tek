@@ -23,7 +23,7 @@
       </span>
     </div>
 
-    <button class="btn-checkout" routerLink="/panier" (click)="cartOpen.set(false)">PASSER À LA CAISSE</button>
+    <button class="btn-checkout" routerLink="/panier" (click)="cartOpen.set(false)">PASSER LA COMMANDE</button>
 
     <div class="cart-list" *ngIf="cart.items().length; else empty">
       <div class="line"><hr></div>

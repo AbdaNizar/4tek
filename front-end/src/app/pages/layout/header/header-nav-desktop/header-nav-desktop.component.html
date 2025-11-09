@@ -1,81 +1,55 @@
-<nav class="subnav" aria-label="Catégories">
-  <div class="pill">
+<nav class="mega" aria-label="Navigation catégories">
+  <!-- TRIGGER -->
+  <button
+    class="trigger"
+    type="button"
+    (mouseenter)="openPanel(); cancelClose()"
+    (mouseleave)="closeAfter(160)"
+    (click)="toggle()"
+    [attr.aria-expanded]="open()"
+    aria-controls="mega-panel">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <span>TOUS NOS CATÉGORIES</span>
+  </button>
 
-    <!-- Bouton Accueil -->
-    <a class="tab-home" routerLink="/">
-      <span class="ico">
-        <img loading="lazy" src="assets/png/home-3d.png" alt="Accueil" />
-      </span>
-      ACCUEIL
-    </a>
+  <!-- PANEL -->
+  <div
+    id="mega-panel"
+    class="panel"
+    *ngIf="open()"
+    [class.single]="activeCatId() && !hasSubs(activeCatId()!)"
+    (mouseenter)="cancelClose()"
+    (mouseleave)="closeAfter(160)">
 
-    <!-- Bloc catégories -->
-    <div class="menu-host">
-      <ng-container *ngFor="let c of categories()">
-        <div class="cat-item"
-             (mouseenter)="onEnterCat(c)"
-             (focusin)="onEnterCat(c)"
-             (mouseleave)="activeCatId.set(null); activeSubId.set(null)">
-
-          <!-- Onglet catégorie -->
-          <a class="tab"
-             [class.active]="activeCatId()===c._id"
-             [routerLink]="['/categories', c._id]"
-             (click)="goTo($event, ['/categories', c._id])">
-            <span class="ico">
-              <img loading="lazy" [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'" [alt]="c.name" />
-            </span>
+    <ul class="cat-list" role="menu">
+      <li *ngFor="let c of categories()"
+          [class.active]="activeCatId()===c._id">
+        <button class="row" type="button" role="menuitem"
+                (mouseenter)="onEnterCat(c)" (focusin)="onEnterCat(c)"
+                (click)="goCat(c)">
+          <span class="left">
+            <span class="ico"><img loading="lazy" [src]="catIcon(c)" [alt]="c.name"/></span>
             <span class="lbl">{{ c.name }}</span>
-            <svg class="chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-              <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+          </span>
+          <span class="chev" *ngIf="hasSubs(c._id)">›</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="subcol" *ngIf="activeCatId() && hasSubs(activeCatId()!)">
+      <h4 class="sub-title">{{ catName(activeCatId()!) }}</h4>
+      <ul class="sub-list">
+        <li *ngFor="let s of subsOf(activeCatId()!)">
+          <a href (click)="goSub($event, s)">
+            <span class="left">
+              <span class="ico sm"><img loading="lazy" [src]="subIcon(s)" [alt]="s.name"/></span>
+              <span class="lbl">{{ s.name }}</span>
+            </span>
           </a>
-
-          <!-- Panel sous-catégories / produits -->
-          <div class="panel" *ngIf="activeCatId()===c._id"
-               (mouseenter)="onPanelEnter()"
-               (mouseleave)="onPanelLeave()">
-            <div class="panel-inner" [class.has-right]="prodsOf(activeSubId()!).length > 0">
-
-              <aside class="col left">
-                <ul class="submenu">
-                  <li *ngFor="let s of subsOf(c._id)">
-                    <a class="submenu-item"
-                       [class.current]="activeSubId()===s._id"
-                       (mouseenter)="onEnterSub(s)"
-                       (focus)="onEnterSub(s)"
-                       [routerLink]="['/categories/sub-categories', s._id]"
-                       (click)="goTo($event, ['categories/sub-categories', s._id])">
-                      {{ s.name }} <span class="arrow">›</span>
-                    </a>
-                  </li>
-                </ul>
-              </aside>
-
-              <section class="col right" *ngIf="activeSubId()">
-                <div class="subcategory-section" *ngIf="prodsOf(activeSubId()!).length > 0">
-                  <h3 class="subcategory-title">{{ getSubName(activeSubId()!) }}</h3>
-                  <ul class="links">
-                    <li *ngFor="let p of prodsOf(activeSubId()!).slice(0, 6)">
-                      <a [routerLink]="['/product', p.slug]"
-                         (click)="goTo($event, ['/product', p.slug])">
-                        {{ p.name }}
-                      </a>
-                    </li>
-                    <li class="all">
-                      <a [routerLink]="['/categories/sub-categories', activeSubId()]"
-                         (click)="goTo($event, ['/categories/sub-categories', activeSubId()])">
-                        Tous les articles →
-                      </a>
-                    </li>
-                  </ul>
-                </div>
-              </section>
-
-            </div>
-          </div>
-        </div>
-      </ng-container>
+        </li>
+      </ul>
     </div>
   </div>
 </nav>

@@ -5,77 +5,56 @@
 <nav class="mobile-menu" [class.open]="open" (click)="$event.stopPropagation()" aria-label="Menu mobile">
   <button class="close-btn" (click)="closed.emit()" aria-label="Fermer">✕</button>
 
-  <!-- Main links -->
+  <!-- Liens principaux -->
   <a class="main-link" routerLink="/" (click)="closed.emit()">
-    <span class="ico">🏠</span> Accueil
+    <span class="ico-emoji">🏠</span> Accueil
   </a>
 
-  <!-- Categories -->
+  <!-- Catégories -->
   <div class="accordion" *ngFor="let c of categories()">
     <div class="accordion-header">
-
-      <!-- Click = GO to category -->
+      <!-- Tap = NAVIGATE catégorie -->
       <a class="head-link"
          [routerLink]="['/categories', c._id]"
          (click)="closed.emit()">
-        <div class="ico">
-          <img loading="lazy" [src]="getUrl(c.iconUrl || c.imageUrl || c.banners?.[0]) || '/assets/placeholder.jpg'"
-               [alt]="c.name" />
-        </div>
-        <span>{{ c.name }}</span>
+        <span class="ico">
+          <img [src]="catIcon(c)" [alt]="c.name" loading="lazy"/>
+        </span>
+        <span class="lbl">{{ c.name }}</span>
       </a>
 
-      <!-- Chevron = TOGGLE only -->
+      <!-- Chevron = TOGGLE sous-catégories -->
       <button type="button"
               class="chev-btn"
+              *ngIf="hasSubs(c._id)"
               (click)="toggleCategory(c._id); $event.stopPropagation()"
-              [attr.aria-expanded]="openCatId === c._id">
-        <span class="chev" [class.rotated]="openCatId === c._id">›</span>
+              [attr.aria-expanded]="openCatId === c._id"
+              [disabled]="!hasSubs(c._id)">
+        <span class="chev"  [class.rotated]="openCatId === c._id">›</span>
       </button>
     </div>
 
-    <!-- Subcategories -->
-    <div class="accordion-body" *ngIf="openCatId === c._id">
-      <ul>
-        <li *ngFor="let s of (subsCache.get(c._id) || [])">
-          <div class="sub-line">
-            <!-- Click = GO to subcategory list page -->
-            <a class="sub-link"
-               [routerLink]="['/categories', c._id]"
-               (click)="closed.emit()">
-              {{ s.name }}
-            </a>
-
-            <!-- Chevron = TOGGLE products of this sub -->
-            <button type="button"
-                    class="chev-btn sm"
-                    (click)="toggleSub(s._id); $event.stopPropagation()"
-                    [attr.aria-expanded]="openSubId === s._id">
-              <span class="chev small" [class.rotated]="openSubId === s._id">›</span>
-            </button>
-          </div>
-
-          <!-- Products (only if any) -->
-          <ul class="sub-products" *ngIf="openSubId === s._id && (prodsCache.get(s._id)?.length || 0) > 0">
-            <li *ngFor="let p of prodsCache.get(s._id) || []">
-              <a [routerLink]="['/produits', p._id]" (click)="closed.emit()">
-                {{ p.name }}
-              </a>
-            </li>
-            <li class="all">
-              <a [routerLink]="['/categories', c._id, 'sub', s._id]" (click)="closed.emit()">Tous les articles →</a>
-            </li>
-          </ul>
+    <!-- Sous-catégories (icônes + nav) -->
+    <div class="accordion-body" *ngIf="openCatId === c._id && hasSubs(c._id)">
+      <ul class="subs">
+        <li *ngFor="let s of subsOf(c._id)">
+          <a class="sub-link"
+             [routerLink]="['/categories/sub-categories', s._id]"
+             (click)="closed.emit()">
+            <span class="left">
+              <span class="ico sm">
+                <img [src]="subIcon(s)" [alt]="s.name" loading="lazy"/>
+              </span>
+              <span class="lbl">{{ s.name }}</span>
+            </span>
+          </a>
         </li>
-
-        <li *ngIf="(subsCache.get(c._id)?.length || 0) === 0" class="muted" style="padding:6px 12px;">
-          Aucune sous-catégorie.
-        </li>
+        <li *ngIf="subsOf(c._id).length===0" class="muted" style="padding:6px 12px;">Aucune sous-catégorie.</li>
       </ul>
     </div>
   </div>
 
   <a class="main-link" routerLink="/contact" (click)="closed.emit()">
-    <span class="ico">📞</span> Contact
+    <span class="ico-emoji">📞</span> Contact
   </a>
 </nav>

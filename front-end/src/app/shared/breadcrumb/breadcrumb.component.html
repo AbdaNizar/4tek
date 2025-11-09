@@ -1,0 +1,22 @@
+<nav class="bc" aria-label="Fil d’Ariane" *ngIf="crumbs().length > 0">
+  <ng-container *ngFor="let c of crumbs(); let i = index">
+    <ng-container *ngIf="i === 0; else notHome">
+      <a class="home" [routerLink]="c.url">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="currentColor"/>
+        </svg>
+        <span>{{ c.label }}</span>
+      </a>
+    </ng-container>
+    <ng-template #notHome>
+      <span class="sep">/</span>
+      <ng-container *ngIf="!c.isLast && c.url; else last">
+        <a [routerLink]="c.url">{{ c.label }}</a>
+      </ng-container>
+      <ng-template #last>
+        <span class="current" aria-current="page">{{ c.label }}</span>
+      </ng-template>
+    </ng-template>
+  </ng-container>
+
+</nav>

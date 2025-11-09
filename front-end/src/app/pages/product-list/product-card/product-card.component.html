@@ -1,20 +1,71 @@
 <article class="card" [class.list]="view === 'list'">
-  <!-- IMAGE / THUMB -->
-  <a class="thumb" [routerLink]="['/product', product.slug]" >
-    <img
-      [src]="getUrl(product.imageUrl) || 'assets/images/placeholder.jpg'"
-      [alt]="product.name"
-      loading="lazy"
-    />
-    <span *ngIf="!product.stock || product.stock <= 0" class="badge oos">Rupture</span>
 
-    <!-- logo marque si peuplée -->
-    <div class="brand-mark" *ngIf="product.brands?.iconUrl">
-      <img [src]="getUrl(product.brands?.iconUrl)" alt="brand" />
+  <!-- ====== THUMB + QUICK ACTIONS ====== -->
+  <div class="thumb-wrap">
+  <span *ngIf="product.isNew" class="corner-ribbon">
+    <span>Nouveau</span>
+  </span>
+    <!-- Vignette cliquable -->
+    <a class="thumb" [routerLink]="['/product', product.slug]">
+      <img
+        [src]="getUrl(product.imageUrl) || 'assets/images/placeholder.jpg'"
+        [alt]="product.name"
+        loading="lazy"
+      />
+
+      <!-- Rupture -->
+      <span *ngIf="!product.stock || product.stock <= 0" class="badge oos">Rupture</span>
+
+      <!-- Logo marque (si dispo) -->
+      <div class="brand-mark" *ngIf="product.brands?.iconUrl">
+        <img [src]="getUrl(product.brands?.iconUrl)" alt="brand" />
+      </div>
+    </a>
+
+    <!-- Icônes rapides (affichées au hover) -->
+    <div class="quick-actions">
+      <!-- Voir -->
+      <a class="qa-btn view"
+         [routerLink]="['/product', product.slug]"
+         aria-label="Voir le produit"
+         title="Voir le produit">
+        <!-- loupe -->
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path fill="currentColor"
+                d="M10 4a6 6 0 1 1 0 12A6 6 0 0 1 10 4m0-2a8 8 0 1 0 4.9 14.3l4.4 4.4 1.4-1.4-4.4-4.4A8 8 0 0 0 10 2z"/>
+        </svg>
+      </a>
+
+      <!-- Ajouter au panier (seulement si stock > 0) -->
+      <button class="qa-btn add"
+              type="button"
+              *ngIf="product.stock > 0"
+              (click)="addToCart()"
+              aria-label="Ajouter au panier"
+              title="Ajouter au panier">
+        <!-- panier -->
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 22a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 22a1 1 0 1 0 .001-2.001A1 1 0 0 0 20 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M1 1h3l3.6 12.59a2 2 0 0 0 2 1.41h7.92a2 2 0 0 0 1.98-1.64l1.2-6.36H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Indispo (si rupture) -->
+      <span class="qa-btn ban"
+            *ngIf="!product.stock || product.stock <= 0"
+            aria-label="En rupture de stock"
+            title="En rupture de stock">
+        <!-- interdit -->
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path fill="currentColor"
+                d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm-8 10a8 8 0 0 1 12.9-6.2L5.8 16.9A7.95 7.95 0 0 1 4 12zm8 8a7.95 7.95 0 0 1-4.9-1.7L18.3 7.1A8 8 0 0 1 12 20z"/>
+        </svg>
+      </span>
     </div>
-  </a>
+  </div>
 
-  <!-- INFO -->
+  <!-- ====== INFO ====== -->
   <div class="info">
     <div class="top">
       <h3 class="title">
@@ -30,26 +81,22 @@
       <span class="sku" *ngIf="product.sku">SKU: {{ product.sku }}</span>
     </div>
 
-    <!-- specs: on affiche max 3 paires clé:valeur -->
     <div class="chips" *ngIf="product?.specs">
       <ng-container *ngFor="let s of (product.specs | keyvalue) | slice:0:3">
         <span class="chip">{{ s.key }}: {{ s.value }}</span>
       </ng-container>
     </div>
 
-    <!-- tags -->
     <div class="tags" *ngIf="product.tags?.length">
       <span class="tag" *ngFor="let t of product.tags">{{ t }}</span>
     </div>
 
-    <!-- description courte -->
     <p class="desc" *ngIf="product.description">{{ product.description }}</p>
 
-    <!-- bas de carte -->
     <div class="bottom">
-
-      <div class="rating-line" *ngIf="product.ratingCount! > 0"
-           [attr.aria-label]="'Note ' + (product.ratingAvg | number:'1.1-1') + ' sur 5 pour ' + product.name">        <div class="stars-meter" [style.--fill]="(Math.min(5, Math.max(0, product.ratingAvg || 0)) * 20) + '%'">
+      <div class="rating-line" *ngIf="product.ratingCount! > 0; else noRating"
+           [attr.aria-label]="'Note ' + (product.ratingAvg | number:'1.1-1') + ' sur 5 pour ' + product.name">
+        <div class="stars-meter" [style.--fill]="(Math.min(5, Math.max(0, product.ratingAvg || 0)) * 20) + '%'">
           <span class="bg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
           <span class="fg"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></span>
         </div>
@@ -63,10 +110,6 @@
       <div class="price-wrap">
         <span class="price">{{ product.price | currency:(product.currency || 'TND') }}</span>
         <span class="old" *ngIf="product.oldPrice">{{ product.oldPrice | currency:(product.currency || 'TND') }}</span>
-      </div>
-      <div class="actions">
-        <a class="btn sm ghost" [routerLink]="['/product', product.slug]">Voir</a>
-        <button class="btn sm primary" type="button">Ajouter</button>
       </div>
     </div>
   </div>

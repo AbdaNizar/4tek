@@ -12,7 +12,7 @@ import { Slide } from '../../../models/slide';
 })
 export class BannerComponent implements OnInit, OnDestroy {
   @Input({ required: true }) slides: Slide[] = [];
-  @Input() intervalMs = 3000;
+  @Input() intervalMs = 4000;
   @Input() autoPlay = true;
 
   index = signal(0);

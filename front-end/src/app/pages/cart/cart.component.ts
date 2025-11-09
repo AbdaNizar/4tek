@@ -11,7 +11,7 @@ import { CreateOrderInput } from '../../interfaces/OrderItem';
 import { FormsModule } from '@angular/forms';
 import { NgForOf } from '@angular/common';
 
-import { showAlert} from '../../shared/constant/function';
+import { showAlert } from '../../shared/constant/function';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -22,13 +22,14 @@ import Swal from 'sweetalert2';
   styleUrls: ['./cart.component.css']
 })
 export class CartComponent {
-  private auth = inject(AuthService);
+  private auth      = inject(AuthService);
   private authModal = inject(AuthModalService);
-  private orders = inject(OrderService);
-  cart = inject(CartService);
-  private router = inject(Router);
+  private orders    = inject(OrderService);
+  cart              = inject(CartService);
+  private router    = inject(Router);
 
   private readonly SHIPPING_FLAT = 8;
+  private busy = false;
 
   get shipping(): number {
     return this.cart.items().length ? this.SHIPPING_FLAT : 0;
@@ -38,65 +39,75 @@ export class CartComponent {
   }
 
   async checkout() {
-    // A) Panier vide
-    if (!this.cart.items().length) {
-      await showAlert({
-        icon: 'warning',
-        title: 'Panier vide',
-        html: 'Votre panier ne contient aucun article.',
-        confirmButtonText: 'OK',
-        showCancelButton: false
-      });
-      return;
-    }
+    if (this.busy) return;
+    this.busy = true;
 
-    // B) Pas connecté → Login | Register | Annuler
-    if (!this.auth.isLoggedIn()) {
-      const r = await showAlert({
-        icon: 'info',
-        title: 'Connexion requise',
-        html: 'Pour passer votre commande, connectez-vous ou créez un compte.',
-        confirmButtonText: 'Se connecter',
-        showDenyButton: true,
-        denyButtonText: 'Créer un compte',
-        showCancelButton: true,
-        cancelButtonText: 'Annuler',
-        reverseButtons: true
-      });
-
-      if (r.isConfirmed) {
-        this.authModal.open({ mode: 'login', patch: { email: '' }, autofocus: true });
-      } else if (r.isDenied) {
-        this.authModal.open({ mode: 'register', patch: { email: '' }, autofocus: true });
-      }
-      return;
-    }
-
-    // C) Connecté mais sans téléphone OU adresse → demander les 2 via showAlert
-    const okContact = await this.ensureContactInfo();
-    if (!okContact) return;
-
-    // D) Créer la commande
     try {
+      // A) Panier vide
+      if (!this.cart.items().length) {
+        await showAlert({
+          icon: 'warning',
+          title: 'Panier vide',
+          html: 'Votre panier ne contient aucun article.',
+          confirmButtonText: 'OK',
+          showCancelButton: false
+        });
+        return;
+      }
+
+      // 🔑 HYDRATATION AVANT TOUTE VÉRIFICATION
+      // Si des cookies existent déjà (access/refresh), /auth/me retournera l’utilisateur
+      // et mettra à jour this.auth.user().
+      await this.auth.hydrateFromServer();
+
+      // B) Pas connecté → Login | Register | Annuler
+      if (!this.auth.isLoggedIn()) {
+        const r = await showAlert({
+          icon: 'info',
+          title: 'Connexion requise',
+          html: 'Pour passer votre commande, connectez-vous ou créez un compte.',
+          confirmButtonText: 'Se connecter',
+          showDenyButton: true,
+          denyButtonText: 'Créer un compte',
+          showCancelButton: true,
+          cancelButtonText: 'Annuler',
+          reverseButtons: true
+        });
+
+        if (r.isConfirmed) {
+          this.authModal.open({ mode: 'login', patch: { email: '' }, autofocus: true });
+        } else if (r.isDenied) {
+          this.authModal.open({ mode: 'register', patch: { email: '' }, autofocus: true });
+        }
+        return;
+      }
+
+      // C) Connecté mais sans téléphone/adresse → demander et sauvegarder
+      const okContact = await this.ensureContactInfo();
+      if (!okContact) return;
+
+      // D) Créer la commande
       const payload: CreateOrderInput = {
         items: this.cart.items().map(i => ({
           productId: (i as any).productId || (i as any).product || (i as any)._id,
           name: i.name,
-          price: i.price, // le back recalcule de toute façon
+          price: i.price, // le back recalcule
           qty: i.qty,
           imageUrl: i.imageUrl
         })),
         currency: 'TND'
       };
 
+      // ⚠️ Assure-toi que OrderService.create utilise { withCredentials: true } (interceptor Credentials OK)
       const created = await firstValueFrom(this.orders.create(payload));
+
       this.cart.clear();
 
       await showAlert({
         icon: 'success',
         title: 'Commande créée',
         html: 'Merci ! Votre commande a été enregistrée.',
-        confirmButtonText: 'Voir ma commande',
+        confirmButtonText: 'Voir mes commandes',
         showCancelButton: false
       });
 
@@ -109,15 +120,20 @@ export class CartComponent {
         confirmButtonText: 'OK',
         showCancelButton: false
       });
+    } finally {
+      this.busy = false;
     }
   }
 
   /**
    * Vérifie téléphone + adresse. Si manquants → showAlert avec 2 inputs.
-   * Valide (regex/simple longueur), sauvegarde via AuthService, puis retourne true.
+   * Valide, sauvegarde via AuthService, puis retourne true.
    */
   private async ensureContactInfo(): Promise<boolean> {
+    // Réhydrate au cas où (sécurité)
+    await this.auth.hydrateFromServer();
     const user = this.auth.user();
+
     const hasPhone   = !!(user?.phone && String(user.phone).trim().length >= 6);
     const hasAddress = !!(user?.address && String(user.address).trim().length >= 6);
     if (hasPhone && hasAddress) return true;
@@ -146,7 +162,6 @@ export class CartComponent {
       cancelButtonText: 'Annuler',
       showCancelButton: true,
       allowOutsideClick: false,
-      // ⚠️ on utilise ton preConfirm pour valider & renvoyer les valeurs
       preConfirm: () => {
         const phoneEl = document.getElementById('swal-phone') as HTMLInputElement | null;
         const addrEl  = document.getElementById('swal-address') as HTMLInputElement | null;
@@ -156,14 +171,8 @@ export class CartComponent {
         const phoneOk = /^[0-9 +\-().]{8,13}$/.test(phone);
         const addrOk  = address.length >= 10;
 
-        if (!phoneOk) {
-          Swal.showValidationMessage('Téléphone invalide (8–13 caractères).');
-          return false;
-        }
-        if (!addrOk) {
-          Swal.showValidationMessage('Adresse trop courte (≥ 10 caractères).');
-          return false;
-        }
+        if (!phoneOk) { Swal.showValidationMessage('Téléphone invalide (8–13 caractères).'); return false; }
+        if (!addrOk)  { Swal.showValidationMessage('Adresse trop courte (≥ 10 caractères).'); return false; }
         return { phone, address };
       },
       showLoaderOnConfirm: true

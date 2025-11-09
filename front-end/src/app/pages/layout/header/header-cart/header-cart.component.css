@@ -104,16 +104,19 @@
 
 /* === Bandeau haut / résumé ============================================== */
 .cart-top {
-  position: sticky;
+  position: relative;
   top: 0;
+  /* display: flex; */
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin: 4px 2px 8px;
-  padding-bottom: 8px;
-  background: inherit; /* garde le fond blurry sous le sticky */
+  padding: 8px;
+  border-radius: 15px;
+  /* background: inherit; */
+  background: rgba(9, 9, 9, 0.85);
 }
 
 /* === CTA “Passer à la caisse” =========================================== */

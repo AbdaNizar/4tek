@@ -1,12 +1,15 @@
 // controllers/orders.js
 const mongoose = require('mongoose');
+const path = require('path');
+
 const Order = require('../models/order');
 const Product = require('../models/productSchema');
-const SHIPPING_FLAT = 8;
-const path = require('path');
 const { generatePdf } = require('../lib/pdf/generatePdf');
 const mapOrderToInvoiceVars = require('../lib/pdf/mapOrderToInvoiceVars');
-const {sendMail, renderBase, fill, load} = require("../functions/mailer");
+const { sendMail, renderBase, fill, load } = require('../functions/mailer');
+
+const SHIPPING_FLAT = 8;
+
 const STATUSES = ['pending','confirmed','shipped','delivered','cancelled'];
 const ALLOWED = {
     pending:   ['confirmed', 'cancelled'],
@@ -14,6 +17,21 @@ const ALLOWED = {
     shipped:   ['delivered','confirmed','cancelled'],
     delivered: ['delivered','shipped'],
     cancelled: ['pending','confirmed', 'cancelled']
+};
+
+const STATUS_TITLES = {
+    pending:   'En attente',
+    confirmed: 'Confirmée',
+    shipped:   'Expédiée',
+    delivered: 'Livrée',
+    cancelled: 'Annulée',
+};
+const STATUS_MESSAGES = {
+    pending:   `Nous avons bien reçu votre commande et elle est en file d'attente.`,
+    confirmed: `Votre commande a été confirmée par notre équipe.`,
+    shipped:   `Bonne nouvelle ! Votre commande a été expédiée.`,
+    delivered: `Votre commande a été livrée. Merci pour votre confiance.`,
+    cancelled: `Votre commande a été annulée. Si ce n’était pas attendu, contactez-nous.`,
 };
 
 const isObjectId = (v) => mongoose.isValidObjectId(v);
@@ -53,7 +71,34 @@ function calcLineTotal(price, qty) {
     return Math.max(0, Number(price)) * Math.max(1, Number(qty));
 }
 
-// ========== CUSTOMER ==========
+/* ------------------------------------------------------------------ */
+/*                 GÉLAGE DES COÛTS (unitCost) - IDÉMPOTENT           */
+/* ------------------------------------------------------------------ */
+// Remplit items[].unitCost depuis Product.cost si vide/0.
+// N’écrase jamais un unitCost déjà présent.
+async function freezeOrderCosts(order) {
+    const needIds = order.items
+        .filter(it => !it.unitCost || it.unitCost <= 0)
+        .map(it => String(it.productId));
+
+    if (needIds.length === 0) return order;
+
+    const prods = await Product.find(
+        { _id: { $in: needIds } },
+        { cost: 1 }
+    ).lean();
+    const costMap = new Map(prods.map(p => [String(p._id), Number(p.cost || 0)]));
+
+    order.items = order.items.map(it => {
+        if (it.unitCost && it.unitCost > 0) return it;
+        it.unitCost = costMap.get(String(it.productId)) || 0;
+        return it;
+    });
+
+    return order;
+}
+
+/* ============================== CUSTOMER ============================== */
 exports.create = async (req, res) => {
     try {
         const u = req.user;
@@ -66,33 +111,35 @@ exports.create = async (req, res) => {
             return res.status(400).json({ error: 'Complétez votre numéro de téléphone et votre adresse avant de commander.' });
         }
 
+        // Charger les produits
         const productIds = items.map(i => i.productId);
         const dbProducts = await Product.find(
             { _id: { $in: productIds } },
-            { price: 1, name: 1 }
+            { price: 1, name: 1, imageUrl: 1, cost: 1 }
         ).lean();
-
         const byId = new Map(dbProducts.map(p => [String(p._id), p]));
+
+        // Construire les lignes sûres (geler le coût dès la création)
         const safeItems = items.map(i => {
             const p = byId.get(String(i.productId));
             if (!p) throw new Error(`Produit introuvable: ${i.productId}`);
-            const price = Number(p.price);
+            const price = Number(p.price || 0);
             const qty = Math.max(1, Number(i.qty));
             return {
                 productId: i.productId,
                 name: i.name || p.name || 'Produit',
                 price,
                 qty,
-                imageUrl: i.imageUrl,
-                lineTotal: calcLineTotal(price, qty)
+                imageUrl: i.imageUrl || p.imageUrl || '',
+                unitCost: Number(p.cost || 0) // ✅ coût gelé ici
             };
         });
 
-        const subtotal = safeItems.reduce((s, it) => s + it.lineTotal, 0);
+        const subtotal = safeItems.reduce((s, it) => s + calcLineTotal(it.price, it.qty), 0);
         const shippingFee = items.length > 0 ? SHIPPING_FLAT : 0;
         const total = subtotal + shippingFee;
 
-        const order = await Order.create({
+        let order = await Order.create({
             user: {
                 id: u.id,
                 email: u.email,
@@ -100,37 +147,34 @@ exports.create = async (req, res) => {
                 address: u.address,
                 name: u.name
             },
-            items: safeItems.map(({ lineTotal, ...rest }) => rest),
+            items: safeItems,
             currency, subtotal, shippingFee, total,
             note
         });
 
-        res.status(201).json(order);
+        // Filet de sécurité (si certains unitCost étaient restés vides)
+        order = await freezeOrderCosts(order);
+        await order.save();
+
+        res.status(201).json(order.toObject());
     } catch (e) {
         console.error('create order error', e);
         res.status(400).json({ error: e.message || 'Création impossible' });
     }
 };
 
-// controllers/orders.js
 exports.getMine = async (req, res) => {
     try {
         const page  = Math.max(1, Number(req.query.page) || 1);
-        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+        // ✅ accepte pageSize (front) ou limit (legacy)
+        const limit = Math.min(100, Math.max(1, Number(req.query.pageSize || req.query.limit || 20)));
         const skip = (page - 1) * limit;
 
-        const q = (req.query.q || '').trim();
         const status = (req.query.status || '').trim();
 
         const filter = { 'user.id': req.user.id };
-
-        // status filter
         const allowed = ['pending','confirmed','shipped','delivered','cancelled'];
-        if (status && allowed.includes(status)) {
-            filter.status = status;
-        }
-
-
+        if (status && allowed.includes(status)) filter.status = status;
 
         const [items, total] = await Promise.all([
             Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
@@ -150,9 +194,7 @@ exports.getMine = async (req, res) => {
     }
 };
 
-
-
-// ========== ADMIN ==========
+/* =============================== ADMIN =============================== */
 exports.listAdminOrders = async (req, res) => {
     try {
         const page = toInt(req.query.page, 1);
@@ -174,6 +216,7 @@ exports.listAdminOrders = async (req, res) => {
         res.status(500).json({ error: err?.message || 'Unable to list orders' });
     }
 };
+
 exports.getById = async (req, res) => {
     const o = await Order.findById(req.params.id).lean();
     if (!o) return res.status(404).json({ error: 'Commande introuvable' });
@@ -194,7 +237,6 @@ exports.getAdminOrder = async (req, res) => {
         res.status(500).json({ error: err?.message || 'Unable to fetch order' });
     }
 };
-
 
 exports.updateAdminOrderNote = async (req, res) => {
     try {
@@ -254,29 +296,6 @@ exports.getAdminOrderStats = async (_req, res) => {
         res.status(500).json({ error: err?.message || 'Unable to compute stats' });
     }
 };
-const STATUS_TITLES = {
-    pending:   'En attente',
-    confirmed: 'Confirmée',
-    shipped:   'Expédiée',
-    delivered: 'Livrée',
-    cancelled: 'Annulée',
-};
-
-const STATUS_MESSAGES = {
-    pending:   `Nous avons bien reçu votre commande et elle est en file d'attente.`,
-    confirmed: `Votre commande a été confirmée par notre équipe.`,
-    shipped:   `Bonne nouvelle ! Votre commande a été expédiée.`,
-    delivered: `Votre commande a été livrée. Merci pour votre confiance.`,
-    cancelled: `Votre commande a été annulée. Si ce n’était pas attendu, contactez-nous.`,
-};
-
-
-
-
-// controllers/orders.js
-
-
-
 
 exports.updateAdminOrderStatus = async (req, res) => {
     try {
@@ -287,23 +306,28 @@ exports.updateAdminOrderStatus = async (req, res) => {
 
         const order = await Order.findById(id);
         if (!order) return res.status(404).json({ error: 'Order not found' });
-        console.log(status)
+
         const from = order.status;
         if (!ALLOWED[from]?.includes(status)) {
             return res.status(400).json({ error: `Invalid transition ${from} → ${status}` });
         }
 
+        // ✅ si on passe à confirmed/shipped/delivered → s'assurer que le coût est gelé
+        if (['confirmed','shipped','delivered'].includes(status)) {
+            await freezeOrderCosts(order); // idempotent
+        }
+
         // Appliquer le nouveau statut
         order.status = status;
         const now = new Date();
-        if (status === 'shipped')   order.shippedAt = now;
+        if (status === 'shipped')   order.shippedAt   = now;
         if (status === 'delivered') order.deliveredAt = now;
-        if (status === 'cancelled') order.canceledAt = now;
+        if (status === 'cancelled') order.canceledAt  = now;
         if (status === 'confirmed') order.confirmedAt = now;
 
         await order.save();
 
-        // Préparer l’email
+        // Email client
         const subjectTitle = STATUS_TITLES[order.status] || order.status;
         const prevTitle    = STATUS_TITLES[from] || from;
         const message      = STATUS_MESSAGES[order.status] || `Statut mis à jour : ${subjectTitle}.`;
@@ -323,7 +347,7 @@ exports.updateAdminOrderStatus = async (req, res) => {
             TOTAL_TND: (order.total || 0).toFixed(2),
             ORDER_URL: orderUrl,
             ACCENT: '#22d3ee',
-            TRACKING_BLOCK: '', // tu peux remettre ton bloc tracking si présent
+            TRACKING_BLOCK: '',
             BRAND_NAME: '4tek',
         });
         const html = renderBase(content, {
@@ -333,7 +357,7 @@ exports.updateAdminOrderStatus = async (req, res) => {
             accent: '#22d3ee',
         });
 
-        // Attache la facture PDF UNIQUEMENT si confirmé
+        // Joindre facture PDF uniquement quand "confirmed"
         let attachments = [];
         if (status === 'confirmed') {
             const vars = mapOrderToInvoiceVars(order, {
@@ -372,3 +396,175 @@ exports.updateAdminOrderStatus = async (req, res) => {
     }
 };
 
+/* ========================== ADMIN ANALYTICS =========================== */
+/**
+ * GET /v1/admin/consumption?userId=&from=&to=
+ * Retourne:
+ *  - summary: { ordersCount, revenue, cost, margin }
+ *  - byProduct: [{ productId, productName, qty, revenue, cost, margin }]
+ *  - byOrder:   [{ orderId, date, userEmail, itemsRevenue, itemsCost, margin }]
+ */
+exports.getAdminConsumption = async (req, res) => {
+    try {
+        const { userId, from, to } = req.query || {};
+        const match = {};
+        if (userId && isObjectId(userId)) match['user.id'] = new mongoose.Types.ObjectId(userId);
+        if (from || to) {
+            match.createdAt = {};
+            if (from) match.createdAt.$gte = new Date(from);
+            if (to)   match.createdAt.$lte = new Date(to);
+        }
+
+        // byProduct
+        const byProduct = await Order.aggregate([
+            { $match: match },
+            { $unwind: '$items' },
+            {
+                $project: {
+                    productId: '$items.productId',
+                    productName: '$items.name',
+                    qty: '$items.qty',
+                    revenue: { $multiply: ['$items.price', '$items.qty'] },
+                    cost:    { $multiply: [{ $ifNull: ['$items.unitCost', 0] }, '$items.qty'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$productId',
+                    productName: { $last: '$productName' },
+                    qty: { $sum: '$qty' },
+                    revenue: { $sum: '$revenue' },
+                    cost: { $sum: '$cost' }
+                }
+            },
+            { $addFields: { margin: { $subtract: ['$revenue', '$cost'] } } },
+            { $sort: { revenue: -1 } }
+        ]);
+
+        // summary (global sur items)
+        const summaryRow = await Order.aggregate([
+            { $match: match },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: null,
+                    ordersCount: { $addToSet: '$_id' }, // set unique
+                    revenue: { $sum: { $multiply: ['$items.price', '$items.qty'] } },
+                    cost: { $sum: { $multiply: [{ $ifNull: ['$items.unitCost', 0] }, '$items.qty'] } }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    ordersCount: { $size: '$ordersCount' },
+                    revenue: 1,
+                    cost: 1,
+                    margin: { $subtract: ['$revenue', '$cost'] }
+                }
+            }
+        ]);
+        const summary = summaryRow[0] || { ordersCount: 0, revenue: 0, cost: 0, margin: 0 };
+
+        // byOrder
+        const byOrder = await Order.aggregate([
+            { $match: match },
+            {
+                $project: {
+                    orderId: '$_id',
+                    date: '$createdAt',
+                    userEmail: '$user.email',
+                    itemsRevenue: {
+                        $sum: {
+                            $map: {
+                                input: '$items',
+                                as: 'it',
+                                in: { $multiply: ['$$it.price', '$$it.qty'] }
+                            }
+                        }
+                    },
+                    itemsCost: {
+                        $sum: {
+                            $map: {
+                                input: '$items',
+                                as: 'it',
+                                in: { $multiply: [{ $ifNull: ['$$it.unitCost', 0] }, '$$it.qty'] }
+                            }
+                        }
+                    }
+                }
+            },
+            { $addFields: { margin: { $subtract: ['$itemsRevenue', '$itemsCost'] } } },
+            { $sort: { date: -1 } }
+        ]);
+
+        res.json({ summary, byProduct, byOrder });
+    } catch (e) {
+        console.error('getAdminConsumption error:', e);
+        res.status(500).json({ error: 'Unable to compute consumption' });
+    }
+};
+
+/**
+ * GET /v1/admin/consumption.csv?userId=&from=&to=
+ * Export CSV (par produit)
+ */
+exports.exportAdminConsumptionCsv = async (req, res) => {
+    try {
+        // on réutilise la logique ci-dessus mais seulement par produit
+        req.query = req.query || {};
+        const { userId, from, to } = req.query;
+        const match = {};
+        if (userId && isObjectId(userId)) match['user.id'] = new mongoose.Types.ObjectId(userId);
+        if (from || to) {
+            match.createdAt = {};
+            if (from) match.createdAt.$gte = new Date(from);
+            if (to)   match.createdAt.$lte = new Date(to);
+        }
+
+        const rows = await Order.aggregate([
+            { $match: match },
+            { $unwind: '$items' },
+            {
+                $project: {
+                    productId: '$items.productId',
+                    productName: '$items.name',
+                    qty: '$items.qty',
+                    revenue: { $multiply: ['$items.price', '$items.qty'] },
+                    cost:    { $multiply: [{ $ifNull: ['$items.unitCost', 0] }, '$items.qty'] }
+                }
+            },
+            {
+                $group: {
+                    _id: '$productId',
+                    productName: { $last: '$productName' },
+                    qty: { $sum: '$qty' },
+                    revenue: { $sum: '$revenue' },
+                    cost: { $sum: '$cost' }
+                }
+            },
+            { $addFields: { margin: { $subtract: ['$revenue', '$cost'] } } },
+            { $sort: { revenue: -1 } }
+        ]);
+
+        // CSV
+        const header = ['productId','productName','qty','revenue','cost','margin'];
+        const lines = [header.join(',')];
+        for (const r of rows) {
+            lines.push([
+                JSON.stringify(String(r._id)),
+                JSON.stringify(r.productName || ''),
+                r.qty || 0,
+                (r.revenue || 0).toFixed(2),
+                (r.cost || 0).toFixed(2),
+                ((r.revenue || 0) - (r.cost || 0)).toFixed(2)
+            ].join(','));
+        }
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="consumption.csv"');
+        res.send('\uFEFF' + lines.join('\n')); // BOM UTF-8
+    } catch (e) {
+        console.error('exportAdminConsumptionCsv error:', e);
+        res.status(500).json({ error: 'Unable to export CSV' });
+    }
+};

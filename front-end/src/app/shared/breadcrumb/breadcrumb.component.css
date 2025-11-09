@@ -1,0 +1,56 @@
+/* S’adapte à votre thème global (variables déjà présentes) */
+.bc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+
+  font-size: var(--fs-2);
+  white-space: nowrap;
+  overflow: auto;
+  justify-content: center;
+}
+
+.bc .home {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  opacity: .9;
+}
+
+.home:hover {
+  color: var(--accent)
+}
+
+
+.bc a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.bc a:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.bc .current {
+  color: rgba(148, 148, 151, 0.85);
+  font-weight: 700;
+}
+
+.bc .sep {
+  opacity: .5;
+  user-select: none;
+}
+
+/* côté responsive: réduire un peu l’espace */
+@media (max-width: 640px) {
+  .bc {
+    gap: 6px;
+    font-size: 13px;
+  }
+}

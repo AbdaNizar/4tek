@@ -54,6 +54,10 @@ exports.list = async (req, res) => {
             .sort(sort)
             .skip(skipNum)
             .limit(limitNum)
+            .populate({
+                path: 'brand',
+                select: '_id name iconUrl isActive'
+            })
             .lean();
 
         const total = await Product.countDocuments(where);
@@ -123,20 +127,24 @@ exports.update = async (req, res) => {
             stock,
             sku,
             isActive,
+            isNew,
             category,
             currency,
-            tags
+            tags,
+            cost
         } = req.body;
         const updates = {
             ...(name ? {name} : {}),
             ...(slug ? {slug: slugify(slug)} : {}),
             ...(description !== undefined ? {description} : {}),
             ...(price !== undefined ? {price: Number(price)} : {}),
+            ...(cost !== undefined ? {cost: Number(cost)} : {}),
             ...(oldPrice !== undefined ? {oldPrice: Number(oldPrice)} : {}),
             ...(stock !== undefined ? {stock: Number(stock)} : {}),
             ...(sku !== undefined ? {sku} : {}),
             ...(currency ? {currency} : {}),
             ...(isActive !== undefined ? {isActive: (isActive === 'true' || isActive === true)} : {}),
+            ...(isNew !== undefined ? {isNew: (isNew === 'true' || isNew === true)} : {}),
             ...(category ? {category} : {}),
             ...(brand ? {brand} : {}),
             ...(subCategory ? {subCategory} : {}),
@@ -158,6 +166,17 @@ exports.toggle = async (req, res) => {
         const doc = await Product.findById(req.params.id);
         if (!doc) return res.status(404).json({error: 'Produit introuvable'});
         doc.isActive = !doc.isActive;
+        await doc.save();
+        res.json(doc.toObject());
+    } catch (e) {
+        res.status(500).json({error: 'Erreur serveur'});
+    }
+};
+exports.toggleToNew = async (req, res) => {
+    try {
+        const doc = await Product.findById(req.params.id);
+        if (!doc) return res.status(404).json({error: 'Produit introuvable'});
+        doc.isNew = !doc.isNew;
         await doc.save();
         res.json(doc.toObject());
     } catch (e) {
@@ -293,10 +312,13 @@ exports.create = async (req, res) => {
             currency,
             tags,
             brand,
+            cost,
+            isNew
         } = req.body;
 
         if (!name) return res.status(400).json({error: 'name requis'});
         if (!price) return res.status(400).json({error: 'price requis'});
+        if (!cost) return res.status(400).json({ error: 'cost requis' });
         if (!category) return res.status(400).json({error: 'category requis'});
         if (!brand) return res.status(400).json({error: 'Brand requis'});
 
@@ -340,10 +362,12 @@ exports.create = async (req, res) => {
             description: description || '',
             price: Number(price),
             oldPrice: oldPrice ? Number(oldPrice) : undefined,
+            cost: Number(cost),
             currency: currency || 'TND',
-            stock: stock ? Number(stock) : 0,
+            stock: stock ? Number(stock) : 10,
             sku: sku || '',
             isActive: toBool(isActive),
+            isNew: toBool(isNew),
             category: cat._id,
             subCategory: subCat._id,
             imageUrl,
@@ -391,5 +415,142 @@ exports.getBySlug = async (req, res) => {
     } catch (e) {
         console.error('getBySlug error:', e);
         return res.status(500).json({error: 'Erreur serveur'});
+    }
+};
+
+
+// controllers/products.js
+
+
+exports.search = async (req, res) => {
+    try {
+        const {
+            q = '',
+            cat, category,
+            subCat, subcategory,
+            brand,
+            min, max,
+            active,
+            sort,
+            page = 1,
+            limit = 24
+        } = req.query;
+
+        // ---------- BASE FILTERS ----------
+        const where = {};
+        // Default to active products unless explicitly asked otherwise
+        if (active === 'true')  where.isActive = true;
+        else if (active === 'false') where.isActive = false;
+        else where.isActive = true;
+
+        const catId  = cat || category;
+        const subId  = subCat || subcategory;
+        const brandId = brand;
+
+        if (catId)   where.category    = catId;
+        if (subId)   where.subCategory = subId;
+        if (brandId) where.brand       = brandId;
+
+        if (min || max) {
+            where.price = {
+                ...(min ? { $gte: Number(min) } : {}),
+                ...(max ? { $lte: Number(max) } : {}),
+            };
+        }
+
+        // ---------- SEARCH EXPANSION (name/category/sub/brand by name) ----------
+        const queryText = (q || '').trim();
+        let finalQuery = { ...where };
+
+        if (queryText) {
+            const rx = new RegExp(queryText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+            // Find categories/subs/brands whose NAMES match q, then search products by those ids too
+            const [cats, subs, brs] = await Promise.all([
+                Category.find({ name: rx }).select('_id').lean(),
+                SubCategory.find({ name: rx }).select('_id').lean(),
+                Brand.find({ name: rx }).select('_id').lean(),
+            ]);
+            const catIds   = cats.map(c => c._id);
+            const subIds   = subs.map(s => s._id);
+            const brandIds = brs.map(b => b._id);
+
+            finalQuery = {
+                ...where,
+                $or: [
+                    { name: rx },
+                    { description: rx },
+                    ...(catIds.length   ? [{ category: { $in: catIds } }] : []),
+                    ...(subIds.length   ? [{ subCategory: { $in: subIds } }] : []),
+                    ...(brandIds.length ? [{ brand: { $in: brandIds } }] : []),
+                ]
+            };
+        }
+
+        // ---------- PAGINATION / SORT ----------
+        const pageNum  = Math.max(1, Number(page)  || 1);
+        const limitNum = Math.max(1, Number(limit) || 24);
+        const skipNum  = (pageNum - 1) * limitNum;
+
+        let sortObj = { createdAt: -1 }; // default newest
+        switch (sort) {
+            case 'priceAsc':  sortObj = { price: 1 };  break;
+            case 'priceDesc': sortObj = { price: -1 }; break;
+            case 'newest':    sortObj = { createdAt: -1 }; break;
+            // allow raw sort like "-createdAt" if desired:
+            default:
+                if (typeof sort === 'string' && sort.trim()) {
+                    // mongoose accepts a string sort directive
+                    sortObj = sort;
+                }
+        }
+
+        // ---------- QUERY + TOTAL ----------
+        const [docs, total] = await Promise.all([
+            Product.find(finalQuery)
+                .select('_id name slug imageUrl price oldPrice currency stock category subCategory brand')
+                .populate('category',    '_id name slug')
+                .populate('subCategory', '_id name slug')
+                .populate('brand',       '_id name slug iconUrl')
+                .sort(sortObj)
+                .skip(skipNum)
+                .limit(limitNum)
+                .lean(),
+            Product.countDocuments(finalQuery)
+        ]);
+
+        if (!docs.length) {
+            return res.json({ items: [], total, page: pageNum, limit: limitNum });
+        }
+
+        // ---------- RATINGS (approved only) ----------
+        const ids = docs.map(d => d._id);
+        const ratingsAgg = await Rating.aggregate([
+            { $match: { productId: { $in: ids }, status: 'approved' } },
+            { $group: {
+                    _id: '$productId',
+                    ratingCount: { $sum: 1 },
+                    ratingAvg:   { $avg: '$stars' }
+                }
+            },
+            { $project: { ratingCount: 1, ratingAvg: { $round: ['$ratingAvg', 1] } } }
+        ]);
+
+        const byProd = new Map(
+            ratingsAgg.map(r => [
+                String(r._id),
+                { ratingAvg: r.ratingAvg || 0, ratingCount: r.ratingCount || 0 }
+            ])
+        );
+
+        const items = docs.map(p => {
+            const r = byProd.get(String(p._id)) || { ratingAvg: 0, ratingCount: 0 };
+            return { ...p, ratingAvg: r.ratingAvg, ratingCount: r.ratingCount };
+        });
+
+        return res.json({ items, total, page: pageNum, limit: limitNum });
+    } catch (e) {
+        console.error('products.search error:', e);
+        return res.status(500).json({ error: 'Erreur serveur' });
     }
 };

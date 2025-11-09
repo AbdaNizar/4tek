@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {SearchHit} from '../../interfaces/SearchHit';
+import {Product} from '../../interfaces/product';
 
 
 
@@ -13,6 +14,13 @@ export class SearchService {
 
   suggest(q: string, limit = 8): Observable<SearchHit[]> {
     const params = new HttpParams().set('q', q).set('limit', limit);
-    return this.http.get<SearchHit[]>(`${this.base}/products`, { params });
+    return this.http.get<SearchHit[]>(`${this.base}/suggest`, { params });
+  }
+  search(q: string, page = 1, limit = 24): Observable<{items: Product[]; total: number; page: number; limit: number}> {
+    const params = new HttpParams()
+      .set('q', q)
+      .set('page', page)
+      .set('limit', limit);
+    return this.http.get<{items: Product[]; total: number; page: number; limit: number}>(this.base, { params });
   }
 }

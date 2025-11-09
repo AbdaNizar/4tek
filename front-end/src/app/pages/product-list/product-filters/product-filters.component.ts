@@ -1,10 +1,9 @@
-import {Component, EventEmitter, Input, Output, inject, OnInit} from '@angular/core';
-import {FormControl, FormGroup, ReactiveFormsModule} from '@angular/forms';
-import {NgxSliderModule, Options} from '@angular-slider/ngx-slider';
-import { BrandService } from '../../../services/brand/brand.service';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { NgxSliderModule, Options } from '@angular-slider/ngx-slider';
+import { DecimalPipe, CommonModule } from '@angular/common';
 import { Brand } from '../../../interfaces/brand';
 import { getUrl } from '../../../shared/constant/function';
-import {DecimalPipe, CommonModule} from '@angular/common';
 
 type FiltersForm = FormGroup<{
   brand: FormControl<string | null>;
@@ -16,38 +15,41 @@ type FiltersForm = FormGroup<{
   standalone: true,
   templateUrl: './product-filters.component.html',
   styleUrls: ['./product-filters.component.css'],
-  imports: [
-    CommonModule,          // <— important pour *ngIf/*ngFor
-    ReactiveFormsModule,
-    DecimalPipe,
-    NgxSliderModule
-  ]
+  imports: [CommonModule, ReactiveFormsModule, DecimalPipe, NgxSliderModule]
 })
-export class ProductFiltersComponent implements OnInit {
+export class ProductFiltersComponent implements OnChanges {
   @Input({ required: true }) form!: FiltersForm;
+
   @Input() minValue = 0;
   @Input() maxValue = 10000;
   @Input() options!: Options;
+
   @Input() showTextBrand = false;
+
+  // ✅ Only use brands provided by the parent
+  @Input() brands: Brand[] = [];
+
   @Output() minValueChange = new EventEmitter<number>();
   @Output() maxValueChange = new EventEmitter<number>();
   @Output() filterChange = new EventEmitter<void>();
   @Output() reset = new EventEmitter<void>();
 
-  private brandApi = inject(BrandService);
-  brands: Brand[] = [];
-
   protected readonly getUrl = getUrl;
 
-  ngOnInit() {
-    // true => uniquement actives (selon ton service)
-    this.brandApi.list(true).subscribe(list => this.brands = list || []);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['brands'] && this.form) {
+      const cur = this.form.controls.brandId.value;
+      if (cur && !this.brands.some(b => b._id === cur)) {
+        this.form.patchValue({ brandId: null }, { emitEvent: true });
+      }
+    }
   }
 
-  selectBrand(id: string) {
-    const cur = this.form.value.brandId;
-
-    this.form.patchValue({ brandId: cur === id ? null : id }, { emitEvent: true });
+  selectBrand(id: string | null) {
+    console.log(this.brands)
+    const cur = this.form.controls.brandId.value;
+    const next = cur === id ? null : id;
+    this.form.patchValue({ brandId: next }, { emitEvent: true });
     this.filterChange.emit();
   }
 
@@ -55,6 +57,7 @@ export class ProductFiltersComponent implements OnInit {
 
   onMinChange(v: number) { this.minValue = v; this.minValueChange.emit(v); }
   onMaxChange(v: number) { this.maxValue = v; this.maxValueChange.emit(v); }
+
   onReset() {
     this.form.patchValue({ brandId: null, brand: null }, { emitEvent: true });
     this.reset.emit();

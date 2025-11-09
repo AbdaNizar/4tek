@@ -2,6 +2,7 @@
 
 <header class="header">
   <app-header-brand></app-header-brand>
+  <app-header-nav-desktop></app-header-nav-desktop>
 
   <app-header-search (submitSearch)="onSearch($event)"></app-header-search>
 
@@ -15,7 +16,6 @@
 </header>
 
 
-<app-header-nav-desktop></app-header-nav-desktop>
 
 <app-header-nav-mobile
   [open]="open()"

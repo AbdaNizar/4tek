@@ -39,6 +39,9 @@
           <span class="badge" [class.on]="p.isActive" [class.off]="!p.isActive">
             {{ p.isActive ? 'Actif' : 'Inactif' }}
           </span>
+          <span class="badge" [class.on]="p.isNew" [class.off]="!p.isNew">
+            {{ p.isNew ? 'Nouveau' : 'Ancien ' }}
+          </span>
         </div>
 
         <div class="meta-line">
@@ -70,6 +73,12 @@
                   [disabled]="busy && actionId()===p._id && actionKind()==='toggle'">
             <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='toggle'"></span>
             {{ p.isActive ? 'Désactiver' : 'Activer' }}
+          </button>
+          <button class="btn warn"
+                  (click)="toggleToNew(p)"
+                  [disabled]="busy && actionId()===p._id && actionKind()==='toggleToNew'">
+            <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='toggleToNew'"></span>
+            {{ p.isNew ? 'Changé a ancien' : 'Changé a Nouveau' }}
           </button>
 
           <button class="btn danger"
@@ -128,6 +137,7 @@
           </div>
         </div>
 
+
         <div class="field">
           <label>Sous-catégorie *</label>
           <select formControlName="subCategory" [disabled]="!subOptions().length">
@@ -151,7 +161,21 @@
             <input type="number" step="0.001" formControlName="oldPrice" placeholder="0.000">
           </div>
         </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Coût unitaire (achat) *</label>
+            <input type="number" step="0.001" formControlName="cost" placeholder="0.000">
+            <small class="muted">Interne — non affiché au public</small>
+          </div>
 
+          <div class="field">
+            <label>Marge estimée</label>
+            <div class="pill">
+              ≈ {{ marginAmountSig() | number:'1.3-3' }} {{ currencySig() }}
+              ({{ marginRateSig() | number:'1.0-0' }} %)
+            </div>
+          </div>
+        </div>
         <div class="row-2">
           <div class="field">
             <label>Stock</label>
@@ -215,6 +239,11 @@
         <div class="field switch">
           <input id="active" type="checkbox" formControlName="isActive">
           <label for="active">Produit actif</label>
+        </div>
+
+ <div class="field switch">
+          <input id="new" type="checkbox" formControlName="isNew">
+          <label for="active">Nouveau Produit</label>
         </div>
 
         <div class="actions">

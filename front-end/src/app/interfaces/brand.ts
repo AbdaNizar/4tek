@@ -3,5 +3,6 @@ export interface Brand {
   name: string;
   slug: string;
   iconUrl?: string;
-  isActive: boolean;
+  count?: Number;
+  isActive?: boolean;
 }

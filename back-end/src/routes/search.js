@@ -3,8 +3,9 @@ const router = express.Router();
 const Product = require('../models/productSchema');
 const Category = require('../models/category');
 const SubCategory = require('../models/subCategory');
+const ctrl    = require('../controllers/productController');
 
-router.get('/products'   ,  async (req, res) => {
+router.get('/suggest'   ,  async (req, res) => {
     try {
         const q = (req.query.q || '').trim();
         const limit = Math.min(parseInt(req.query.limit || '8', 10), 20);
@@ -48,5 +49,6 @@ router.get('/products'   ,  async (req, res) => {
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });
+router.get('/', ctrl.search);
 
 module.exports = router;

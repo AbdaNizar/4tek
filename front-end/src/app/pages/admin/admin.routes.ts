@@ -55,6 +55,9 @@ export const ADMIN_ROUTES: Routes = [
           }, {
             path: 'avis',
           loadComponent: () => import('./admin-ratings/admin-ratings.component').then(m => m.RatingsComponent)
+          },{
+            path: 'statistiques',
+          loadComponent: () => import('./admin-user-consumption/admin-user-consumption.component').then(m=>m.AdminReportsComponent)
           },
         ]
     }

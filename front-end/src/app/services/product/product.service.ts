@@ -17,6 +17,7 @@ export class ProductService {
   create(fd: FormData){ return this.http.post<Product>(`/products`, fd); }
   update(id: string, payload: any){ return this.http.patch<Product>(`/products/${id}`, payload); }
   toggle(id: string){ return this.http.post<Product>(`/products/${id}/toggle`, {}); }
+  toggleToNew(id: string){ return this.http.post<Product>(`/products/${id}/toggle/to/new`, {}); }
   remove(id: string){ return this.http.delete<{ok:true}>(`/products/${id}`); }
   replace(id: string, fd: FormData) {
     return this.http.put<Product>(`/products/${id}/replace`, fd);

@@ -78,7 +78,6 @@
 .pc-shell {
   position: relative;
   isolation: isolate;
-  padding-inline: 8px;
   max-width: 100%;
   border-radius: 18px;
   overflow: hidden;

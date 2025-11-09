@@ -14,9 +14,10 @@
     <div class="pc-fade right"></div>
 
     <div class="pc-track" #track>
-      <div class="pc-item" *ngFor="let c of cats; trackBy: trackByCat">
+      <div class="pc-item" *ngFor="let c of catsSig(); trackBy: trackByCat">
         <app-category-card [cat]="c"></app-category-card>
       </div>
+
     </div>
   </div>
 

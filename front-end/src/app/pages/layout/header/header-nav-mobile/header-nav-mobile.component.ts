@@ -1,13 +1,14 @@
-import {Component, Input, Output, EventEmitter, signal, inject, OnInit} from '@angular/core';
-import {NgFor, NgIf} from '@angular/common';
-import {RouterLink} from '@angular/router';
-import {CategoryService} from '../../../../services/category/category.service';
-import {getUrl} from '../../../../shared/constant/function';
-import {Category} from '../../../../interfaces/category';
-import {ProductService} from '../../../../services/product/product.service';
-import {SubcategoryService} from '../../../../services/subcategory/subcategory.service';
-import {Product} from '../../../../interfaces/product';
-import {SubCategory} from '../../../../interfaces/SubCategory';
+import { Component, Input, Output, EventEmitter, signal, inject, OnInit } from '@angular/core';
+import { NgFor, NgIf } from '@angular/common';
+import { RouterLink, Router } from '@angular/router';
+
+import { CategoryService } from '../../../../services/category/category.service';
+import { SubcategoryService } from '../../../../services/subcategory/subcategory.service';
+import { Category } from '../../../../interfaces/category';
+import { SubCategory } from '../../../../interfaces/SubCategory';
+import { getUrl } from '../../../../shared/constant/function';
+
+type ID = string;
 
 @Component({
   selector: 'app-header-nav-mobile',
@@ -20,46 +21,61 @@ export class HeaderNavMobileComponent implements OnInit {
   @Input() open = false;
   @Output() closed = new EventEmitter<void>();
 
-  openCatId: string | null = null;
-  openSubId: string | null = null;
-
-  private api = inject(CategoryService);
-  categories = signal<Category[]>([]);
+  private catsApi = inject(CategoryService);
   private subsApi = inject(SubcategoryService);
-  private prodsApi = inject(ProductService);
-  subsCache = new Map<string, SubCategory[]>(); // key: categoryId
-  prodsCache = new Map<string, Product[]>();
+  private router = inject(Router);
+
+  categories = signal<Category[]>([]);
+  openCatId: ID | null = null;
+
+  // cache sous-catégories par catégorie
+  private subsCache = new Map<ID, SubCategory[]>();
+
   protected readonly getUrl = getUrl;
 
   async ngOnInit() {
     try {
-      const data = await this.api.list().toPromise();
-      this.categories.set((data || []).filter(c => c.isActive));
-    } catch (e) {
-
-    }
-  }
-  async toggleCategory(catId: string) {
-    this.openSubId = null;
-    this.openCatId = (this.openCatId === catId) ? null : catId;
-
-    if (this.openCatId && !this.subsCache.has(catId)) {
-      const subs = await this.subsApi.listByCategory(catId).toPromise();
-      this.subsCache.set(catId, subs || []);
-    }
+      const rows = await this.catsApi.list().toPromise();
+      this.categories.set((rows || []).filter(c => c.isActive));
+    } catch { /* noop */ }
   }
 
-// Toggle a subcategory’s products (does NOT navigate)
-  async toggleSub(subId: string) {
-    this.openSubId = (this.openSubId === subId) ? null : subId;
+  async toggleCategory(catId: ID) {
+    const opening = this.openCatId !== catId;
+    this.openCatId = opening ? catId : null;
 
-    if (this.openSubId && !this.prodsCache.has(subId)) {
-      const prods = await this.prodsApi.listBySubcategory(subId).toPromise();
-      this.prodsCache.set(subId, prods?.items || []);
+    if (opening && !this.subsCache.has(catId)) {
+      try {
+        const subs = await this.subsApi.listByCategory(catId).toPromise();
+        this.subsCache.set(catId, (subs || []).filter(s => s.isActive));
+        // Optional: close if there are actually no subs
+        if (this.openCatId === catId && (this.subsCache.get(catId) || []).length === 0) {
+          this.openCatId = null;
+        }
+      } catch {
+        this.subsCache.set(catId, []);
+        if (this.openCatId === catId) this.openCatId = null;
+      }
     }
   }
 
 
+  // header-nav-mobile.component.ts
+  hasSubs(catId: ID | null): boolean {
+    if (!catId) return false;
+    if (!this.subsCache.has(catId)) return true;
+    return (this.subsCache.get(catId) || []).length > 0;
+  }
 
+  subsOf(catId: ID): SubCategory[] {
+    return this.subsCache.get(catId) || [];
+  }
 
+  // icônes (comme desktop)
+  catIcon(c: any): string {
+    return getUrl(c?.iconUrl || c?.imageUrl || (c?.banners?.[0] ?? '')) || '/assets/placeholder.jpg';
+  }
+  subIcon(s: any): string {
+    return getUrl(s?.iconUrl || s?.imageUrl || s?.banner || s?.icon || '') || '/assets/placeholder.jpg';
+  }
 }

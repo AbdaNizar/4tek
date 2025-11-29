@@ -98,7 +98,6 @@ export class AdminUsersComponent {
     this.modalOpen.set(true);
     this.detailLoading.set(true);
     try {
-      console.log('ud',u._id)
       const res = await this.api.detail(u._id).toPromise();
       if (res?.user) this.selected.set(res.user);
       this.orders.set(res?.orders || []);

@@ -26,7 +26,8 @@
 
       <ng-container *ngIf="!loading() && !error() && results().length">
         <a class="hit" *ngFor="let p of results(); trackBy: trackById"
-           [routerLink]="['/produits', p._id]">
+           [routerLink]="['/product', p.slug]"
+           (click)="onHitClick(p)">
           <img loading="lazy" class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
           <div class="meta">
             <div class="name">{{ p.name }}</div>
@@ -57,11 +58,11 @@
   </button>
 
   <!-- Mobile overlay -->
-  <div *ngIf=" isOpen" class="backdrop" (click)="closeMobile()"></div>
+  <div *ngIf="isOpen" class="backdrop" (click)="closeMobile(true)"></div>
 
   <div *ngIf="isOpen" class="mobile-sheet" role="dialog" aria-modal="true">
     <form class="searchbar mobile" (submit)="onSubmit($event)" role="search">
-      <button class="icon-btn" type="button" aria-label="Fermer" (click)="closeMobile()">×</button>
+      <button class="icon-btn" type="button" aria-label="Fermer" (click)="closeMobile(true)">×</button>
       <input
         #mobileInput
         type="search"
@@ -83,8 +84,8 @@
       <div class="error" *ngIf="!loading() && error()">{{ error() }}</div>
 
       <a class="hit" *ngFor="let p of results(); trackBy: trackById"
-         [routerLink]="['/produits', p._id]"
-         (click)="closeMobile()">
+         [routerLink]="['/product', p.slug]"
+         (click)="onHitClick(p)">
         <img loading="lazy" class="thumb" [src]="getUrl(p.imageUrl) || 'assets/images/placeholder.jpg'" [alt]="p.name">
         <div class="meta">
           <div class="name">{{ p.name }}</div>

@@ -40,7 +40,6 @@ export class CategoryComponent implements OnInit {
     this.route.paramMap.subscribe(async pm => {
       const id = pm.get('id');
       this.selectedCatId.set(id);
-      console.log()
       if (id) {
         await this.fetchOneAndSubs(id);
       } else {
@@ -69,7 +68,6 @@ export class CategoryComponent implements OnInit {
         this.subsApi.listByCategory(id).toPromise()
       ]);
       this.cat.set(c || null);
-      console.log('s',s)
       this.subs.set((s || []).filter(x => x.isActive));
     } finally {
       this.loading.set(false);

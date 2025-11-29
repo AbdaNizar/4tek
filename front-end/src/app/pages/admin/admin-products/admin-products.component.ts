@@ -1,20 +1,27 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule, NgFor, NgIf } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ProductService } from '../../../services/product/product.service';
-import { CategoryService } from '../../../services/category/category.service';
-import { SubcategoryService } from '../../../services/subcategory/subcategory.service';
-import { BrandService } from '../../../services/brand/brand.service';
-import { Category } from '../../../interfaces/category';
-import { SubCategory } from '../../../interfaces/SubCategory';
-import { Brand } from '../../../interfaces/brand';
-import { Product } from '../../../interfaces/product';
-import { lastValueFrom } from 'rxjs';
-import { Router } from '@angular/router';
-import { getUrl } from '../../../shared/constant/function';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { startWith, map } from 'rxjs';
-import { showAlert} from '../../../shared/constant/function';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect
+} from '@angular/core';
+import {CommonModule, NgFor, NgIf} from '@angular/common';
+import {FormsModule, ReactiveFormsModule, FormBuilder, Validators} from '@angular/forms';
+import {ProductService} from '../../../services/product/product.service';
+import {CategoryService} from '../../../services/category/category.service';
+import {SubcategoryService} from '../../../services/subcategory/subcategory.service';
+import {BrandService} from '../../../services/brand/brand.service';
+import {Category} from '../../../interfaces/category';
+import {SubCategory} from '../../../interfaces/SubCategory';
+import {Brand} from '../../../interfaces/brand';
+import {Product} from '../../../interfaces/product';
+import {lastValueFrom} from 'rxjs';
+import {Router} from '@angular/router';
+import {getUrl} from '../../../shared/constant/function';
+import {toSignal} from '@angular/core/rxjs-interop';
+import {startWith} from 'rxjs';
+import {showAlert} from '../../../shared/constant/function';
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -42,7 +49,7 @@ export class AdminProductsComponent implements OnInit {
 
   // Sélection courante + options
   selectedCatId = signal<string | ''>('');
-  subOptions   = signal<SubCategory[]>([]);
+  subOptions = signal<SubCategory[]>([]);
 
   // filters
   q = signal<string>('');
@@ -51,15 +58,66 @@ export class AdminProductsComponent implements OnInit {
 
   // modal create/edit
   modalOpen = signal(false);
-  editing   = signal<Product | null>(null);
+  editing = signal<Product | null>(null);
 
   // modal replace
   replaceOpen = signal(false);
 
   // ---------- loaders ciblés ----------
-  actionId   = signal<string | null>(null);
-  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' |'toggleToNew'| null>(null);
-  get busy() { return this.actionKind() !== null; }
+  actionId = signal<string | null>(null);
+  actionKind = signal<'create' | 'update' | 'toggle' | 'remove' | 'replace' | 'toggleToNew' | null>(null);
+
+  get busy() {
+    return this.actionKind() !== null;
+  }
+
+  // ---------- pagination ----------
+  page = signal(1);
+  pageSize = signal(12);
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.list().length / this.pageSize()))
+  );
+
+  readonly pageNums = computed(() => {
+    const max = 7;
+    const pages = this.totalPages();
+    const cur = this.page();
+
+    if (pages <= max) {
+      return Array.from({length: pages}, (_, i) => i + 1);
+    }
+
+    const nums: number[] = [];
+    const push = (n: number) => {
+      if (!nums.includes(n)) nums.push(n);
+    };
+
+    push(1);
+    push(2);
+
+    const start = Math.max(3, cur - 1);
+    const end = Math.min(pages - 2, cur + 1);
+
+    if (start > 3) push(NaN);
+    for (let i = start; i <= end; i++) push(i);
+    if (end < pages - 2) push(NaN);
+
+    push(pages - 1);
+    push(pages);
+
+    return nums;
+  });
+
+  readonly pagedList = computed(() => {
+    const page = this.page();
+    const pageSize = this.pageSize();
+    const start = (page - 1) * pageSize;
+    return this.list().slice(start, start + pageSize);
+  });
+
+  // pour pouvoir utiliser Number.isNaN dans le template
+  protected readonly Number = Number;
 
   // form
   f = this.fb.group({
@@ -75,6 +133,7 @@ export class AdminProductsComponent implements OnInit {
     cost: [null as any, [Validators.required, Validators.min(0)]],
     sku: [''],
     isActive: [true],
+    isNew: [false],
     currency: ['TND'],
     tags: ['']
   });
@@ -112,6 +171,22 @@ export class AdminProductsComponent implements OnInit {
     });
   });
 
+  // reset page quand filtres changent
+  private readonly resetPageOnFilter = effect(() => {
+    this.q();
+    this.status();
+    this.catId();
+    this.page.set(1);
+  });
+
+  // clamp page si > totalPages
+  private readonly clampPageEffect = effect(() => {
+    const total = this.totalPages();
+    const p = this.page();
+    if (p > total) this.page.set(total);
+    if (p < 1) this.page.set(1);
+  });
+
   async ngOnInit() {
     await Promise.all([this.fetch(), this.loadBrands(), this.fetchCategories()]);
     // hydratation subcats si on arrive en édition
@@ -124,7 +199,6 @@ export class AdminProductsComponent implements OnInit {
     }
   }
 
-
   // -------- fetchers ----------
   async fetch() {
     this.loading.set(true);
@@ -136,9 +210,11 @@ export class AdminProductsComponent implements OnInit {
       this.loading.set(false);
     }
   }
+
   loadBrands() {
     this.brandApi.list().subscribe(rows => this.brands.set(rows || []));
   }
+
   async fetchCategories() {
     const cs = await this.catsApi.list().toPromise();
     this.categories.set(cs || []);
@@ -154,6 +230,7 @@ export class AdminProductsComponent implements OnInit {
       }
     }
   }
+
   private async loadSubcategories(catId: string) {
     try {
       const subs = await lastValueFrom(this.subsApi.listByCategory(catId));
@@ -162,6 +239,7 @@ export class AdminProductsComponent implements OnInit {
       this.subOptions.set([]);
     }
   }
+
   async onCategoryChange(event: Event) {
     const catId = (event.target as HTMLSelectElement).value;
     this.selectedCatId.set(catId || '');
@@ -169,8 +247,9 @@ export class AdminProductsComponent implements OnInit {
     this.subOptions.set([]);
     if (catId) await this.loadSubcategories(catId);
   }
+
   onBrandChange(_: Event) {
-    this.f.patchValue({ category: '', subCategory: '' });
+    this.f.patchValue({category: '', subCategory: ''});
     this.selectedCatId.set('');
     this.subOptions.set([]);
   }
@@ -184,9 +263,21 @@ export class AdminProductsComponent implements OnInit {
   openCreate() {
     this.editing.set(null);
     this.f.reset({
-      name: '', slug: '', category: '', subCategory: '', brand: '',
-      description: '', price: null, oldPrice: null, stock: 0, sku: '',
-      isActive: true, currency: 'TND', tags: '',cost: null,
+      name: '',
+      slug: '',
+      category: '',
+      subCategory: '',
+      brand: '',
+      description: '',
+      price: null,
+      oldPrice: null,
+      stock: 0,
+      sku: '',
+      isActive: true,
+      isNew: false,
+      currency: 'TND',
+      tags: '',
+      cost: null,
     });
     this.coverFile.set(null);
     this.coverPreview.set(null);
@@ -195,6 +286,7 @@ export class AdminProductsComponent implements OnInit {
     this.modalOpen.set(true);
     document.body.classList.add('modal-open');
   }
+
   openEdit(p: Product) {
     this.hydrateEditSubcategories(p);
     this.editing.set(p);
@@ -203,13 +295,14 @@ export class AdminProductsComponent implements OnInit {
       slug: p.slug,
       category: p.category,
       subCategory: p.subCategory,
-      brand: p.brand,
+      brand: p.brand._id,
       description: p.description || '',
       price: p.price,
       oldPrice: p.oldPrice ?? null,
       stock: p.stock ?? 0,
       sku: p.sku || '',
       isActive: p.isActive,
+      isNew: p.isNew ?? false,
       cost: p.cost ?? null,
       currency: p.currency || 'TND',
       tags: (p.tags || []).join(', ')
@@ -221,6 +314,7 @@ export class AdminProductsComponent implements OnInit {
     this.modalOpen.set(true);
     document.body.classList.add('modal-open');
   }
+
   closeModal() {
     this.modalOpen.set(false);
     document.body.classList.remove('modal-open');
@@ -228,13 +322,13 @@ export class AdminProductsComponent implements OnInit {
 
   readonly formValueSig = toSignal(
     this.f.valueChanges.pipe(startWith(this.f.getRawValue())),
-    { initialValue: this.f.getRawValue() }
+    {initialValue: this.f.getRawValue()}
   );
 
   readonly marginAmountSig = computed(() => {
     const v = this.formValueSig();
     const price = Number(v?.price ?? 0);
-    const cost  = Number(v?.cost  ?? 0);
+    const cost = Number(v?.cost ?? 0);
     return Math.max(0, price - cost);
   });
   readonly marginRateSig = computed(() => {
@@ -244,6 +338,7 @@ export class AdminProductsComponent implements OnInit {
     return Math.max(0, (this.marginAmountSig() / price) * 100);
   });
   readonly currencySig = computed(() => this.formValueSig()?.currency || 'TND');
+
   openReplace(p: Product) {
     this.editing.set(p);
     this.coverChanged.set(false);
@@ -255,6 +350,7 @@ export class AdminProductsComponent implements OnInit {
     this.replaceOpen.set(true);
     document.body.classList.add('modal-open');
   }
+
   closeReplace() {
     this.replaceOpen.set(false);
     document.body.classList.remove('modal-open');
@@ -266,7 +362,12 @@ export class AdminProductsComponent implements OnInit {
     this.coverFile.set(f);
     this.coverPreview.set(f ? URL.createObjectURL(f) : null);
   }
-  clearCover() { this.coverFile.set(null); this.coverPreview.set(null); }
+
+  clearCover() {
+    this.coverFile.set(null);
+    this.coverPreview.set(null);
+  }
+
   onPickGallery(ev: Event) {
     const files = Array.from((ev.target as HTMLInputElement).files || []);
     if (!files.length) return;
@@ -274,11 +375,14 @@ export class AdminProductsComponent implements OnInit {
     this.galleryPreviews.set([...this.galleryPreviews(), ...files.map(f => URL.createObjectURL(f))]);
     (ev.target as HTMLInputElement).value = '';
   }
+
   removeGalleryAt(i: number) {
     const nf = [...this.galleryFiles()];
     const np = [...this.galleryPreviews()];
-    nf.splice(i, 1); np.splice(i, 1);
-    this.galleryFiles.set(nf); this.galleryPreviews.set(np);
+    nf.splice(i, 1);
+    np.splice(i, 1);
+    this.galleryFiles.set(nf);
+    this.galleryPreviews.set(np);
   }
 
   // -------- files (replace) ----------
@@ -288,21 +392,25 @@ export class AdminProductsComponent implements OnInit {
     this.coverReplacePreview.set(f ? URL.createObjectURL(f) : null);
     this.coverChanged.set(!!f);
   }
+
   resetCoverReplace() {
     this.coverReplace.set(null);
     this.coverReplacePreview.set(null);
     this.coverChanged.set(false);
   }
+
   onPickGalleryReplace(ev: Event) {
     const files = Array.from((ev.target as HTMLInputElement).files || []);
     this.galleryReplace.set(files);
     this.galleryReplacePreviews.set(files.map(f => URL.createObjectURL(f)));
     this.galleryChanged.set(files.length > 0);
   }
+
   removeNewGalleryAt(i: number) {
     const nf = [...this.galleryReplace()];
     const np = [...this.galleryReplacePreviews()];
-    nf.splice(i, 1); np.splice(i, 1);
+    nf.splice(i, 1);
+    np.splice(i, 1);
     this.galleryReplace.set(nf);
     this.galleryReplacePreviews.set(np);
     this.galleryChanged.set(nf.length > 0);
@@ -312,7 +420,7 @@ export class AdminProductsComponent implements OnInit {
   async save() {
     if (this.f.invalid) {
       this.f.markAllAsTouched();
-      await showAlert({ icon: 'warning', title: 'Vérifiez les champs obligatoires.' });
+      await showAlert({icon: 'warning', title: 'Vérifiez les champs obligatoires.'});
       return;
     }
     const v = this.f.value;
@@ -338,10 +446,11 @@ export class AdminProductsComponent implements OnInit {
     fd.append('description', v.description || '');
     if (v.price !== null && v.price !== undefined) fd.append('price', String(v.price));
     if (v.oldPrice !== null && v.oldPrice !== undefined) fd.append('oldPrice', String(v.oldPrice));
-    if (v.cost !== null && v.cost !== undefined)     fd.append('cost', String(v.cost));
+    if (v.cost !== null && v.cost !== undefined) fd.append('cost', String(v.cost));
     fd.append('stock', String(v.stock ?? 0));
     fd.append('sku', v.sku || '');
     fd.append('isActive', String(!!v.isActive));
+    fd.append('isNew', String(!!v.isNew)); // <-- AJOUT
     fd.append('currency', v.currency || 'TND');
     if (v.tags) fd.append('tags', v.tags);
     if (isCreate) {
@@ -362,9 +471,9 @@ export class AdminProductsComponent implements OnInit {
       }
 
       this.closeModal();
-      await showAlert({ icon: 'success', title: 'Enregistré avec succès', timer: 1300, timerProgressBar: true });
+      await showAlert({icon: 'success', title: 'Enregistré avec succès', timer: 1300, timerProgressBar: true});
     } catch (e: any) {
-      await showAlert({ icon: 'error', title: 'Erreur', html: e?.message || 'Action impossible' });
+      await showAlert({icon: 'error', title: 'Erreur', html: e?.message || 'Action impossible'});
     } finally {
       this.actionKind.set(null);
       this.actionId.set(null);
@@ -417,10 +526,10 @@ export class AdminProductsComponent implements OnInit {
       if (updated) {
         this.raw.set(this.raw().map(x => x._id === updated._id ? updated : x));
       }
-      await showAlert({ icon: 'success', title: 'Fichiers remplacés', timer: 1300, timerProgressBar: true });
+      await showAlert({icon: 'success', title: 'Fichiers remplacés', timer: 1300, timerProgressBar: true});
       this.closeReplace();
     } catch (e: any) {
-      await showAlert({ icon: 'error', title: 'Erreur', html: e?.message || 'Impossible d’enregistrer.' });
+      await showAlert({icon: 'error', title: 'Erreur', html: e?.message || 'Impossible d’enregistrer.'});
     } finally {
       this.actionKind.set(null);
       this.actionId.set(null);
@@ -445,11 +554,11 @@ export class AdminProductsComponent implements OnInit {
       this.actionId.set(p._id);
 
       const updated = await this.api.toggle(p._id).toPromise();
-      if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : x));
+      if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : p));
 
-      await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true });
+      await showAlert({icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true});
     } catch (e: any) {
-      await showAlert({ icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible' });
+      await showAlert({icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible'});
     } finally {
       this.actionKind.set(null);
       this.actionId.set(null);
@@ -459,7 +568,7 @@ export class AdminProductsComponent implements OnInit {
   async toggleToNew(p: Product) {
     const ask = await showAlert({
       icon: 'question',
-      title: p.isNew ? 'Changé a ancien ?' : 'Changé a Nouveau?',
+      title: p.isNew ? 'Changé à ancien ?' : 'Changé à nouveau ?',
       showCancelButton: true,
       confirmButtonText: 'Confirmer',
       cancelButtonText: 'Annuler',
@@ -473,11 +582,11 @@ export class AdminProductsComponent implements OnInit {
       this.actionId.set(p._id);
 
       const updated = await this.api.toggleToNew(p._id).toPromise();
-      if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : x));
+      if (updated) this.raw.set(this.raw().map(x => x._id === p._id ? updated : p));
 
-      await showAlert({ icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true });
+      await showAlert({icon: 'success', title: 'Statut mis à jour', timer: 1100, timerProgressBar: true});
     } catch (e: any) {
-      await showAlert({ icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible' });
+      await showAlert({icon: 'error', title: 'Échec de mise à jour', html: e?.message || 'Action impossible'});
     } finally {
       this.actionKind.set(null);
       this.actionId.set(null);
@@ -506,9 +615,9 @@ export class AdminProductsComponent implements OnInit {
       await this.api.remove(p._id).toPromise();
       this.raw.set(this.raw().filter(x => x._id !== p._id));
 
-      await showAlert({ icon: 'success', title: 'Produit supprimé', timer: 1100, timerProgressBar: true });
+      await showAlert({icon: 'success', title: 'Produit supprimé', timer: 1100, timerProgressBar: true});
     } catch (e: any) {
-      await showAlert({ icon: 'error', title: 'Échec de suppression', html: e?.message || 'Action impossible' });
+      await showAlert({icon: 'error', title: 'Échec de suppression', html: e?.message || 'Action impossible'});
     } finally {
       this.actionKind.set(null);
       this.actionId.set(null);
@@ -517,4 +626,27 @@ export class AdminProductsComponent implements OnInit {
 
   // helpers
   getUrl = getUrl;
+
+  // -------- pagination actions ----------
+  goTo(n: number) {
+    if (Number.isNaN(n)) return;
+    const total = this.totalPages();
+    if (n < 1 || n > total) return;
+    this.page.set(n);
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  goPrev() {
+    this.goTo(this.page() - 1);
+  }
+
+  goNext() {
+    this.goTo(this.page() + 1);
+  }
+
+  changePageSize(sz: number | string) {
+    const size = Number(sz) || 12;
+    this.pageSize.set(size);
+    this.page.set(1);
+  }
 }

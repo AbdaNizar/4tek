@@ -37,7 +37,6 @@ export class AdminSubcategoryDetailComponent implements OnInit {
     this.loading.set(true);
     try{
       const data :any  = await this.api.getOne(id).toPromise();
-      console.log('data', data);
       this.subcat.set(data);
     } finally {
       this.loading.set(false);

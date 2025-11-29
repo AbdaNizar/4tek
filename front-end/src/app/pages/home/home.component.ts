@@ -63,11 +63,19 @@ export class HomeComponent implements OnInit {
     this.categories.set(activeCats);
 
     // === Banners depuis les SOUS-CATÉGORIES des catégories actives ===
+    // === Banners depuis les SOUS-CATÉGORIES des catégories actives ===
     const subsArrays = await Promise.all(
-      activeCats.map(c => this.apiSub.listByCategory(c._id).toPromise().catch(() => [] as SubCategory[]))
+      activeCats.map(c =>
+        this.apiSub.listByCategory(c._id).toPromise().catch(() => [] as SubCategory[])
+      )
     );
     const allSubs: SubCategory[] = subsArrays.flat().filter(s => s?.isActive);
-    this.slides.set(this.buildSlidesFromSubcategories(allSubs)); // ← switch vers subs
+
+// prendre 7 sous-catégories aléatoires max
+    const randomSubs = this.pickRandom(allSubs, 7);
+
+    this.slides.set(this.buildSlidesFromSubcategories(randomSubs));
+    // ← switch vers subs
 
     // === Populaires (on peut rester sur les catégories) ===
     this.popularCats.set(this.buildPopularCats(activeCats, 12));
@@ -81,6 +89,17 @@ export class HomeComponent implements OnInit {
 
     // === Marques ===
     this.brandApi.list(true).subscribe(list => this.brands.set(list || []));
+  }
+  /** Prend jusqu'à `max` éléments aléatoires d'un tableau (sans doublons) */
+  private pickRandom<T>(arr: T[], max: number): T[] {
+    if (!arr.length) return [];
+    const copy = [...arr];
+    // shuffle Fisher–Yates
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy.slice(0, Math.min(max, copy.length));
   }
 
   /** Slides depuis sous-catégories (banners > imageUrl > iconUrl) */

@@ -95,7 +95,6 @@ export class ProductListComponent implements OnInit {
       const name = raw;
       return { _id: raw, name, slug: this.slugify(name) };
     }
-    console.log('row',raw)
     const _id  = raw._id ?? raw.id ?? (raw.slug ?? raw.name ?? '').toString();
     const name = (raw.name ?? raw.label ?? _id ?? '').toString();
     const slug = (raw.slug ?? this.slugify(name));

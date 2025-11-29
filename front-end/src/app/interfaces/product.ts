@@ -22,7 +22,7 @@ export interface Product {
   updatedAt: string;
   brandId?: string;
   specs?: string[];
-  brand?: string;
+  brand?: Brand;
   brands?: Brand;
   ratingAvg?: number;
   ratingCount?: number;

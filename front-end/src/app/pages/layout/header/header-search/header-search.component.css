@@ -81,6 +81,10 @@
   box-shadow: 0 20px 60px rgba(0,0,0,.35);
   padding: 10px;
   z-index: 100;
+
+  /* scroll pour la liste desktop */
+  max-height: 420px;
+  overflow-y: auto;
 }
 
 .suggest .loading,
@@ -137,8 +141,6 @@
   background: rgba(0, 0, 0, .55);
   backdrop-filter: blur(3px);
   z-index: 900;
-  animation: _ngcontent-ng-c390820198_fadeIn .25s
-  ease;
   border-radius: 20px;
 }
 
@@ -156,8 +158,6 @@
   flex-direction: column;
   gap: 12px;
   border-radius: 20px;
-  animation: _ngcontent-ng-c390820198_slideDown .25s
-  ease;
 }
 
 .searchbar.mobile {
@@ -208,7 +208,7 @@
   opacity: 0.8;
 }
 
-/* Animation */
+/* Animation (si tu veux les utiliser, renomme-les dans le CSS) */
 @keyframes slideDown {
   from { transform: translateY(-15px); opacity: 0; }
   to   { transform: none; opacity: 1; }

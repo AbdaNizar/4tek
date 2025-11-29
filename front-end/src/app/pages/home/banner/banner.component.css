@@ -1,5 +1,8 @@
+/* src/app/pages/home/banner/banner.component.css */
+
 .banner {
-  position: relative; width: 100%;
+  position: relative;
+  width: 100%;
   height: clamp(240px, 42vw, 520px);
   border-radius: 16px;
   overflow: hidden;
@@ -8,30 +11,65 @@
 }
 
 /* Smooth stacking */
-.slides { position: absolute; inset: 0; }
+.slides {
+  position: absolute;
+  inset: 0;
+}
 
 /* Nav buttons */
 .nav {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  width: 38px; height: 38px; border-radius: 10px;
-  display: grid; place-items: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
   background: rgba(255,255,255,.14);
-  color: #fff; border: 1px solid rgba(255,255,255,.2);
-  cursor: pointer; z-index: 5;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.2);
+  cursor: pointer;
+  z-index: 5;
   transition: background .2s ease, transform .15s ease, border-color .2s ease;
 }
-.nav:hover { background: rgba(255,255,255,.22); transform: translateY(-50%) scale(1.05); }
-.nav.prev { left: 10px; }
-.nav.next { right: 10px; }
+
+.nav:hover {
+  background: rgba(255,255,255,.22);
+  transform: translateY(-50%) scale(1.05);
+}
+
+.nav.prev {
+  left: 10px;
+}
+
+.nav.next {
+  right: 10px;
+}
 
 /* Dots */
 .dots {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: 12px; display: flex; gap: 8px; z-index: 5;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 5;
 }
+
 .dot {
-  width: 9px; height: 9px; border-radius: 999px;
-  background: rgba(255,255,255,.45); border: none; cursor: pointer;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.45);
+  border: none;
+  cursor: pointer;
   transition: transform .15s ease, background .2s ease;
 }
-.dot.active, .dot:hover { background: #22d3ee; transform: scale(1.15); }
+
+.dot.active,
+.dot:hover {
+  background: #22d3ee;
+  transform: scale(1.15);
+}

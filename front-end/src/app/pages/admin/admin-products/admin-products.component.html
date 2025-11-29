@@ -27,8 +27,8 @@
 
   <div *ngIf="loading()" class="loading">Chargement…</div>
 
-  <div class="grid" *ngIf="!loading() && list().length; else empty">
-    <article class="card" *ngFor="let p of list()">
+  <div class="grid" *ngIf="!loading() && pagedList().length; else empty">
+    <article class="card" *ngFor="let p of pagedList()">
       <div class="media">
         <img [src]="getUrl(p.imageUrl) || '/assets/placeholder.jpg'" alt="{{p.name}}">
       </div>
@@ -40,7 +40,7 @@
             {{ p.isActive ? 'Actif' : 'Inactif' }}
           </span>
           <span class="badge" [class.on]="p.isNew" [class.off]="!p.isNew">
-            {{ p.isNew ? 'Nouveau' : 'Ancien ' }}
+            {{ p.isNew ? 'Nouveau' : 'Ancien' }}
           </span>
         </div>
 
@@ -74,11 +74,12 @@
             <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='toggle'"></span>
             {{ p.isActive ? 'Désactiver' : 'Activer' }}
           </button>
+
           <button class="btn warn"
                   (click)="toggleToNew(p)"
                   [disabled]="busy && actionId()===p._id && actionKind()==='toggleToNew'">
             <span class="spinner" *ngIf="busy && actionId()===p._id && actionKind()==='toggleToNew'"></span>
-            {{ p.isNew ? 'Changé a ancien' : 'Changé a Nouveau' }}
+            {{ p.isNew ? 'Changé à ancien' : 'Changé à nouveau' }}
           </button>
 
           <button class="btn danger"
@@ -95,6 +96,41 @@
   <ng-template #empty>
     <p class="empty muted">Aucun produit.</p>
   </ng-template>
+
+  <!-- PAGINATION ADMIN -->
+  <nav *ngIf="!loading() && totalPages() > 1" class="pager" aria-label="Pagination">
+    <button class="pg-btn"
+            [disabled]="page() === 1"
+            (click)="goPrev()"
+            aria-label="Page précédente">‹
+    </button>
+
+    <ng-container *ngFor="let n of pageNums()">
+      <button *ngIf="!Number.isNaN(n)"
+              class="pg-btn"
+              [class.active]="n === page()"
+              (click)="goTo(n)">
+        {{ n }}
+      </button>
+      <span *ngIf="Number.isNaN(n)" class="pg-btn ellipsis">…</span>
+    </ng-container>
+
+    <button class="pg-btn"
+            [disabled]="page() === totalPages()"
+            (click)="goNext()"
+            aria-label="Page suivante">›
+    </button>
+
+    <!-- taille de page optionnelle -->
+    <span class="pg-size">
+      Par page
+      <select [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+        <option [ngValue]="6">6</option>
+        <option [ngValue]="12">12</option>
+        <option [ngValue]="24">24</option>
+      </select>
+    </span>
+  </nav>
 </section>
 
 <!-- MODAL CREATE / EDIT -->
@@ -123,7 +159,7 @@
           <div class="field">
             <label>Marque *</label>
             <select formControlName="brand" (change)="onBrandChange($event)">
-              <option value="" disabled selected>Choisir…</option>
+              <option value="" disabled>Choisir…</option>
               <option *ngFor="let b of brands()" [value]="b._id">{{ b.name }}</option>
             </select>
           </div>
@@ -131,12 +167,11 @@
           <div class="field">
             <label>Catégorie *</label>
             <select formControlName="category" [disabled]="!f.value.brand" (change)="onCategoryChange($event)">
-              <option value="" disabled selected>Choisir…</option>
+              <option value="" disabled>Choisir…</option>
               <option *ngFor="let c of categories()" [value]="c._id">{{ c.name }}</option>
             </select>
           </div>
         </div>
-
 
         <div class="field">
           <label>Sous-catégorie *</label>
@@ -161,6 +196,7 @@
             <input type="number" step="0.001" formControlName="oldPrice" placeholder="0.000">
           </div>
         </div>
+
         <div class="row-2">
           <div class="field">
             <label>Coût unitaire (achat) *</label>
@@ -176,6 +212,7 @@
             </div>
           </div>
         </div>
+
         <div class="row-2">
           <div class="field">
             <label>Stock</label>
@@ -241,9 +278,9 @@
           <label for="active">Produit actif</label>
         </div>
 
- <div class="field switch">
+        <div class="field switch">
           <input id="new" type="checkbox" formControlName="isNew">
-          <label for="active">Nouveau Produit</label>
+          <label for="new">Nouveau produit</label>
         </div>
 
         <div class="actions">

@@ -55,9 +55,22 @@ async function issueRefresh(userId, familyId) {
 }
 
 // ---- 1) START ----
+// src/routes/auth.google.js
+
+// ...
+
+// ---- 1) START ----
 router.get('/start', (req, res) => {
+    // URL de retour (web ou mobile)
     const returnTo = (req.query.r || FRONT_FALLBACK).toString();
+
+    // type de client : 'web' (par défaut) ou 'mobile'
+    const client = (req.query.c || 'web').toString();
+
     const scope = ['openid', 'email', 'profile'].join(' ');
+
+    // on encode r + c dans le state
+    const statePayload = b64url({ r: returnTo, c: client });
 
     const authUrl =
         `https://accounts.google.com/o/oauth2/v2/auth` +
@@ -67,32 +80,43 @@ router.get('/start', (req, res) => {
         `&scope=${encodeURIComponent(scope)}` +
         `&prompt=consent` +
         `&access_type=offline` +
-        `&state=${encodeURIComponent(b64url({ r: returnTo }))}`;
+        `&state=${encodeURIComponent(statePayload)}`;
 
     return res.redirect(authUrl);
 });
 
+
 // ---- 2) CALLBACK ----
+
 router.get('/callback', async (req, res) => {
     const { code, state } = req.query;
 
     let returnTo = FRONT_FALLBACK;
+    let client = 'web'; // par défaut
+
     try {
         if (state) {
-            const json = Buffer.from(String(state).replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
+            const json = Buffer
+                .from(String(state).replace(/-/g, '+').replace(/_/g, '/'), 'base64')
+                .toString('utf8');
+
             const parsed = JSON.parse(json);
             if (parsed?.r) returnTo = parsed.r;
+            if (parsed?.c) client = parsed.c;  // 'web' ou 'mobile'
         }
     } catch {}
 
     if (!code) {
+        console.error('[GOOGLE OAUTH] Pas de "code" dans la callback');
         const data = b64url({ type: 'VERIFY_INVALID' });
         return res.redirect(`${returnTo}#data=${data}`);
     }
 
     try {
-        // Échange code -> tokens Google
-        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        // 🔍 LOG pour voir ce qu'on envoie
+        console.log('[GOOGLE OAUTH] Using redirect_uri =', GOOGLE_REDIRECT_URI);
+
+        const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -102,18 +126,41 @@ router.get('/callback', async (req, res) => {
                 redirect_uri: GOOGLE_REDIRECT_URI,
                 grant_type: 'authorization_code'
             }).toString()
-        }).then(r => r.json());
+        });
 
-        if (tokenRes.error) {
+        const tokenText = await tokenResp.text();
+        console.log('[GOOGLE OAUTH] Token response status=', tokenResp.status);
+        console.log('[GOOGLE OAUTH] Token response body=', tokenText);
+
+        let tokenRes;
+        try {
+            tokenRes = JSON.parse(tokenText);
+        } catch (e) {
+            console.error('[GOOGLE OAUTH] Erreur parse JSON tokenRes:', e);
             const data = b64url({ type: 'VERIFY_INVALID' });
             return res.redirect(`${returnTo}#data=${data}`);
         }
 
-        const { access_token } = tokenRes;
-        const userinfo = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-            headers: { Authorization: `Bearer ${access_token}` }
-        }).then(r => r.json());
+        if (tokenRes.error) {
+            console.error('[GOOGLE OAUTH] tokenRes.error =', tokenRes.error);
+            const data = b64url({ type: 'VERIFY_INVALID', reason: tokenRes.error });
+            return res.redirect(`${returnTo}#data=${data}`);
+        }
 
+        const { access_token } = tokenRes;
+
+        // 🔍 LOG USERINFO
+        const userinfoResp = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+            headers: { Authorization: `Bearer ${access_token}` }
+        });
+
+        const userinfoText = await userinfoResp.text();
+        console.log('[GOOGLE OAUTH] userinfo status=', userinfoResp.status);
+        console.log('[GOOGLE OAUTH] userinfo body=', userinfoText);
+
+        const userinfo = JSON.parse(userinfoText);
+
+        // ... ensuite tu gardes EXACTEMENT ton code existant :
         const googleId = userinfo.sub;
         const email = (userinfo.email || '').toLowerCase();
 
@@ -146,7 +193,6 @@ router.get('/callback', async (req, res) => {
             return res.redirect(`${returnTo}#data=${data}`);
         }
 
-        // === Notre propre session: access court + refresh long + cookies ===
         const access = signAccess(user);
         const familyId = crypto.randomUUID();
         const refreshRaw = await issueRefresh(user._id, familyId);
@@ -157,7 +203,13 @@ router.get('/callback', async (req, res) => {
         setCsrfCookie(res, randomToken(16));
 
         const safe = toSafeUser(user);
-        const payload = b64url({ token: '[cookie]', user: safe }); // garde le format attendu par le front
+
+        let tokenPayload = '[cookie]';
+        if (client === 'mobile') {
+            tokenPayload = access;
+        }
+
+        const payload = b64url({ token: tokenPayload, user: safe });
         return res.redirect(`${returnTo}#data=${payload}`);
 
     } catch (e) {

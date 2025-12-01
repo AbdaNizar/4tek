@@ -49,7 +49,7 @@
   position: absolute;
   left: 0;
   top: calc(100% + 10px);
-  width: min(650px, 96vw);
+  width: min(800px, 96vw);
   display: grid;
   grid-template-columns:364px minmax(260px, 480px);
   background: radial-gradient(120% 140% at 110% -10%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 60%),

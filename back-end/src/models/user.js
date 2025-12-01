@@ -18,7 +18,10 @@ const UserSchema = new mongoose.Schema({
             return !(this.providers?.google || this.providers?.facebook) && !this.password;
         }
         },
-
+    deviceTokens: {
+        type: [String],
+        default: [],
+    },
     resetPasswordTokenHash: { type: String },
     resetPasswordExpires:   { type: Date },
 }, { timestamps: true });

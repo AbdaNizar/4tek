@@ -28,7 +28,7 @@ router.get('/suggest'   ,  async (req, res) => {
             ],
             isActive: true
         })
-            .select('_id name imageUrl price category subCategory')
+            .select('_id name slug imageUrl price category subCategory')
             .limit(limit)
             .populate('category', '_id name')
             .populate('subCategory', '_id name')
@@ -38,6 +38,7 @@ router.get('/suggest'   ,  async (req, res) => {
         res.json(products.map(p => ({
             _id: p._id,
             name: p.name,
+            slug: p.slug,
             imageUrl: p.imageUrl,
             price: p.price,
             category: p.category ? { _id: p.category._id, name: p.category.name } : undefined,

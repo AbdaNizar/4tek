@@ -34,56 +34,9 @@ exports.getOne = async (req, res) => {
 };
 
 
-exports.update = async (req, res) => {
-    try {
-        const {name, slug, description, isActive, parentId} = req.body;
-        const updates = {
-            ...(name ? {name} : {}),
-            ...(slug ? {slug: slugify(slug)} : {}),
-            ...(description !== undefined ? {description} : {}),
-            ...(isActive !== undefined ? {isActive: (isActive === 'true' || isActive === true)} : {}),
-            ...(parentId ? {parent: parentId} : {})
-        };
 
 
-        const doc = await SubCategory.findByIdAndUpdate(req.params.id, updates, {new: true})
-            .populate('parent', 'name _id')
-            .lean();
-        if (!doc) return res.status(404).json({error: 'Sous-catégorie introuvable'});
-        res.json(doc);
-    } catch (e) {
-        console.error('update subcategory error', e);
-        res.status(500).json({error: 'Erreur serveur'});
-    }
-};
 
-
-exports.toggle = async (req, res) => {
-    const d = await SubCategory.findByIdAndUpdate(req.params.id,
-        {$set: {isActive: !!req.body.isActive}},
-        {new: true}).populate('parent', 'name _id').lean();
-    if (!d) return res.status(404).json({error: 'Introuvable'});
-    res.json(d);
-};
-
-exports.remove = async (req, res) => {
-    const sc = await SubCategory.findById(req.params.id);
-    if (!sc) return res.status(404).json({error: 'Introuvable'});
-
-    // supprime fichiers locaux
-    const delLocal = (u) => {
-        if (u?.startsWith('/uploads/subcategories')) {
-            const abs = path.join(ROOT, u);
-            fs.existsSync(abs) && fs.unlinkSync(abs);
-        }
-    };
-    delLocal(sc.iconUrl);
-    delLocal(sc.imageUrl);
-    (sc.banners || []).forEach(delLocal);
-
-    await sc.deleteOne();
-    res.json({ok: true});
-};
 
 
 exports.listByCategory = async (req, res) => {
@@ -125,7 +78,54 @@ exports.listByCategory = async (req, res) => {
         res.status(500).json({error: 'Erreur serveur'});
     }
 };
+exports.update = async (req, res) => {
+    try {
+        const {name, slug, description, isActive, parentId} = req.body;
+        const updates = {
+            ...(name ? {name} : {}),
+            ...(slug ? {slug: slugify(slug)} : {}),
+            ...(description !== undefined ? {description} : {}),
+            ...(isActive !== undefined ? {isActive: (isActive === 'true' || isActive === true)} : {}),
+            ...(parentId ? {parent: parentId} : {})
+        };
 
+
+        const doc = await SubCategory.findByIdAndUpdate(req.params.id, updates, {new: true})
+            .populate('parent', 'name _id')
+            .lean();
+        if (!doc) return res.status(404).json({error: 'Sous-catégorie introuvable'});
+        res.json(doc);
+    } catch (e) {
+        console.error('update subcategory error', e);
+        res.status(500).json({error: 'Erreur serveur'});
+    }
+};
+
+exports.remove = async (req, res) => {
+    const sc = await SubCategory.findById(req.params.id);
+    if (!sc) return res.status(404).json({error: 'Introuvable'});
+
+    // supprime fichiers locaux
+    const delLocal = (u) => {
+        if (u?.startsWith('/uploads/subcategories')) {
+            const abs = path.join(ROOT, u);
+            fs.existsSync(abs) && fs.unlinkSync(abs);
+        }
+    };
+    delLocal(sc.iconUrl);
+    delLocal(sc.imageUrl);
+    (sc.banners || []).forEach(delLocal);
+
+    await sc.deleteOne();
+    res.json({ok: true});
+};
+exports.toggle = async (req, res) => {
+    const d = await SubCategory.findByIdAndUpdate(req.params.id,
+        {$set: {isActive: !!req.body.isActive}},
+        {new: true}).populate('parent', 'name _id').lean();
+    if (!d) return res.status(404).json({error: 'Introuvable'});
+    res.json(d);
+};
 
 // ---------- Helpers ----------
 const toBool = v => v === true || v === 'true';

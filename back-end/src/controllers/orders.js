@@ -7,6 +7,8 @@ const Product = require('../models/productSchema');
 const { generatePdf } = require('../lib/pdf/generatePdf');
 const mapOrderToInvoiceVars = require('../lib/pdf/mapOrderToInvoiceVars');
 const { sendMail, renderBase, fill, load } = require('../functions/mailer');
+const {queueNotificationForUser} = require("../lib/services/push.service");
+const User = require("../models/user");
 
 const SHIPPING_FLAT = 8;
 
@@ -101,13 +103,16 @@ async function freezeOrderCosts(order) {
 /* ============================== CUSTOMER ============================== */
 exports.create = async (req, res) => {
     try {
+        console.log(req.body)
         const u = req.user;
         const { items, currency = 'TND', note } = req.body || {};
 
         if (!Array.isArray(items) || items.length === 0) {
+            console.log('ehhi',items)
             return res.status(400).json({ error: 'Aucun article' });
         }
         if (!u?.phone || !u?.address) {
+            console.log('bhej')
             return res.status(400).json({ error: 'Complétez votre numéro de téléphone et votre adresse avant de commander.' });
         }
 
@@ -165,6 +170,7 @@ exports.create = async (req, res) => {
 
 exports.getMine = async (req, res) => {
     try {
+        console.log('hiii')
         const page  = Math.max(1, Number(req.query.page) || 1);
         // ✅ accepte pageSize (front) ou limit (legacy)
         const limit = Math.min(100, Math.max(1, Number(req.query.pageSize || req.query.limit || 20)));
@@ -180,7 +186,6 @@ exports.getMine = async (req, res) => {
             Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
             Order.countDocuments(filter)
         ]);
-
         res.json({
             items,
             total,
@@ -297,44 +302,61 @@ exports.getAdminOrderStats = async (_req, res) => {
     }
 };
 
+ // adapte à ton projet
+
 exports.updateAdminOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body || {};
-        if (!isObjectId(id)) return res.status(400).json({ error: 'Invalid id' });
-        if (!status || !STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
-        const order = await Order.findById(id);
+        if (!isObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid id' });
+        }
+        if (!status || !STATUSES.includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const order = await Order.findById(id).populate('user'); // 👈 IMPORTANT : on populate le user
         if (!order) return res.status(404).json({ error: 'Order not found' });
 
         const from = order.status;
         if (!ALLOWED[from]?.includes(status)) {
-            return res.status(400).json({ error: `Invalid transition ${from} → ${status}` });
+            return res
+                .status(400)
+                .json({ error: `Invalid transition ${from} → ${status}` });
         }
 
         // ✅ si on passe à confirmed/shipped/delivered → s'assurer que le coût est gelé
-        if (['confirmed','shipped','delivered'].includes(status)) {
+        if (['confirmed', 'shipped', 'delivered'].includes(status)) {
             await freezeOrderCosts(order); // idempotent
         }
 
         // Appliquer le nouveau statut
         order.status = status;
         const now = new Date();
-        if (status === 'shipped')   order.shippedAt   = now;
+        if (status === 'shipped') order.shippedAt = now;
         if (status === 'delivered') order.deliveredAt = now;
-        if (status === 'cancelled') order.canceledAt  = now;
+        if (status === 'cancelled') order.canceledAt = now;
         if (status === 'confirmed') order.confirmedAt = now;
 
         await order.save();
 
-        // Email client
+        // ===============================
+        //  EMAIL CLIENT (ton code existant)
+        // ===============================
         const subjectTitle = STATUS_TITLES[order.status] || order.status;
-        const prevTitle    = STATUS_TITLES[from] || from;
-        const message      = STATUS_MESSAGES[order.status] || `Statut mis à jour : ${subjectTitle}.`;
+        const prevTitle = STATUS_TITLES[from] || from;
+        const message =
+            STATUS_MESSAGES[order.status] ||
+            `Statut mis à jour : ${subjectTitle}.`;
 
-        const appUrl   = process.env.CLIENT_URL || (req?.protocol && req?.get ? `${req.protocol}://${req.get('host')}` : '');
+        const appUrl =
+            process.env.CLIENT_URL ||
+            (req?.protocol && req?.get
+                ? `${req.protocol}://${req.get('host')}`
+                : '');
         const orderUrl = `${appUrl}/mes-commandes`;
-        const subject  = `Commande #${order.number || order._id} — ${subjectTitle}`;
+        const subject = `Commande #${order.number || order._id} — ${subjectTitle}`;
 
         const contentTpl = load(path.join('order-status.html'));
         const content = fill(contentTpl, {
@@ -368,7 +390,7 @@ exports.updateAdminOrderStatus = async (req, res) => {
                 accountNo: '123456789',
                 accountName: '4tek',
                 branchName: 'Agence centrale',
-                logo: path.join(__dirname, '../../src/assets/logo.png')
+                logo: path.join(__dirname, '../../src/assets/logo.png'),
             });
             const pdfBuffer = await generatePdf({
                 template: 'invoice.html',
@@ -389,10 +411,36 @@ exports.updateAdminOrderStatus = async (req, res) => {
             console.error('sendMail(order status) error:', e);
         }
 
+        // ===============================
+        //  🔔 PUSH NOTIFICATION MOBILE
+        // ===============================
+
+// 🔔 Créer une notif pour le user
+        try {
+            const user = await User.findById(order.user.id)
+                .select('_id role email name phone address active avatar isVerified providers createdAt deviceTokens')
+                .lean();
+            await queueNotificationForUser(user, {
+                title: `Commande #${order._id} — ${subjectTitle}`,
+                body: message,
+                data: {
+                    type: 'ORDER_STATUS_CHANGED',
+                    orderId: String(order._id),
+                    status: order.status,
+                    number: String(order._id || ''),
+                    total: Number(order.total || 0),
+                },
+            });
+        } catch (e) {
+            console.error('Erreur queueNotificationForUser:', e);
+        }
+
         return res.json(order.toObject());
     } catch (err) {
         console.error('updateAdminOrderStatus error:', err);
-        return res.status(500).json({ error: err?.message || 'Unable to update status' });
+        return res
+            .status(500)
+            .json({ error: err?.message || 'Unable to update status' });
     }
 };
 

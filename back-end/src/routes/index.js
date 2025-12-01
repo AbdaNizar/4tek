@@ -11,6 +11,7 @@ const contact = require("./contact");
 const orders = require("./orders");
 const ratings = require("./ratings");
 const reports = require("./admin.reports");
+const notification = require("./notification");
 
 const api = express.Router();
 api.get("/healthz", (_req, res) => res.json({ ok: true }));
@@ -26,6 +27,7 @@ api.use('/contact',contact );
 api.use('/orders',orders );
 api.use('/ratings',ratings );
 api.use('/admin/reports',reports );
+api.use('/notifications',notification );
 
 
 module.exports = api;

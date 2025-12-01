@@ -16,24 +16,25 @@ export class MyOrdersComponent {
   private ordersApi = inject(OrderService);
   private auth = inject(AuthService);
 
-  loading = signal(true);
-  items   = signal<Order[]>([]);
-  page    = signal(1);
-  pages   = signal(1);
-  q       = signal('');
-  status  = signal<OrderStatus | ''>('');
-  pageSize= signal(20);
-  total   = signal(0);
+  loading  = signal(true);
+  items    = signal<Order[]>([]);
+  page     = signal(1);
+  pages    = signal(1);
+  q        = signal('');
+  status   = signal<OrderStatus | ''>('');
+  pageSize = signal(20);
+  total    = signal(0);
+
+  /** commande sélectionnée dans le modal */
+  selectedOrder = signal<Order | null>(null);
 
   /** Séquence d'appel pour ignorer les réponses en retard */
   private reqSeq = 0;
 
   constructor() {
-    // Crée l'effect DANS le constructeur (contexte d’injection OK)
     effect(() => {
       const user = this.auth.user(); // signal<User|null>
 
-      // Reset rapide de l’UI à chaque changement d’utilisateur
       this.page.set(1);
       this.items.set([]);
       this.total.set(0);
@@ -43,7 +44,7 @@ export class MyOrdersComponent {
       } else {
         this.loading.set(false);
       }
-    }, { allowSignalWrites: true }); // on modifie des signals dans l’effect
+    }, { allowSignalWrites: true });
   }
 
   async fetch() {
@@ -58,7 +59,7 @@ export class MyOrdersComponent {
         status: this.status() || undefined
       }).toPromise();
 
-      if (seq !== this.reqSeq) return; // ignore la réponse si une autre requête a commencé
+      if (seq !== this.reqSeq) return;
 
       const items = res?.items ?? [];
       const total = res?.total ?? 0;
@@ -89,6 +90,19 @@ export class MyOrdersComponent {
     this.fetch();
   }
 
+  /** ouvrir le modal de détails */
+  openDetails(o: Order) {
+    this.selectedOrder.set(o);
+  }
+
+  /** fermer le modal */
+  closeDetails(e?: MouseEvent) {
+    if (e) {
+      e.stopPropagation();
+    }
+    this.selectedOrder.set(null);
+  }
+
   trackById = (_: number, o: Order) => o._id;
 
   // Map statut anglais -> français
@@ -96,9 +110,11 @@ export class MyOrdersComponent {
     switch ((status || '').toLowerCase()) {
       case 'pending':   return 'En attente';
       case 'confirmed': return 'Confirmée';
+      case 'paid':      return 'Payée';
       case 'shipped':   return 'Expédiée';
       case 'delivered': return 'Livrée';
-      case 'cancelled': return 'Annulée';
+      case 'cancelled':
+      case 'canceled':  return 'Annulée';
       default:          return status || '—';
     }
   }

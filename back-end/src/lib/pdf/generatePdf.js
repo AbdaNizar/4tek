@@ -1,5 +1,6 @@
 // lib/pdf/generatePdf.js
-const puppeteer  = require('puppeteer');
+const puppeteer = require('puppeteer');
+
 const path       = require('path');
 const fs         = require('fs');
 const handlebars = require('handlebars');

@@ -4,6 +4,13 @@ const User = require('../models/user');
 const { toSafeUser } = require('../functions/authCookies');
 
 function extractToken(req) {
+
+    // 1. Priorité au header Authorization (mode mobile)
+    const auth = req.headers['authorization'] || req.headers['Authorization'];
+    if (auth && typeof auth === 'string' && auth.startsWith('Bearer ')) {
+        const raw = auth.slice(7).trim();
+        if (raw) return raw;
+    }
     // Prefer HttpOnly cookie
     if (req.cookies && req.cookies.access_token) return req.cookies.access_token;
     // Fallback: Authorization Bearer (not used by our FE, but keeps Postman useful)
@@ -15,7 +22,7 @@ function extractToken(req) {
 async function requireAuth(req, res, next) {
     try {
         const token = extractToken(req);
-
+        console.log(token)
         if (!token) return res.status(401).json({ error: 'Non authentifié' });
         let payload;
         try {

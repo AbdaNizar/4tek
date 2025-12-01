@@ -100,8 +100,53 @@ exports.login = async (req, res) => {
     setRefreshCookie(res, refreshRaw);
     setUserCookie(res, user);              // cookie lisible (signé) pour UX
     setCsrfCookie(res, randomToken(16));   // optionnel CSRF
+    const safeUser = toSafeUser(user);
+    // 🟦 MODE MOBILE : token réel dans le JSON
+    const clientType = (req.headers['x-4tek-client'] || '').toString();
+    if (clientType === 'mobile') {
+        return res.json({
+            token: access,             // JWT access token
+            refreshToken: refreshRaw,  // refresh brut
+            user: safeUser,
+        });
+    }
+    return res.json({ token: "[cookie]", user: safeUser });
+};
+exports.verifyEmail = async (req, res) => {
+    try {
+        const { token, uid } = req.query;
+        if (!token || !uid) return redirectWithData(res, { type: "VERIFY_INVALID" });
 
-    return res.json({ token: "[cookie]", user: toSafeUser(user) });
+        const tokenHash = sha256(String(token)).toString();
+        const record = await EmailToken.findOne({ userId: uid, tokenHash, type: "verify", usedAt: null });
+
+        const user0 = await User.findById(uid).lean().catch(() => null);
+        if (!record) {
+            return redirectWithData(res, { type: "VERIFY_INVALID", email: user0?.email || undefined });
+        }
+        if (record.expiresAt < new Date()) {
+            return redirectWithData(res, { type: "VERIFY_EXPIRED", email: user0?.email || undefined });
+        }
+
+        await User.findByIdAndUpdate(uid, { $set: { isVerified: true, active: true } });
+        record.usedAt = new Date();
+        await record.save();
+
+        const user = await User.findById(uid);
+        const access = signAccess(user);
+        const familyId = crypto.randomUUID();
+        const { raw: refreshRaw } = await issueRefresh(user._id, familyId);
+
+        setAccessCookie(res, access);
+        setRefreshCookie(res, refreshRaw);
+        setUserCookie(res, user);
+        setCsrfCookie(res, randomToken(16));
+
+        return redirectWithData(res, { type: "VERIFY_OK", token: "[cookie]", user: toSafeUser(user) });
+    } catch (e) {
+        console.error(e);
+        return redirectWithData(res, { type: "VERIFY_INVALID" });
+    }
 };
 
 exports.register = async (req, res) => {
@@ -215,42 +260,6 @@ exports.updateUser = async (req, res) => {
     }
 };
 
-exports.verifyEmail = async (req, res) => {
-    try {
-        const { token, uid } = req.query;
-        if (!token || !uid) return redirectWithData(res, { type: "VERIFY_INVALID" });
-
-        const tokenHash = sha256(String(token)).toString();
-        const record = await EmailToken.findOne({ userId: uid, tokenHash, type: "verify", usedAt: null });
-
-        const user0 = await User.findById(uid).lean().catch(() => null);
-        if (!record) {
-            return redirectWithData(res, { type: "VERIFY_INVALID", email: user0?.email || undefined });
-        }
-        if (record.expiresAt < new Date()) {
-            return redirectWithData(res, { type: "VERIFY_EXPIRED", email: user0?.email || undefined });
-        }
-
-        await User.findByIdAndUpdate(uid, { $set: { isVerified: true, active: true } });
-        record.usedAt = new Date();
-        await record.save();
-
-        const user = await User.findById(uid);
-        const access = signAccess(user);
-        const familyId = crypto.randomUUID();
-        const { raw: refreshRaw } = await issueRefresh(user._id, familyId);
-
-        setAccessCookie(res, access);
-        setRefreshCookie(res, refreshRaw);
-        setUserCookie(res, user);
-        setCsrfCookie(res, randomToken(16));
-
-        return redirectWithData(res, { type: "VERIFY_OK", token: "[cookie]", user: toSafeUser(user) });
-    } catch (e) {
-        console.error(e);
-        return redirectWithData(res, { type: "VERIFY_INVALID" });
-    }
-};
 
 exports.forgot = async (req, res) => {
     try {

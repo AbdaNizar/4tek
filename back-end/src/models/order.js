@@ -32,7 +32,6 @@ const OrderSchema = new mongoose.Schema({
     confirmedAt: {type: Date}
 }, {timestamps: true});
 
-OrderSchema.index({'user.id': 1, createdAt: -1});
 // Order
 OrderSchema.index({ createdAt: -1, status: 1 });
 OrderSchema.index({ 'user.id': 1, createdAt: -1 });

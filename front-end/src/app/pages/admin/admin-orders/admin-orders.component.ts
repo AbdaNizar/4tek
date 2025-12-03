@@ -88,6 +88,7 @@ export class AdminOrdersComponent implements OnInit {
   }
 
   // ------------ Actions avec SweetAlert + loader ------------
+
   private statusLabel(s: OrderStatus) {
     switch (s) {
       case 'pending': return 'En attente';
@@ -102,6 +103,8 @@ export class AdminOrdersComponent implements OnInit {
     const o = this.selected();
     if (!o || this.actionBusy()) return;
 
+    const displayNumber = o.number ?? o._id;
+
     // Confirmation
     const label = this.statusLabel(s);
     const currentLabel = this.statusLabel(o.status);
@@ -111,7 +114,7 @@ export class AdminOrdersComponent implements OnInit {
       html: `
         <div style="text-align:left">
           <p>Voulez-vous vraiment passer la commande</p>
-          <p><b>#${o._id}</b> de <b>${currentLabel}</b> → <b>${label}</b> ?</p>
+          <p><b>#${displayNumber}</b> de <b>${currentLabel}</b> → <b>${label}</b> ?</p>
         </div>
       `,
       showCancelButton: true,
@@ -135,10 +138,8 @@ export class AdminOrdersComponent implements OnInit {
       },
     });
 
-    // Si l’utilisateur a annulé via cancel, rien à faire
     if (!confirmRes.isConfirmed) return;
 
-    // Succès
     await showAlert({
       icon: 'success',
       title: 'Statut mis à jour',

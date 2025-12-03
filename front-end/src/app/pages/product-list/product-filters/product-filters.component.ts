@@ -46,7 +46,6 @@ export class ProductFiltersComponent implements OnChanges {
   }
 
   selectBrand(id: string | null) {
-    console.log(this.brands)
     const cur = this.form.controls.brandId.value;
     const next = cur === id ? null : id;
     this.form.patchValue({ brandId: next }, { emitEvent: true });

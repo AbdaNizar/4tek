@@ -34,14 +34,15 @@
         (click)="openDetails(o)"
         class="clickable-row"
       >
-        <td>{{ o._id }}</td>
+        <!-- numéro lisible ou fallback sur la fin du _id -->
+        <td>#{{ o.number || (o._id | slice:-6) }}</td>
         <td>{{ o.createdAt | date: 'short' }}</td>
         <td>{{ o.items.length }}</td>
         <td>{{ o.total }} {{ o.currency }}</td>
         <td>
-            <span class="badge" [ngClass]="o.status">
-              {{ statusLabel(o.status) }}
-            </span>
+          <span class="badge" [ngClass]="o.status">
+            {{ statusLabel(o.status) }}
+          </span>
         </td>
       </tr>
       </tbody>
@@ -55,7 +56,7 @@
         (click)="openDetails(o)"
       >
         <div class="row">
-          <h3 class="ref">#{{ o._id }}</h3>
+          <h3 class="ref">#{{ o.number || (o._id | slice:-6) }}</h3>
           <span class="badge" [ngClass]="o.status">
             {{ statusLabel(o.status) }}
           </span>
@@ -102,7 +103,7 @@
   <article class="modal" (click)="$event.stopPropagation()">
     <header class="modal-head">
       <div>
-        <h3>Commande #{{ order._id }}</h3>
+        <h3>Commande #{{ order.number || (order._id | slice:-6) }}</h3>
         <p class="modal-date">
           Passée le {{ order.createdAt | date: 'short' }}
         </p>

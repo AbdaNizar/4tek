@@ -60,6 +60,13 @@ function buildFilter({ q, status, from, to }) {
             { 'user.phone': like },
             { 'items.name': like }
         ];
+
+        // 🔎 recherche par numéro lisible
+        const asNumber = Number(s);
+        if (Number.isFinite(asNumber)) {
+            or.push({ number: asNumber });
+        }
+
         if (isObjectId(s)) {
             or.push({ _id: new mongoose.Types.ObjectId(s) });
             or.push({ 'user.id': new mongoose.Types.ObjectId(s) });
@@ -144,7 +151,14 @@ exports.create = async (req, res) => {
         const shippingFee = items.length > 0 ? SHIPPING_FLAT : 0;
         const total = subtotal + shippingFee;
 
+        // 🔢 numéro de commande lisible (1001, 1002, ...)
+        const lastOrder = await Order.findOne({}, { number: 1 })
+            .sort({ number: -1 })
+            .lean();
+        const nextNumber = (lastOrder?.number || 1000) + 1;
+
         let order = await Order.create({
+            number: nextNumber,
             user: {
                 id: u.id,
                 email: u.email,
@@ -170,7 +184,6 @@ exports.create = async (req, res) => {
 
 exports.getMine = async (req, res) => {
     try {
-        console.log('hiii')
         const page  = Math.max(1, Number(req.query.page) || 1);
         // ✅ accepte pageSize (front) ou limit (legacy)
         const limit = Math.min(100, Math.max(1, Number(req.query.pageSize || req.query.limit || 20)));

@@ -21,6 +21,7 @@
     <table class="list">
       <thead>
       <tr>
+        <th>N°</th>
         <th>Date</th>
         <th>Client</th>
         <th>Email</th>
@@ -31,6 +32,7 @@
       </thead>
       <tbody>
       <tr *ngFor="let o of items()" class="clickable" (click)="open(o)" tabindex="0" (keyup.enter)="open(o)">
+        <td>#{{ o.number || (o._id | slice:-6) }}</td>
         <td>{{ o.createdAt | date:'short' }}</td>
         <td>{{ o.user?.name || '—' }}</td>
         <td>{{ o.user?.email }}</td>
@@ -39,7 +41,7 @@
         <td><span class="badge" [class]="o.status">{{ o.status }}</span></td>
       </tr>
       <tr *ngIf="items().length===0">
-        <td colspan="6" class="empty">Aucune commande.</td>
+        <td colspan="7" class="empty">Aucune commande.</td>
       </tr>
       </tbody>
     </table>
@@ -60,7 +62,7 @@
   <header class="modal-head">
     <div class="who">
       <div>
-        <h3>Commande #{{ selected()?._id }}</h3>
+        <h3>Commande #{{ selected()?.number || (selected()?._id | slice:-6) }}</h3>
         <p class="small">
           {{ selected()?.user?.name }} · {{ selected()?.user?.email }} · {{ selected()?.user?.phone }}
         </p>
@@ -173,7 +175,7 @@
 
     <button
       class="btn cancel"
-      *ngIf="selected()?.status!=='cancelled' && selected()?.status!=='shipped' && selected()?.status!=='delivered'&& selected()?.status!=='confirmed'"
+      *ngIf="selected()?.status!=='cancelled' && selected()?.status!=='shipped' && selected()?.status!=='delivered' && selected()?.status!=='confirmed'"
       (click)="setStatus('cancelled')"
       [disabled]="actionBusy()"
     >

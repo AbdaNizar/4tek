@@ -77,11 +77,12 @@ app.use((err, _req, res, _next) => {
 
 connectDB().then(() => {
     const PORT = Number(process.env.PORT || 3000);
-    startNotificationCron();
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
         console.log(`✅ API 4tek (${NODE_ENV}) sur http://localhost:${PORT}`);
         console.log('CORS allowed:', allowedOrigins.join(', '));
         console.log('Uploads dir:', PUBLIC_UPLOADS_DIR);
+        await startNotificationCron();
+
     });
 
 }).catch(err => {

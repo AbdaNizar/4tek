@@ -22,7 +22,6 @@ function extractToken(req) {
 async function requireAuth(req, res, next) {
     try {
         const token = extractToken(req);
-        console.log(token)
         if (!token) return res.status(401).json({ error: 'Non authentifié' });
         let payload;
         try {

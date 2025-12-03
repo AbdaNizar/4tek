@@ -22,6 +22,7 @@ export interface OrderItem extends OrderItemInput {
 export type OrderStatus = 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 export interface Order {
   _id: string;
+  number?: number;
   user: { id: string; email: string; phone: string; address: string; name?: string };
   items: OrderItemInput[];
   currency: string;

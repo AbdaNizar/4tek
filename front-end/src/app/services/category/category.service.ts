@@ -31,7 +31,6 @@ export class CategoryService {
     return this.http.patch<Category>(`/categories/${id}/toggle`, { isActive: active });
   }
   replace(id: string, fd: FormData) {
-    console.log(fd)
     return this.http.put<Category>(`/categories/${id}/replace`, fd);
   }
   remove(id: string) {

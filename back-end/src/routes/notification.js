@@ -12,7 +12,6 @@ router.get('/mine', async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthenticated' });
         }
-
         const status = req.query.status || 'ready';
 
         const notifs = await Notification.find({

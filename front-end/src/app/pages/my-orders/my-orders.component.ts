@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../services/order/order.service';
@@ -12,7 +12,7 @@ import { Order, OrderStatus } from '../../interfaces/OrderItem';
   templateUrl: './my-orders.component.html',
   styleUrls: ['./my-orders.component.css']
 })
-export class MyOrdersComponent {
+export class MyOrdersComponent implements OnDestroy {
   private ordersApi = inject(OrderService);
   private auth = inject(AuthService);
 
@@ -93,6 +93,7 @@ export class MyOrdersComponent {
   /** ouvrir le modal de détails */
   openDetails(o: Order) {
     this.selectedOrder.set(o);
+    document.body.classList.add('no-scroll');
   }
 
   /** fermer le modal */
@@ -101,6 +102,11 @@ export class MyOrdersComponent {
       e.stopPropagation();
     }
     this.selectedOrder.set(null);
+    document.body.classList.remove('no-scroll');
+  }
+
+  ngOnDestroy() {
+    document.body.classList.remove('no-scroll');
   }
 
   trackById = (_: number, o: Order) => o._id;

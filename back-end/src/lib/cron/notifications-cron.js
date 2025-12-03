@@ -3,14 +3,13 @@ const Notification = require('../../models/notification');
 
 async function processNotifications() {
     const now = new Date();
-
+    console.log('here')
     try {
         // on récupère les notifs qui doivent passer en "ready"
         const pending = await Notification.find({
             status: 'pending',
             scheduledAt: { $lte: now },
         }).limit(100); // limite au cas où
-
         if (!pending.length) return;
 
         const ids = pending.map((n) => n._id);
@@ -27,8 +26,8 @@ async function processNotifications() {
 }
 
 // à appeler AU DÉMARRAGE de ton serveur
-function startNotificationCron() {
-    // toutes les 60s
+async function startNotificationCron() {
+
     setInterval(processNotifications, 60 * 1000);
 }
 

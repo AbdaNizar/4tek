@@ -34,6 +34,5 @@ export class AppHeaderComponent {
 
   onSearch(term: string) {
     // TODO: naviguer vers /recherche?query=term ou appeler un service
-    console.log('search:', term);
   }
 }

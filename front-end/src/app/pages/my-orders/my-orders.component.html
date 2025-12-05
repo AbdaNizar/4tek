@@ -166,7 +166,18 @@
     </section>
 
     <footer class="modal-footer">
-      <button class="modal-btn" (click)="closeDetails($event)">Fermer</button>
+      <!-- Bouton télécharger facture : visible seulement si la commande est confirmée / expédiée / livrée -->
+      <button
+        class="modal-btn"
+        type="button"
+        (click)="downloadInvoice(order)"
+        *ngIf="order.status === 'confirmed' || order.status === 'shipped' || order.status === 'delivered'">
+        Télécharger la facture
+      </button>
+
+      <button class="modal-btn" type="button" (click)="closeDetails($event)">
+        Fermer
+      </button>
     </footer>
   </article>
 </div>

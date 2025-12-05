@@ -17,7 +17,6 @@ exports.create = async (req, res) => {
             hp: website || ''
         });
 
-        console.log('req.user?.id',req.user?.id)
         res.json({ ok: true, id: doc._id });
     } catch (e) {
         console.error(e);

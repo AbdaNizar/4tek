@@ -39,6 +39,11 @@ export class OrderService {
   byId(id: string) {
     return this.http.get<Order>(`${this.base}/${id}`);
   }
+  downloadInvoice(orderId: string): Observable<Blob> {
+    return this.http.get(`${this.base}/${orderId}/invoice`, {
+      responseType: 'blob'
+    });
+  }
 
   // admin
   adminList(opts: { page?: number; pageSize?: number; q?: string; status?: OrderStatus; from?: string; to?: string } = {}) {

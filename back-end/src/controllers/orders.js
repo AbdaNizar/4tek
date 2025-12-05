@@ -629,3 +629,113 @@ exports.exportAdminConsumptionCsv = async (req, res) => {
         res.status(500).json({ error: 'Unable to export CSV' });
     }
 };
+
+// ============================ CUSTOMER INVOICE ============================
+exports.downloadInvoice = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!isObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid id' });
+        }
+
+        const order = await Order.findById(id).lean();
+        if (!order) {
+            return res.status(404).json({ error: 'Commande introuvable' });
+        }
+
+        // sécurité : seulement le propriétaire ou un admin
+        if (String(order.user.id) !== String(req.user.id) && req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const vars = mapOrderToInvoiceVars(order, {
+            brandName: '4tek',
+            address: 'Adresse 4tek',
+            supportEmail: 'support@4tek.tn',
+            phone: '+216 00 000 000',
+            accountNo: '123456789',
+            accountName: '4tek',
+            branchName: 'Agence centrale',
+            logo: path.join(__dirname, '../../src/assets/logo.png'),
+        });
+
+        const pdfBuffer = await generatePdf({
+            template: 'invoice.html',
+            variables: vars,
+        });
+
+        if (!pdfBuffer) {
+            return res
+                .status(500)
+                .json({ error: 'Impossible de générer la facture' });
+        }
+
+        const filename = `Facture-${order.number || order._id}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${filename}"`
+        );
+
+        return res.send(pdfBuffer);
+    } catch (err) {
+        console.error('downloadInvoice error:', err);
+        return res
+            .status(500)
+            .json({ error: err?.message || 'Unable to generate invoice' });
+    }
+};
+
+exports.getOrderInvoice = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!isObjectId(id)) {
+            return res.status(400).json({ error: 'Invalid id' });
+        }
+
+        const order = await Order.findById(id).populate('user');
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // on s'assure que les coûts sont gelés
+        await freezeOrderCosts(order);
+
+        const vars = mapOrderToInvoiceVars(order, {
+            brandName: '4tek',
+            address: 'Adresse 4tek',
+            supportEmail: 'support@4tek.tn',
+            phone: '+216 00 000 000',
+            accountNo: '123456789',
+            accountName: '4tek',
+            branchName: 'Agence centrale',
+            logo: path.join(__dirname, '../../src/assets/logo.png'),
+        });
+
+        const pdfBuffer = await generatePdf({
+            template: 'invoice.html',
+            variables: vars,
+        });
+
+        if (!pdfBuffer) {
+            return res.status(500).json({ error: 'Unable to generate invoice' });
+        }
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="Facture-${order.number || order._id}.pdf"`
+        );
+
+        return res.send(pdfBuffer);
+    } catch (err) {
+        console.error('getOrderInvoice error:', err);
+        return res
+            .status(500)
+            .json({ error: err?.message || 'Unable to generate invoice' });
+    }
+};
+

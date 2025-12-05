@@ -323,8 +323,15 @@
 .modal-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-top: 4px;
 }
+
+.modal-btn.secondary {
+  background: transparent;
+  border-color: rgba(148, 163, 184, .55);
+}
+
 
 .modal-btn {
   height: 32px;

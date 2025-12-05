@@ -3,7 +3,6 @@ const Notification = require('../../models/notification');
 
 async function processNotifications() {
     const now = new Date();
-    console.log('here')
     try {
         // on récupère les notifs qui doivent passer en "ready"
         const pending = await Notification.find({

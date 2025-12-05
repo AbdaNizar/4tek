@@ -219,4 +219,93 @@ router.get('/callback', async (req, res) => {
     }
 });
 
+// ---- 3) MOBILE LOGIN AVEC idToken (Google Sign-In natif) ----
+
+router.post('/mobile-login', async (req, res) => {
+    try {
+        const { idToken } = req.body || {};
+        if (!idToken) {
+            return res.status(400).json({ error: 'idToken manquant' });
+        }
+
+        // Vérifier l'idToken auprès de Google
+        const verifyResp = await fetch(
+            'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(idToken)
+        );
+
+        if (!verifyResp.ok) {
+            console.error('[GOOGLE MOBILE] tokeninfo status =', verifyResp.status);
+            return res.status(401).json({ error: 'idToken invalide' });
+        }
+
+        const userinfo = await verifyResp.json();
+        // userinfo ressemble à :
+        // {
+        //   "iss": "...",
+        //   "sub": "...",           // googleId
+        //   "email": "xxx",
+        //   "email_verified": "true"/"false",
+        //   "name": "...",
+        //   "picture": "https://...",
+        //   ...
+        // }
+
+        const googleId = userinfo.sub;
+        const email = (userinfo.email || '').toLowerCase();
+        const emailVerified =
+            String(userinfo.email_verified || '').toLowerCase() === 'true';
+
+        if (!googleId || !email) {
+            return res.status(400).json({ error: 'Réponse Google incomplète' });
+        }
+
+        let user = await User.findOne({
+            $or: [{ email }, { 'providers.google': googleId }]
+        });
+
+        if (!user) {
+            user = await User.create({
+                email,
+                name: userinfo.name || '',
+                avatar: userinfo.picture || '',
+                role: 'user',
+                active: true,
+                isVerified: emailVerified,
+                providers: { google: googleId },
+            });
+        } else {
+            user.providers = user.providers || {};
+            if (!user.providers.google) user.providers.google = googleId;
+            if (!user.avatar && userinfo.picture) user.avatar = userinfo.picture;
+            if (!user.name && userinfo.name) user.name = userinfo.name;
+            if (emailVerified) user.isVerified = true;
+            if (user.active === undefined) user.active = true;
+            await user.save();
+        }
+
+        if (user && user.active === false) {
+            return res.status(403).json({ error: 'Compte désactivé' });
+        }
+
+        // Générer le même access token que pour les autres logins
+        const access = signAccess(user);
+
+        // Option : tu peux aussi émettre un refresh côté DB si tu veux
+        const familyId = crypto.randomUUID();
+        const refreshRaw = await issueRefresh(user._id, familyId);
+
+        const safe = toSafeUser(user);
+
+        // ⚠️ Sur mobile, on renvoie JSON (pas de cookies)
+        return res.json({
+            token: access,
+            refreshToken: refreshRaw,   // optionnel, à utiliser plus tard si tu veux
+            user: safe,
+        });
+    } catch (e) {
+        console.error('[GOOGLE MOBILE] error:', e);
+        return res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 module.exports = router;

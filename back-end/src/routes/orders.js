@@ -15,5 +15,7 @@ r.delete('/admin/:id',        requireAuth, requireAdmin, ctrl.deleteAdminOrder);
 r.post('/',     requireAuth, ctrl.create);
 r.get('/me',    requireAuth, ctrl.getMine);
 r.get('/:id',   requireAuth, ctrl.getById);
+r.get('/:id/invoice', ctrl.downloadInvoice);
+
 
 module.exports = r;

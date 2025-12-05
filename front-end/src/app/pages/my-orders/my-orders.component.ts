@@ -28,6 +28,9 @@ export class MyOrdersComponent implements OnDestroy {
   /** commande sélectionnée dans le modal */
   selectedOrder = signal<Order | null>(null);
 
+  /** loader bouton facture */
+  invoiceLoading = signal(false);
+
   /** Séquence d'appel pour ignorer les réponses en retard */
   private reqSeq = 0;
 
@@ -107,6 +110,33 @@ export class MyOrdersComponent implements OnDestroy {
 
   ngOnDestroy() {
     document.body.classList.remove('no-scroll');
+  }
+
+  /** téléchargement de la facture en PDF */
+  async downloadInvoice(order: Order) {
+    if (this.invoiceLoading()) return;
+
+    this.invoiceLoading.set(true);
+    try {
+      const blob = await this.ordersApi.downloadInvoice(order._id).toPromise();
+      if (!blob) return;
+
+      const filename = `Facture-${order.number || order._id}.pdf`;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Erreur downloadInvoice:', err);
+      // tu peux afficher un toast ici si tu as un service de notif
+    } finally {
+      this.invoiceLoading.set(false);
+    }
   }
 
   trackById = (_: number, o: Order) => o._id;
